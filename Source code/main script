@@ -149,7 +149,7 @@ def write_character_name(file_path, offset, new_name, byte_size=32):
 # Function to open the file
 def open_file():
     global name_offset
-    file_path = filedialog.askopenfilename(filetypes=[("inventory Files", "*.*")])
+    file_path = filedialog.askopenfilename(filetypes=[("inventory Files", "*")])
     if file_path:
         file_path_var.set(file_path)
         file_name_label.config(text=f"File: {os.path.basename(file_path)}")
