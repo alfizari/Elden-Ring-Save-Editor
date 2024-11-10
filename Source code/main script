@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
+import json
 
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00'
@@ -64,8 +65,10 @@ item_hex_patterns = {
 replacement_items = item_hex_patterns.copy()
 
 # for the rest of the items
-from itemshex import inventory_item_hex_patterns
+with open("itemshex.json", "r") as file:
+    inventory_item_hex_patterns = json.load(file)
 
+# Make a copy of the loaded dictionary
 inventory_replacement_items = inventory_item_hex_patterns.copy()
 
 # main window
@@ -149,7 +152,7 @@ def write_character_name(file_path, offset, new_name, byte_size=32):
 # Function to open the file
 def open_file():
     global name_offset
-    file_path = filedialog.askopenfilename(filetypes=[("inventory Files", "*.*")])
+    file_path = filedialog.askopenfilename(filetypes=[("inventory Files", "*")])
     if file_path:
         file_path_var.set(file_path)
         file_name_label.config(text=f"File: {os.path.basename(file_path)}")
