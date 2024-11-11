@@ -1,4 +1,5 @@
 import json
+import glob
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog, Scrollbar
@@ -30,40 +31,34 @@ stats_offsets_for_stats_tap = {
     "Luck": -239,
 }
 
+# Set JSON Folder
+def load_json_files():
+    current_dir = os.getcwd()
+    json_files = glob.glob(os.path.join(current_dir, "*.json"))
+    data = {}
+    for json_file in json_files:
+        with open(json_file, "r") as file:
+            file_name = os.path.splitext(os.path.basename(json_file))[0]
+            data[file_name] = json.load(file)
+    return data
 
-# for the rest of the items
-with open("itemshex.json", "r") as file:
-    inventory_item_hex_patterns = json.load(file)
+# Load the JSON files
+all_json_data = load_json_files()
 
-# Make a copy of the loaded dictionary
+# Set variables
+inventory_item_hex_patterns = all_json_data.get("inventory_item_hex_patterns", {}).copy()
 inventory_replacement_items = inventory_item_hex_patterns.copy()
 
-with open("goods_magic.json", "r") as file:
-    inventory_goods_magic_hex_patterns = json.load(file)
+replacement_items = all_json_data.get("inventory_goods_magic_hex_patterns", {}).copy()
+item_hex_patterns = all_json_data.get("inventory_goods_magic_hex_patterns", {})
 
-# Make a copy of the loaded dictionary
-replacement_items = inventory_goods_magic_hex_patterns.copy()
-item_hex_patterns= inventory_goods_magic_hex_patterns
+weapon_item_patterns = all_json_data.get("inventory_weapons_hex_patterns", {}).copy()
 
-with open("weapons.json", "r") as file:
-    inventory_weapons_hex_patterns = json.load(file)
+armor_item_patterns = all_json_data.get("inventory_armor_hex_patterns", {})
+armor_replacement_items = all_json_data.get("inventory_armor_hex_patterns", {}).copy()
 
-# Make a copy of the loaded dictionary
-weapon_item_patterns = inventory_weapons_hex_patterns.copy()
-
-with open("armor.json", "r") as file:
-    inventory_armor_hex_patterns = json.load(file)
-
-# Make a copy of the loaded dictionary
-armor_item_patterns= inventory_armor_hex_patterns
-armor_replacement_items = inventory_armor_hex_patterns.copy()
-
-with open("ring.json", "r") as file:
-    inventory_ring_hex_patterns = json.load(file)
-
-# Make a copy of the loaded dictionary
-replacement_ring_items = inventory_ring_hex_patterns.copy()
-ring_hex_patterns = inventory_ring_hex_patterns
+replacement_ring_items = all_json_data.get("inventory_ring_hex_patterns", {}).copy()
+ring_hex_patterns = all_json_data.get("inventory_ring_hex_patterns", {})
 
 
 # Main window
