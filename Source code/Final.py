@@ -31,17 +31,17 @@ stats_offsets_for_stats_tap = {
     "Luck": -239,
 }
 
-# Set directory
+# Set the working directory
 working_directory = os.path.dirname(os.path.abspath(__file__))
 os.chdir(working_directory)
 
-# load and copy JSON data from files in the current working directory
+# load and copy JSON data from files in the working directory
 def load_and_copy_json(file_name):
     file_path = os.path.join(working_directory, file_name)
     with open(file_path, "r") as file:
         return json.load(file).copy()
 
-# Load and copy data from JSON files within the current working directory
+# Load and copy data from JSON files within the specified working directory
 inventory_item_hex_patterns = load_and_copy_json("itemshex.json")
 inventory_replacement_items = inventory_item_hex_patterns.copy()
 
@@ -59,7 +59,7 @@ armor_replacement_items = inventory_armor_hex_patterns.copy()
 inventory_ring_hex_patterns = load_and_copy_json("ring.json")
 replacement_ring_items = inventory_ring_hex_patterns.copy()
 ring_hex_patterns = inventory_ring_hex_patterns
-ring_hex_patterns = inventory_ring_hex_patterns
+
 
 # Main window
 window = tk.Tk()
