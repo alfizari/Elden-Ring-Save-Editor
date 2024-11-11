@@ -31,35 +31,35 @@ stats_offsets_for_stats_tap = {
     "Luck": -239,
 }
 
-# Set JSON Folder
-def load_json_files():
-    current_dir = os.getcwd()
-    json_files = glob.glob(os.path.join(current_dir, "*.json"))
-    data = {}
-    for json_file in json_files:
-        with open(json_file, "r") as file:
-            file_name = os.path.splitext(os.path.basename(json_file))[0]
-            data[file_name] = json.load(file)
-    return data
+# Set directory
+working_directory = os.path.dirname(os.path.abspath(__file__))
+os.chdir(working_directory)
 
-# Load the JSON files
-all_json_data = load_json_files()
+# load and copy JSON data from files in the current working directory
+def load_and_copy_json(file_name):
+    file_path = os.path.join(working_directory, file_name)
+    with open(file_path, "r") as file:
+        return json.load(file).copy()
 
-# Set variables
-inventory_item_hex_patterns = all_json_data.get("inventory_item_hex_patterns", {}).copy()
+# Load and copy data from JSON files within the current working directory
+inventory_item_hex_patterns = load_and_copy_json("itemshex.json")
 inventory_replacement_items = inventory_item_hex_patterns.copy()
 
-replacement_items = all_json_data.get("inventory_goods_magic_hex_patterns", {}).copy()
-item_hex_patterns = all_json_data.get("inventory_goods_magic_hex_patterns", {})
+inventory_goods_magic_hex_patterns = load_and_copy_json("goods_magic.json")
+replacement_items = inventory_goods_magic_hex_patterns.copy()
+item_hex_patterns = inventory_goods_magic_hex_patterns
 
-weapon_item_patterns = all_json_data.get("inventory_weapons_hex_patterns", {}).copy()
+inventory_weapons_hex_patterns = load_and_copy_json("weapons.json")
+weapon_item_patterns = inventory_weapons_hex_patterns.copy()
 
-armor_item_patterns = all_json_data.get("inventory_armor_hex_patterns", {})
-armor_replacement_items = all_json_data.get("inventory_armor_hex_patterns", {}).copy()
+inventory_armor_hex_patterns = load_and_copy_json("armor.json")
+armor_item_patterns = inventory_armor_hex_patterns
+armor_replacement_items = inventory_armor_hex_patterns.copy()
 
-replacement_ring_items = all_json_data.get("inventory_ring_hex_patterns", {}).copy()
-ring_hex_patterns = all_json_data.get("inventory_ring_hex_patterns", {})
-
+inventory_ring_hex_patterns = load_and_copy_json("ring.json")
+replacement_ring_items = inventory_ring_hex_patterns.copy()
+ring_hex_patterns = inventory_ring_hex_patterns
+ring_hex_patterns = inventory_ring_hex_patterns
 
 # Main window
 window = tk.Tk()
