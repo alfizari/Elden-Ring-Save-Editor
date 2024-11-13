@@ -3,6 +3,9 @@ import glob
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog, Scrollbar
+import gc
+from functools import wraps
+from time import time
 
 
 
@@ -91,16 +94,22 @@ new_stats_vars = {stat: tk.StringVar() for stat in stats_offsets_for_stats_tap}
 
 # Utility Functions
 def find_hex_offset(file_path, hex_pattern):
-    pattern_bytes = bytes.fromhex(hex_pattern)
-    with open(file_path, 'rb') as file:
-        chunk_size = 100034
-        offset = 0
-        while chunk := file.read(chunk_size):
-            if pattern_bytes in chunk:
-                byte_offset = chunk.index(pattern_bytes)
-                return offset + byte_offset
-            offset += chunk_size
-    return None
+    try:
+        pattern_bytes = bytes.fromhex(hex_pattern)
+        chunk_size = 4096
+        with open(file_path, 'rb') as file:
+            offset = 0
+            while chunk := file.read(chunk_size):
+                if pattern_bytes in chunk:
+                    byte_offset = chunk.index(pattern_bytes)
+                    return offset + byte_offset
+                offset += len(chunk)
+                del chunk
+        gc.collect()
+        return None
+    except (IOError, ValueError) as e:
+        messagebox.showerror("Error", f"Failed to read file: {str(e)}")
+        return None
 
 def calculate_offset2(offset1, distance):
     return offset1 + distance
@@ -771,6 +780,11 @@ def replace_item(file_path, item_name, replacement_hex, new_quantity=None):
 
 
 def refresh_item_list(file_path):
+    # Clear previous items to free memory
+    for widget in items_list_frame.winfo_children():
+        widget.destroy()
+    gc.collect()  # Force garbage collection
+
     key_offset = find_hex_offset(file_path, hex_pattern1_Fixed) + goods_magic_offset
     updated_items = find_key_items(file_path, key_offset)
 
@@ -813,6 +827,11 @@ def refresh_item_list(file_path):
 # refresh rings
 
 def refresh_weapon_list(file_path):
+    # Clear previous weapons to free memory
+    for widget in weapons_list_frame.winfo_children():
+        widget.destroy()
+    gc.collect()
+
     updated_weapons = find_weapon_items(file_path)
     
     # Clear the previous list and display the updated items
@@ -1011,9 +1030,21 @@ inventory_tab = ttk.Frame(notebook)
 sub_notebook = ttk.Notebook(inventory_tab)
 
 def on_tab_changed(event):
+    file_path = file_path_var.get()
+    if not file_path:  # Skip refresh if no file is selected
+        return
+        
+    gc.collect()
     selected_tab = event.widget.tab(event.widget.index("current"))["text"]
+    
     if selected_tab == "Rings":
-        refresh_ring_list(file_path_var.get())
+        refresh_ring_list(file_path)
+    elif selected_tab == "Inventory":
+        refresh_item_list(file_path)
+    elif selected_tab == "Weapons":
+        refresh_weapon_list(file_path)
+    elif selected_tab == "Armor":
+        refresh_armor_list(file_path)
 
 # Bind the NotebookTabChanged event to trigger the refresh when switching tabs
 notebook.bind("<<NotebookTabChanged>>", on_tab_changed)
