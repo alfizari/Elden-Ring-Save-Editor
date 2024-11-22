@@ -4,6 +4,11 @@ DARK SOULS 3 SAVE EDITOR FOR PS4/PS5
 
 USE AT YOUR OWN RISK
 
+Thanks for bawsdeep for code and UI optimization
+(https://github.com/bawsdeep)
+
+Also thanks to Nox for explaining how offsets work
+check out his Bloodborn editor https://github.com/Noxde/Bloodborne-save-editor
 (REQUIRES DECRYPTED SAVE)
 
 ## CURRENT FEATURES
