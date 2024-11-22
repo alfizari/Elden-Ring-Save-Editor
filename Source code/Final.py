@@ -17,7 +17,9 @@ hp_distance= -303
 goods_magic_offset = 0
 goods_magic_range = 30000
 storage_box_distance = 35900   
-drawer_range = 4000 
+drawer_range = 4000
+gesture_offsets= -3800
+hex_pattern2_Fixed= 'FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF'
 
 
 # Stats offsets
@@ -32,8 +34,58 @@ stats_offsets_for_stats_tap = {
     "Intelligence": -247,
     "Faith": -243,
     "Luck": -239,
+    "Estus Flask Max (20 MAX)": -31,
+    "Ashen Estus Flask Max (20 MAX)": -30,
 }
 
+#for bosses
+bosses_offsets_for_bosses_tap = {
+    "Iudex Gundyr": 23254,
+    "Vordt of the Boreal Valley": 4054,
+    "Curse-Rotted Greatwood": 19337,
+    "Crystal Sage": 11736,
+    "Abyss Watchers": 11734,
+    "High Lord Wolnir": 15574,
+    "Oceiros, the Consumed King": 4051,
+    "Champion Gundyr": 23251,
+    "Dancer of the Boreal Valley": 4059,
+    "Deacons of the Deep": 6614,## unsure need testing
+    "Old Demon King": 21174,## unsure need testing
+    "Pontiff Sulyvahn": 3999 ,## unsure need testing
+    "Aldrich, Devourer of Gods": 3997,## unsure need testing
+    "Dragonslayer Armour": 5334,## unsure need testing
+    "Yhorm the Giant": 21974,## unsure need testing
+    "Nameless King": 15510,
+    "Twin Princes": 14291,
+    "Soul of Cinder": 24534,
+    "Champion's Gravetender (DLC)": 25815,
+    "Father Ariandel and Sister Friede (DLC)": 25814,
+    "Halflight, Spear of the Church (DLC)": 30934,
+    "Darkeater Midir (DLC)": 30936,
+    "Slave Knight Gael (DLC)": 32214,
+    "Demon Prince (DLC)": 29654,
+
+
+}
+
+##For bonfire
+bonfire_offsets_for_bonfire_tap = {
+    "Activate Lord of Cinders in Firelink Shrine": 1288,
+    "Cemetary of Ash": 23154,
+    "High Wall of Lothric": 3953,
+    "Undead Settlement": 19314, #need testing
+    "Archdragon Peak": 9074,
+    "Kiln of the First Flame": 24434,
+    "Catacombs of Carthus": 20594,
+    "Irithyll of the Boreal Valley": 6513,
+    "The Dreg Heap": 29554,
+    "Irithyll Dungeon": 21874,
+    "Road of Sacrifices": 11634,
+    "Cathedral of the Deep": 6514,
+    "Lothric Castle": 5234,
+    "Painted World of Ariandel (DLC)": 25714,
+    "The Ringed City (DLC)": 30834,
+}
 # Set the working directory
 working_directory = os.path.dirname(os.path.abspath(__file__))
 os.chdir(working_directory)
@@ -47,6 +99,11 @@ def load_and_copy_json(file_name):
 # Load and copy data from JSON files within the specified working directory
 inventory_item_hex_patterns = load_and_copy_json("itemshex.json")
 inventory_replacement_items = inventory_item_hex_patterns.copy()
+#for bosses
+bosses_data = load_and_copy_json("Bosses.json")
+
+##bonfire
+bonfire_data = load_and_copy_json("bonfire.json")
 
 inventory_goods_magic_hex_patterns = load_and_copy_json("goods_magic.json")
 replacement_items = inventory_goods_magic_hex_patterns.copy()
@@ -87,6 +144,7 @@ found_storage_items_with_quantity = []
 found_items = []
 found_armor= []
 found_ring= []
+file_path_var = tk.StringVar()
 
 # Variables to hold current and new values for each stat
 current_stats_vars = {stat: tk.StringVar(value="N/A") for stat in stats_offsets_for_stats_tap}
@@ -145,71 +203,134 @@ def find_character_name(file_path, offset, byte_size=32):
         return ''.join(name_chars)
 
 def write_character_name(file_path, offset, new_name, byte_size=32):
+   
+    # Convert the new name into bytes
     name_bytes = []
     for char in new_name:
         name_bytes.append(ord(char))
-        name_bytes.append(0) 
-    name_bytes = name_bytes[:byte_size]
+        name_bytes.append(0)  # Add null byte for UTF-16 encoding
+    
+    # Pad the name with null bytes to match the fixed byte size
+    name_bytes = name_bytes[:byte_size]  # Truncate if name is too long
+    name_bytes += [0] * (byte_size - len(name_bytes))  # Pad if name is too short
+
+    # Write the name to the file
     with open(file_path, 'r+b') as file:
         file.seek(offset)
         file.write(bytes(name_bytes))
 
+#
+def open_single_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Save Files", "userdata*")])
+    if not file_path:
+        return
+
+    # Set the file path variable to the selected file
+    file_path_var.set(file_path)
+
+    # Try to find the character name and display it
+    offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if offset1 is not None:
+        for distance in possible_name_distances_for_name_tap:
+            name_offset = calculate_offset2(offset1, distance)
+            character_name = find_character_name(file_path, name_offset)
+            if character_name and character_name != "N/A":
+                # Display the single file's character name
+                display_character_names([(file_path, character_name)])
+                return
+
+    messagebox.showerror("Error", "Unable to find a valid character name in the file!")
+
+
 # Function to open the file
-def open_file():
-    global name_offset
-    file_path = filedialog.askopenfilename(filetypes=[("inventory Files", "*")])
-    if file_path:
-        file_path_var.set(file_path)
-        file_name_label.config(text=f"File: {os.path.basename(file_path)}")
-        
+def open_folder():
+    folder_path = filedialog.askdirectory()
+    if not folder_path:
+        return
+
+    userdata_files = sorted(glob.glob(os.path.join(folder_path, "userdata*")))
+    character_names = []
+
+    for file_path in userdata_files:
         offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
         if offset1 is not None:
-            # Display Souls value
-            souls_offset = calculate_offset2(offset1, souls_distance)
-            current_souls = find_value_at_offset(file_path, souls_offset)
-            current_souls_var.set(current_souls if current_souls is not None else "N/A")
-
-                # Display character name
             for distance in possible_name_distances_for_name_tap:
                 name_offset = calculate_offset2(offset1, distance)
-                current_name = find_character_name(file_path, name_offset)
-                if current_name and current_name != "N/A":
-                    current_name_var.set(current_name)
+                character_name = find_character_name(file_path, name_offset)
+                if character_name and character_name != "N/A":
+                    character_names.append((file_path, character_name))
                     break
-            else:
-                current_name_var.set("N/A")
 
-            for stat, distance in stats_offsets_for_stats_tap.items():
-                stat_offset = calculate_offset2(offset1, distance)
-                current_stat_value = find_value_at_offset(file_path, stat_offset)
-                current_stats_vars[stat].set(current_stat_value if current_stat_value is not None else "N/A")
-# For health (test)
-            if isinstance(hp_distance, int):
-                # Handle the case where hp_distance is a single value
-                hp_offset = calculate_offset2(offset1, hp_distance)
-                current_hp = find_value_at_offset(file_path, hp_offset)
-                current_hp_var.set(current_hp if current_hp is not None else "N/A")
-            else:
-                # Handle the case where hp_distance is iterable
-                for distance in hp_distance:
-                    hp_offset = calculate_offset2(offset1, distance)
-                    current_hp = find_value_at_offset(file_path, hp_offset)
-                    if current_hp and current_hp != "N/A":
-                        current_hp_var.set(current_hp)
-                        break
-                else:
-                    current_hp_var.set("N/A")
-            # Automatically refresh the item list for the Items tab
-            refresh_storage_quantity_list(file_path)
-            refresh_item_list(file_path)
-            refresh_weapon_list(file_path)
-            refresh_armor_list(file_path)
-              
+    display_character_names(character_names)
+
+def display_character_names(character_names):
+    for widget in character_list_frame.winfo_children():
+        widget.destroy()
+
+    for file_path, name in character_names:
+        def on_character_click(selected_file=file_path):
+            file_path_var.set(selected_file)
+            load_file_data(selected_file)
+            refresh_storage_quantity_list(selected_file)  # Ensure storage is refreshed for the selected file
+
+        tk.Button(character_list_frame, text=name, command=on_character_click, bg="white").pack(fill="x", padx=5, pady=2)
+
+
+
+def display_character_names(character_names):
+    # Clear any existing character list
+    for widget in character_list_frame.winfo_children():
+        widget.destroy()
+
+    for file_path, name in character_names:
+        def on_character_click(selected_file=file_path):
+            file_path_var.set(selected_file)
+            load_file_data(selected_file)
+
+        # Create a button for each character name
+        tk.Button(character_list_frame, text=name, command=on_character_click, bg="white").pack(fill="x", padx=5, pady=2)
+
+
+def load_file_data(file_path):
+    offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if offset1 is not None:
+        # Load character name
+        refresh_storage_quantity_list(file_path)
+        for distance in possible_name_distances_for_name_tap:
+            name_offset = calculate_offset2(offset1, distance)
+            current_name = find_character_name(file_path, name_offset)
+            if current_name and current_name != "N/A":
+                current_name_var.set(current_name)
+                break
         else:
-            messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
+            current_name_var.set("N/A")
+
+        # Load other data (e.g., stats, souls, etc.)
+        # Souls
+        souls_offset = calculate_offset2(offset1, souls_distance)
+        current_souls = find_value_at_offset(file_path, souls_offset)
+        current_souls_var.set(current_souls if current_souls is not None else "N/A")
+
+        # Stats
+        for stat, distance in stats_offsets_for_stats_tap.items():
+            stat_offset = calculate_offset2(offset1, distance)
+            current_stat_value = find_value_at_offset(file_path, stat_offset, byte_size=1)
+            current_stats_vars[stat].set(current_stat_value if current_stat_value is not None else "N/A")
+
+        # HP
+        hp_offset = calculate_offset2(offset1, hp_distance)
+        current_hp = find_value_at_offset(file_path, hp_offset)
+        current_hp_var.set(current_hp if current_hp is not None else "N/A")
+
+        # Refresh UI elements (e.g., inventory, stats, etc.)
+    
         refresh_item_list(file_path)
         refresh_weapon_list(file_path)
         refresh_armor_list(file_path)
+        refresh_ring_list(file_path)
+        refresh_boss_tab()
+        refresh_bonfire_tab()
+
        
 
 ###### for updating values
@@ -263,12 +384,19 @@ def update_character_name():
         messagebox.showerror("Input Error", "Please fill in the file path and new character name!")
         return
 
-    write_character_name(file_path, name_offset, new_name)
-    messagebox.showinfo("Success", f"Character name updated to '{new_name}'.")
-    current_name_var.set(new_name)
-    refresh_item_list(file_path)
-    refresh_weapon_list(file_path)
-    refresh_armor_list(file_path)
+    offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if offset1 is not None:
+        for distance in possible_name_distances_for_name_tap:
+            name_offset = calculate_offset2(offset1, distance)
+            current_name = find_character_name(file_path, name_offset)
+            if current_name and current_name != "N/A":
+                write_character_name(file_path, name_offset, new_name)
+                messagebox.showinfo("Success", f"Character name updated to '{new_name}'.")
+                current_name_var.set(new_name)
+                return
+
+    messagebox.showerror("Error", "Unable to find the character name offset!")
+
 
 def update_stat(stat):
     file_path = file_path_var.get()
@@ -307,6 +435,217 @@ def find_goods_offset(file_path, key_offset):
                 found_items.append((item_name, quantity))
                 print(f"Found {item_name} with quantity {quantity}")  # Debugging line
     return found_items
+
+
+
+
+#Bosses
+def find_last_hex_offset(file_path, hex_pattern):
+    try:
+        pattern_bytes = bytes.fromhex(hex_pattern)
+        chunk_size = 4096
+        last_offset = None
+        
+        with open(file_path, 'rb') as file:
+            offset = 0
+            while chunk := file.read(chunk_size):
+                # Search for the pattern within the chunk
+                byte_offset = chunk.rfind(pattern_bytes)
+                
+                # If the pattern is found, update the last_offset to the current location
+                if byte_offset != -1:
+                    last_offset = offset + byte_offset
+                
+                # Update the offset to the next chunk
+                offset += len(chunk)
+                del chunk
+        
+        gc.collect()
+        return last_offset
+    except (IOError, ValueError) as e:
+        messagebox.showerror("Error", f"Failed to read file: {str(e)}")
+        return None
+
+# Function to get the current status of each boss, using the last occurrence of the hex pattern
+def get_boss_status(file_path):
+    global bosses_data
+    bosses_status = {}
+    # Use find_last_hex_offset to locate the last occurrence of the fixed pattern
+    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
+    if offset1 is not None:
+        for boss, defeat_hex in bosses_data.items():
+            defeat_value = int(defeat_hex, 16)  # Convert hex string to integer for comparison
+            boss_distance = bosses_offsets_for_bosses_tap.get(boss)  # Retrieve distance for boss
+            
+            if boss_distance is not None:
+                # Calculate the offset based on fixed offset and boss distance
+                boss_offset = calculate_offset2(offset1, boss_distance)
+                
+                # Read only 1 byte at the boss offset
+                boss_value = find_value_at_offset(file_path, boss_offset, byte_size=1)
+                
+                # Determine if the boss is defeated or alive
+                bosses_status[boss] = "Defeated" if boss_value == defeat_value else "Alive"
+            else:
+                print(f"Warning: Offset for boss '{boss}' not found.")
+    return bosses_status
+
+
+
+
+def update_boss_status(file_path, boss_name, new_status):
+    global bosses_data
+    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
+    if offset1 is not None and boss_name in bosses_data:
+        # Calculate offset for the specific boss
+        boss_distance = bosses_offsets_for_bosses_tap[boss_name]
+        boss_offset = calculate_offset2(offset1, boss_distance)
+        defeat_value = int(bosses_data[boss_name], 16)
+        
+        # Set the value to 1 byte: defeat value for "Defeated" or 0 for "Alive"
+        value = defeat_value if new_status == "Defeated" else 0  # 0 for alive
+        write_value_at_offset(file_path, boss_offset, value, byte_size=1)  # Write only 1 byte
+        messagebox.showinfo("Success", f"{boss_name} status updated to {new_status}.")
+        
+        # Refresh display to reflect changes
+        display_boss_status(file_path)
+    else:
+        messagebox.showerror("Error", "Failed to update boss status. Boss data or offset not found.")
+
+def display_boss_status(file_path):
+    bosses_status = get_boss_status(file_path)
+    
+    # Clear previous entries
+    for widget in boss_list_canvas.winfo_children():
+        widget.destroy()
+    
+    # Create a frame inside the canvas
+    boss_list_frame = tk.Frame(boss_list_canvas)
+    boss_list_canvas.create_window((0, 0), window=boss_list_frame, anchor="nw")
+
+    # Populate the frame with the boss list
+    for boss, status in bosses_status.items():
+        boss_frame = tk.Frame(boss_list_frame)
+        boss_frame.pack(fill="x", padx=10, pady=5)
+        
+        tk.Label(boss_frame, text=f"{boss} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
+        
+        # Dropdown to change status with direct update
+        new_status_var = tk.StringVar(value=status)
+        def on_status_change(selected_status, boss=boss):
+            update_boss_status(file_path, boss, selected_status)
+
+        status_options = tk.OptionMenu(boss_frame, new_status_var, "Alive", "Defeated", command=lambda selection, boss=boss: on_status_change(selection, boss))
+        status_options.pack(side="right", padx=5)
+
+    # Update the scroll region of the canvas
+    boss_list_frame.update_idletasks()
+    boss_list_canvas.config(scrollregion=boss_list_canvas.bbox("all"))
+
+def refresh_boss_tab():
+    file_path = file_path_var.get()
+    if file_path:
+        display_boss_status(file_path)
+        
+def on_world_flag_tab_selected(event):
+    selected_tab = notebook.tab(notebook.select(), "text")
+    if selected_tab == "World Flag":
+        refresh_boss_tab()
+
+##bonfire
+def get_bonfire_status(file_path):
+    global bonfire_data
+    bonfire_status = {}
+    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
+    if offset1 is not None:
+        for bonfire, bonfire_hex in bonfire_data.items():
+            bonfire_value = int(bonfire_hex, 16)  # Convert hex string to integer
+            bonfire_distance = bonfire_offsets_for_bonfire_tap.get(bonfire)  # Retrieve offset distance
+            
+            if bonfire_distance is not None:
+                # Calculate the offset based on fixed offset and bonfire distance
+                bonfire_offset = calculate_offset2(offset1, bonfire_distance)
+                
+                # Read the value (try 1 byte first, then 2 bytes)
+                read_value = find_value_at_offset(file_path, bonfire_offset, byte_size=1)
+                if read_value != bonfire_value:
+                    read_value = find_value_at_offset(file_path, bonfire_offset, byte_size=2)
+
+                # Determine bonfire status
+                bonfire_status[bonfire] = "Unlocked" if read_value == bonfire_value else "Locked"
+            else:
+                print(f"Warning: Offset for bonfire '{bonfire}' not found.")
+    return bonfire_status
+
+def update_bonfire_status(file_path, bonfire_name, bonfire_status):
+    global bonfire_data
+    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
+    if offset1 is not None and bonfire_name in bonfire_data:
+        # Calculate offset for the specific bonfire
+        bonfire_distance = bonfire_offsets_for_bonfire_tap[bonfire_name]
+        bonfire_offset = calculate_offset2(offset1, bonfire_distance)
+        unlock_value = int(bonfire_data[bonfire_name], 16)  
+        # Determine the byte size based on the unlock_value
+        byte_size = 1 if unlock_value <= 0xFF else 2  # Use 1 byte if unlock_value fits, otherwise 2 bytes
+        
+        # Determine value to write: unlock_value for "Unlocked", 0 for "Locked"
+        if bonfire_status == "Unlocked":
+            value = unlock_value
+        else:
+            value = 0  # Write 0 using the same byte size as the unlock_value
+        
+        # Write the value at the calculated offset
+        write_value_at_offset(file_path, bonfire_offset, value, byte_size=byte_size)
+        
+        messagebox.showinfo("Success", f"{bonfire_name} status updated to {bonfire_status}.")
+        
+        # Refresh display to reflect changes
+        display_bonfire_status(file_path)
+    else:
+        messagebox.showerror("Error", "Failed to update bonfire status. Bonfire data or offset not found.")
+
+
+def display_bonfire_status(file_path):
+    bonfire_status = get_bonfire_status(file_path)
+    
+    # Clear previous entries
+    for widget in bonfire_list_canvas.winfo_children():
+        widget.destroy()
+    
+    # Create a frame inside the canvas
+    bonfire_list_frame = tk.Frame(bonfire_list_canvas)
+    bonfire_list_canvas.create_window((0, 0), window=bonfire_list_frame, anchor="nw")
+
+    # Populate the frame with the bonfire list
+    for bonfire, status in bonfire_status.items():
+        bonfire_frame = tk.Frame(bonfire_list_frame)
+        bonfire_frame.pack(fill="x", padx=10, pady=5)
+        
+        tk.Label(bonfire_frame, text=f"{bonfire} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
+        
+        # Dropdown to change status with direct update
+        new_status_var = tk.StringVar(value=status)
+        def on_status_bonfire_change(selected_status, bonfire=bonfire):
+            update_bonfire_status(file_path, bonfire, selected_status)
+
+        status_options = tk.OptionMenu(bonfire_frame, new_status_var, "Locked", "Unlocked", command=lambda selection, bonfire=bonfire: on_status_bonfire_change(selection, bonfire))
+        status_options.pack(side="right", padx=5)
+
+    # Update the scroll region of the canvas
+    bonfire_list_frame.update_idletasks()
+    bonfire_list_canvas.config(scrollregion=bonfire_list_canvas.bbox("all"))
+
+
+def refresh_bonfire_tab():
+    file_path = file_path_var.get()
+    if file_path:
+        display_bonfire_status(file_path)
+        
+def on_world_flag_tab_selected(event):
+    selected_tab = notebook.tab(notebook.select(), "text")
+    if selected_tab == "World Flag":
+        refresh_bonfire_tab()
+
 
 def find_ring_items(file_path):
     global found_ring
@@ -507,6 +846,38 @@ def find_armor_items(file_path, start_offset=71550, range_size=None):
     return found_armor
 
 
+# Gesture Hex Definitions
+gesture_old_id = bytes.fromhex("03 00 00 00 05")
+gesture_new_id = bytes.fromhex(
+    "03 00 00 00 05 00 01 00 07 00 02 00 09 00 03 00 0B 00 04 00 0D 00 05 00 0F 00 06 00 11 00 07 00 13 00 08 00 15 00 09 00 17 00 0A 00 19 00 0B 00 1B 00 0C 00 1D 00 0D 00 1F 00 0E 00 21 00 0F 00 23 00 10 00 25 00 11 00 27 00 12 00 29 00 13 00 2B 00 14 00 2D 00 15 00 2F 00 16 00 31 00 17 00 33 00 18 00 35 00 19 00 37 00 1A 00 39 00 1B 00 3B 00 1C 00 3D 00 1D 00 3F 00 1E 00 41 00 1F 00 43 00 20 00 45"
+)
+
+gesture_distance = -3800  # Offset from Fixed Pattern 2
+gesture_search_range = 500  # Range to search for the gesture ID
+
+def replace_gesture_hex_within_range(file_path):
+    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
+    if offset1 is not None:
+        search_start_offset = calculate_offset2(offset1, gesture_distance)
+        try:
+            with open(file_path, 'r+b') as file:
+                # Read the 500-byte range for the old gesture ID
+                file.seek(search_start_offset)
+                data_chunk = file.read(gesture_search_range)
+                
+                # Find the old gesture ID within the range
+                gesture_offset = data_chunk.find(gesture_old_id)
+                if gesture_offset != -1:
+                    actual_gesture_offset = search_start_offset + gesture_offset
+                    file.seek(actual_gesture_offset)
+                    file.write(gesture_new_id)
+                    messagebox.showinfo("Success", "All gestures unlocked successfully!")
+                else:
+                    messagebox.showerror("Error", "Old gesture ID not found within the specified range.")
+        except IOError as e:
+            messagebox.showerror("File Error", f"Failed to open or modify the file: {e}")
+    else:
+        messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
 
 
 # weappons could be used for armor
@@ -1017,13 +1388,7 @@ def replace_armor(armor_name):
                 col = 0
                 row += 1
 
-# UI Layout
-file_open_frame = tk.Frame(window)
-file_open_frame.pack(fill="x", padx=10, pady=5)
 
-tk.Button(file_open_frame, text="Open Save File", command=open_file).pack(side="left", padx=5)
-file_name_label = tk.Label(file_open_frame, text="No file selected", anchor="w")
-file_name_label.pack(side="left", padx=10, fill="x")
 
 notebook = ttk.Notebook(window)
 inventory_tab = ttk.Frame(notebook)
@@ -1045,6 +1410,8 @@ def on_tab_changed(event):
         refresh_weapon_list(file_path)
     elif selected_tab == "Armor":
         refresh_armor_list(file_path)
+    elif selected_tab == "Bosses":
+        refresh_boss_tab()
 
 # Bind the NotebookTabChanged event to trigger the refresh when switching tabs
 notebook.bind("<<NotebookTabChanged>>", on_tab_changed)
@@ -1092,30 +1459,40 @@ storage_box_tab = ttk.Frame(window)
 storage_list_frame = tk.Frame(storage_box_tab)
 storage_list_frame.pack(fill="x", padx=10, pady=5)
 
-refresh_storage_button = tk.Button(storage_box_tab, text="Refresh Storage Box with Quantity", command=lambda: refresh_storage_quantity_list(file_path_var.get()))
-refresh_storage_button.pack(pady=10)
+
 # Items Tab
 items_tab = ttk.Frame(sub_notebook)
 items_list_frame = tk.Frame(items_tab)
 items_list_frame.pack(fill="x", padx=10, pady=5)
-refresh_button = tk.Button(items_tab, text="Refresh Items List", command=lambda: refresh_item_list(file_path_var.get()))
-refresh_button.pack(pady=10)
 
 
+#ddd
+left_frame = tk.Frame(window, width=200, bg="lightgrey")
+left_frame.pack(side="left", fill="y")
+
+# Right frame for the main content
+right_frame = tk.Frame(window)
+right_frame.pack(side="right", fill="both", expand=True)
+
+# Frame to display character names
+character_list_frame = tk.Frame(left_frame, bg="lightgrey")
+character_list_frame.pack(fill="y", padx=10, pady=10)
+
+# Add a button to open a folder and load character names
+tk.Button(left_frame, text="Load All Character", command=open_folder).pack(pady=10)
+tk.Button(left_frame, text="Load Signle Character", command=open_single_file).pack(pady=10)
 
 # Weapons Tab
 weapons_tab = ttk.Frame(sub_notebook)
 weapons_list_frame = tk.Frame(weapons_tab)
 weapons_list_frame.pack(fill="x", padx=10, pady=5)
-refresh_weapons_button = tk.Button(weapons_tab, text="Refresh Weapons List", command=lambda: refresh_weapon_list(file_path_var.get()))
-refresh_weapons_button.pack(pady=10)
+
 
 # armmor tap
 armor_tab = ttk.Frame(sub_notebook)
 armor_list_frame = tk.Frame(armor_tab)
 armor_list_frame.pack(fill="x", padx=10, pady=5)
-refresh_armor_button = tk.Button(armor_tab, text="Refresh armor List", command=lambda: refresh_armor_list(file_path_var.get()))
-refresh_armor_button.pack(pady=10)
+
 
 
 # Define specific refresh functions for each tab
@@ -1147,7 +1524,7 @@ def refresh_stats_tab():
     if offset1 is not None:
         for stat, distance in stats_offsets_for_stats_tap.items():
             stat_offset = calculate_offset2(offset1, distance)
-            current_stat_value = find_value_at_offset(file_path_var.get(), stat_offset)
+            current_stat_value = find_value_at_offset(file_path_var.get(), stat_offset, byte_size=1)
             current_stats_vars[stat].set(current_stat_value if current_stat_value is not None else "N/A")
 def refresh_storage_box_tab():
     storage_offset = find_hex_offset(file_path_var.get(), hex_pattern1_Fixed) + storage_box_distance
@@ -1220,6 +1597,80 @@ notebook.add(storage_box_tab, text="Storage Box")
 
 
 
+
+# Add a main "World Flag" tab to the main notebook
+world_flag_tab = ttk.Frame(notebook)
+notebook.add(world_flag_tab, text="World Flag")
+
+# Create a sub-notebook within the "World Flag" tab for "Bosses" and other sub-tabs
+world_flag_sub_notebook = ttk.Notebook(world_flag_tab)
+world_flag_sub_notebook.pack(expand=1, fill="both")
+
+# Create the "Bosses" tab as a sub-tab within the "World Flag" sub-notebook
+boss_tab = ttk.Frame(world_flag_sub_notebook)
+world_flag_sub_notebook.add(boss_tab, text="Bosses")
+
+# Canvas and scrollbar for the boss list
+boss_list_canvas = tk.Canvas(boss_tab)
+boss_list_scrollbar = tk.Scrollbar(boss_tab, orient="vertical", command=boss_list_canvas.yview)
+boss_list_canvas.configure(yscrollcommand=boss_list_scrollbar.set)
+
+# Pack the canvas and scrollbar
+boss_list_canvas.pack(side="left", fill="both", expand=True)
+boss_list_scrollbar.pack(side="right", fill="y")
+
+
+# Function to handle auto-refresh on tab change within the World Flag sub-notebook
+def on_world_flag_tab_changed(event):
+    selected_tab = world_flag_sub_notebook.tab(world_flag_sub_notebook.select(), "text")
+    if selected_tab == "Bosses":
+        refresh_boss_tab()
+
+world_flag_sub_notebook.bind("<<NotebookTabChanged>>", on_world_flag_tab_changed)
+
+#for gesture
+# Add Gesture Tab
+gesture_tab = ttk.Frame(world_flag_sub_notebook)
+world_flag_sub_notebook.add(gesture_tab, text="Gestures")
+
+# Unlock All Gestures Button
+unlock_gesture_button = tk.Button(
+    gesture_tab,
+    text="Unlock All Gestures",
+    command=lambda: replace_gesture_hex_within_range(file_path_var.get())
+)
+unlock_gesture_button.pack(pady=20)
+
+gesture_instruction = """
+Clicking 'Unlock All Gestures' Will also unlock Unmannered Bow.
+"""
+gesture_label = tk.Label(gesture_tab, text=gesture_instruction, wraplength=400, justify="left", anchor="nw")
+gesture_label.pack(padx=10, pady=10, fill="x")
+
+#for bonfire
+# Create the "bonfire" tab as a sub-tab within the "World Flag" sub-notebook
+bonfire_tab = ttk.Frame(world_flag_sub_notebook)
+world_flag_sub_notebook.add(bonfire_tab, text="Bonfire")
+
+# Canvas and scrollbar for the bonfire list
+bonfire_list_canvas = tk.Canvas(bonfire_tab)
+bonfire_list_scrollbar = tk.Scrollbar(bonfire_tab, orient="vertical", command=bonfire_list_canvas.yview)
+bonfire_list_canvas.configure(yscrollcommand=bonfire_list_scrollbar.set)
+
+# Pack the canvas and scrollbar
+bonfire_list_canvas.pack(side="left", fill="both", expand=True)
+bonfire_list_scrollbar.pack(side="right", fill="y")
+
+
+# Function to handle auto-refresh on tab change within the World Flag sub-notebook
+def on_world_flag_tab_changed(event):
+    selected_tab = world_flag_sub_notebook.tab(world_flag_sub_notebook.select(), "text")
+    if selected_tab == "Bonfire":
+        refresh_bonfire_tab()
+    elif selected_tab == "Bosses":
+        refresh_boss_tab()
+
+
 notebook.pack(expand=1, fill="both")
 canvas = tk.Canvas(storage_box_tab)
 scrollbar = ttk.Scrollbar(storage_box_tab, orient="vertical", command=canvas.yview)
@@ -1241,6 +1692,16 @@ DO NOT REPLACE ANY ITEM THAT YOU ARE CURRENTLY HAVE EQUIPED. (IF YOU DON'T HAVE 
 
 inventory_label = tk.Label(weapons_tab, text=inventory_text, wraplength=400, justify="left", anchor="nw")
 inventory_label.pack(padx=10, pady=10, fill="x") 
+
+
+goods_text = """
+For titanite Slab don't add over 15
+"""
+
+
+goods_label = tk.Label(items_tab, text=goods_text, wraplength=400, justify="left", anchor="nw")
+goods_label.pack(padx=10, pady=10, fill="x") 
+
 
 storage_text = """
 600 IS THE MAXIMIM.
