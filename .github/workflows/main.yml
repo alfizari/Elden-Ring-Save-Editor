@@ -40,7 +40,7 @@ jobs:
 
       - name: Create Windows Executable (32-bit)
         run: |
-          pyinstaller --onefile --windowed --platform=win32 src/build.spec
+          pyinstaller --onefile --windowed src/build.spec
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
-          path: dist/Dark_Souls_3_Save_Editor_WIN32.exe
+          path: dist/Dark_Souls_3_Save_Editor.exe
 
   build-linux:
     runs-on: ubuntu-latest
