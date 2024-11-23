@@ -309,8 +309,9 @@ def display_character_names(character_names):
             file_path_var.set(selected_file)
             load_file_data(selected_file)
 
-    character_button = ttk.Button(character_list_frame, text=name, command=on_character_click, width=15)  # Set width to 15
-    character_button.pack(fill="x", padx=5, pady=2)  # Use pack for layout
+        # Create a button for each character name
+        character_button = ttk.Button(character_list_frame, text=name, command=on_character_click, width=15)  # Set width to 15
+        character_button.pack(fill="x", padx=5, pady=2)  # Use pack for layout
 
 
 def load_file_data(file_path):
