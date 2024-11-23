@@ -21,12 +21,6 @@ jobs:
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN'
           options: '--onefile --windowed'
 
-      - name: Upload Windows Executable as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dark_Souls_3_Save_Editor_WIN
-          path: D:\a\Dark-souls-3-editor-PS4\Dark-souls-3-editor-PS4\dist\Dark_Souls_3_Save_Editor_WIN.exe  # Specified upload path
-
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +34,3 @@ jobs:
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_UNIX'
           options: '--onefile --windowed'
-
-      - name: Upload Linux Executable as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dark_Souls_3_Save_Editor_UNIX
-          path: /home/runner/work/Dark-souls-3-editor-PS4/Dark-souls-3-editor-PS4/dist/Dark_Souls_3_Save_Editor_UNIX  # Specified upload path
