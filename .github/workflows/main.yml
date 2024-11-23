@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main  # Trigger on pushes to the main branch
-      # You can add more branches if needed, e.g., - develop
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -14,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create Executable
+      - name: Create Windows Executable
         uses: sayyid5416/pyinstaller@v1
         with:
           python_ver: '3.8'
@@ -34,7 +33,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create Executable
+      - name: Create Linux Executable
         uses: sayyid5416/pyinstaller@v1
         with:
           python_ver: '3.8'
