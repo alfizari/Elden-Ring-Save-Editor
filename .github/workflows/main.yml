@@ -63,3 +63,35 @@ jobs:
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_UNIX'
           options: '--onefile --windowed'
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          brew install python3
+          python3 -m pip install --upgrade pip setuptools wheel
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install PyInstaller
+        run: |
+          python -m pip install pyinstaller
+
+      - name: Create macOS Executable
+        run: |
+          pyinstaller --onefile --windowed src/build.spec
+        env:
+          PYTHONPATH: ${{ runner.workspace }}/src
+
+      - name: Upload macOS Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dark_Souls_3_Save_Editor_MAC
+          path: dist/Dark_Souls_3_Save_Editor
