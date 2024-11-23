@@ -1,3 +1,5 @@
+name: BAWSDEEP  # You can change this to any name you prefer
+
 on:
   push:
     tags:
@@ -23,7 +25,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_WIN
-          path: D:\a\Dark-souls-3-editor-PS4\Dark-souls-3-editor-PS4\dist\Dark_Souls_3_Save_Editor_WIN.exe  # Updated path
+          path: D:\a\Dark-souls-3-editor-PS4\Dark-souls-3-editor-PS4\dist\Dark_Souls_3_Save_Editor_WIN.exe  # Specified upload path
 
   build-linux:
     runs-on: ubuntu-latest
@@ -44,30 +46,3 @@ jobs:
         with:
           name: Dark_Souls_3_Save_Editor_UNIX
           path: /home/runner/work/Dark-souls-3-editor-PS4/Dark-souls-3-editor-PS4/dist/Dark_Souls_3_Save_Editor_UNIX  # Specified upload path
-
-  create-release:
-    runs-on: ubuntu-latest
-    needs: [build-windows, build-linux]
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Download Windows Executable Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: Dark_Souls_3_Save_Editor_WIN  # Ensure this matches the upload name
-
-      - name: Download Linux Executable Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: Dark_Souls_3_Save_Editor_UNIX  # Updated to match the new name
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./artifacts/windows/Dark_Souls_3_Save_Editor_WIN.exe  # Ensure this path is correct
-            ./artifacts/linux/Dark_Souls_3_Save_Editor_UNIX  # Ensure this path is correct
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
