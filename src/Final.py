@@ -158,9 +158,6 @@ def toggle_theme():
     # Update button styles after toggling the theme
     update_button_styles()
 
-theme_button = ttk.Button(window, text="Toggle Theme", command=toggle_theme)
-theme_button.pack(side="top", anchor="ne", padx=5, pady=5)
-
 # Globll variables
 file_path_var = tk.StringVar()
 current_name_var = tk.StringVar(value="N/A")
@@ -312,9 +309,8 @@ def display_character_names(character_names):
             file_path_var.set(selected_file)
             load_file_data(selected_file)
 
-        # Create a button for each character using Azure styles
-        character_button = ttk.Button(character_list_frame, text=name, command=on_character_click)
-        character_button.pack(fill="x", padx=5, pady=2)  # Use pack for layout
+    character_button = ttk.Button(character_list_frame, text=name, command=on_character_click, width=15)  # Set width to 15
+    character_button.pack(fill="x", padx=5, pady=2)  # Use pack for layout
 
 
 def load_file_data(file_path):
@@ -1579,8 +1575,20 @@ character_list_frame.pack(fill="y", padx=10, pady=10)
 
 # Change to ttk.Button for Azure theme
 button_width = 15  # Adjust this value to make buttons wider or narrower
-ttk.Button(left_frame, text="Load Foler", width=button_width, command=open_folder).pack(pady=10)
-ttk.Button(left_frame, text="Load File", width=button_width, command=open_single_file).pack(pady=10)
+
+# Define button width (assuming this is the same width used for character buttons)
+button_width = 15  # Adjust this value as needed
+
+# Define button width and padding
+button_width = 15  # Adjust this value to make buttons wider or narrower
+button_padding = 5  # Set padding for buttons
+
+ttk.Button(left_frame, text="Load Folder", width=button_width, command=open_folder).pack(pady=10, padx=10)  # Added padx
+ttk.Button(left_frame, text="Load File", width=button_width, command=open_single_file).pack(pady=10, padx=10)  # Added padx
+
+# Create the "Toggle Theme" button in the left frame at the bottom
+theme_button = ttk.Button(left_frame, text="Toggle Theme", width=button_width, command=toggle_theme)
+theme_button.pack(side="bottom", pady=10, padx=10)
 
 # Weapons Tab
 weapons_tab = ttk.Frame(sub_notebook)
