@@ -7,13 +7,14 @@ import gc
 from functools import wraps
 from time import time
 
-
-
+#just a flag
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00'
 possible_name_distances_for_name_tap = [-199]
 souls_distance = -219
 hp_distance= -303
+fp_distance= -291
+stamina_distance= -275
 goods_magic_offset = 0
 goods_magic_range = 30000
 storage_box_distance = 35900   
@@ -77,7 +78,7 @@ bonfire_offsets_for_bonfire_tap = {
     "Archdragon Peak": 9074,
     "Kiln of the First Flame": 24434,
     "Catacombs of Carthus": 20594,
-    "Irithyll of the Boreal Valley": 6513,
+    "Irithyll of the Boreal Valley": 19313,
     "The Dreg Heap": 29554,
     "Irithyll Dungeon": 21874,
     "Road of Sacrifices": 11634,
@@ -92,7 +93,7 @@ os.chdir(working_directory)
 
 # load and copy JSON data from files in the working directory
 def load_and_copy_json(file_name):
-    file_path = os.path.join(working_directory, file_name)
+    file_path = os.path.join(working_directory, "Resources/Json", file_name)
     with open(file_path, "r") as file:
         return json.load(file).copy()
 
@@ -125,8 +126,42 @@ ring_hex_patterns = inventory_ring_hex_patterns
 window = tk.Tk()
 window.title("Dark Souls 3 Save Editor")
 
+# Load and configure the Azure theme
+try:
+    # Set Theme Path
+    azure_path = os.path.join(os.path.dirname(__file__), "Resources/Azure", "azure.tcl")
+    window.tk.call("source", azure_path)
+    window.tk.call("set_theme", "dark")  # or "light" for light theme
+except tk.TclError as e:
+    messagebox.showwarning("Theme Warning", f"Azure theme could not be loaded: {str(e)}")
 
-# Global variables
+# Function to update button styles based on the current theme
+def update_button_styles():
+    if current_theme.get() == "dark":
+        # Set dark theme styles
+        theme_button.config(style="TButton")  # Use default Azure button style
+    else:
+        # Set light theme styles
+        theme_button.config(style="TButton")  # Use default Azure button style
+
+# Add theme toggle button
+current_theme = tk.StringVar(value="dark")
+
+def toggle_theme():
+    if current_theme.get() == "dark":
+        window.tk.call("set_theme", "light")
+        current_theme.set("light")
+    else:
+        window.tk.call("set_theme", "dark")
+        current_theme.set("dark")
+    
+    # Update button styles after toggling the theme
+    update_button_styles()
+
+theme_button = ttk.Button(window, text="Toggle Theme", command=toggle_theme)
+theme_button.pack(side="top", anchor="ne", padx=5, pady=5)
+
+# Globll variables
 file_path_var = tk.StringVar()
 current_name_var = tk.StringVar(value="N/A")
 new_name_var = tk.StringVar()
@@ -137,8 +172,12 @@ weapon_search_var = tk.StringVar()
 armor_search_var= tk.StringVar()
 ring_search_var = tk.StringVar()
 current_hp_var= tk.StringVar(value="N/A")
+current_fp_var= tk.StringVar(value="N/A")
 new_hp_var= tk.StringVar()
+new_fp_var= tk.StringVar()
+current_stamina_var= tk.StringVar(value="N/A")
 current_souls_var = tk.StringVar(value="N/A")
+new_stamina_var= tk.StringVar()
 new_souls_var = tk.StringVar()
 found_storage_items_with_quantity = []
 found_items = []
@@ -264,20 +303,6 @@ def open_folder():
     display_character_names(character_names)
 
 def display_character_names(character_names):
-    for widget in character_list_frame.winfo_children():
-        widget.destroy()
-
-    for file_path, name in character_names:
-        def on_character_click(selected_file=file_path):
-            file_path_var.set(selected_file)
-            load_file_data(selected_file)
-            refresh_storage_quantity_list(selected_file)  # Ensure storage is refreshed for the selected file
-
-        tk.Button(character_list_frame, text=name, command=on_character_click, bg="white").pack(fill="x", padx=5, pady=2)
-
-
-
-def display_character_names(character_names):
     # Clear any existing character list
     for widget in character_list_frame.winfo_children():
         widget.destroy()
@@ -287,8 +312,9 @@ def display_character_names(character_names):
             file_path_var.set(selected_file)
             load_file_data(selected_file)
 
-        # Create a button for each character name
-        tk.Button(character_list_frame, text=name, command=on_character_click, bg="white").pack(fill="x", padx=5, pady=2)
+        # Create a button for each character using Azure styles
+        character_button = ttk.Button(character_list_frame, text=name, command=on_character_click)
+        character_button.pack(fill="x", padx=5, pady=2)  # Use pack for layout
 
 
 def load_file_data(file_path):
@@ -322,6 +348,17 @@ def load_file_data(file_path):
         current_hp = find_value_at_offset(file_path, hp_offset)
         current_hp_var.set(current_hp if current_hp is not None else "N/A")
 
+        #FP
+        fp_offset = calculate_offset2(offset1, fp_distance)
+        current_fp = find_value_at_offset(file_path, fp_offset)
+        current_fp_var.set(current_fp if current_fp is not None else "N/A")
+        #STAMINA
+        stamina_offset = calculate_offset2(offset1, stamina_distance)
+        current_stamina = find_value_at_offset(file_path, stamina_offset)
+        current_stamina_var.set(current_stamina if current_stamina is not None else "N/A")
+
+
+
         # Refresh UI elements (e.g., inventory, stats, etc.)
     
         refresh_item_list(file_path)
@@ -350,7 +387,7 @@ def update_souls_value():
     if offset1 is not None:
         souls_offset = calculate_offset2(offset1, souls_distance)
         write_value_at_offset(file_path, souls_offset, new_souls_value)
-        messagebox.showinfo("Success", f"Souls value updated to {new_souls_value}. Open Save Again to see if applied")
+        messagebox.showinfo("Success", f"Souls value updated to {new_souls_value}")
     else:
         messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
 
@@ -371,7 +408,54 @@ def update_hp_value():
     if offset1 is not None:
         hp_offset = calculate_offset2(offset1, hp_distance)
         write_value_at_offset(file_path, hp_offset, new_hp_value)
-        messagebox.showinfo("Success", f"Hp value updated to {new_hp_value}. Open Save Again to see if applied")
+        messagebox.showinfo("Success", f"Hp value updated to {new_hp_value}")
+    else:
+        messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
+#FP update
+def update_fp_value():
+    file_path = file_path_var.get()
+    if not file_path or not new_fp_var.get():
+        messagebox.showerror("Input Error", "Please fill in the file path and new FP value!")
+        return
+    
+    try:
+        new_fp_value = int(new_fp_var.get())
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter a valid decimal number for FP.")
+        return
+
+    offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if offset1 is not None:
+        fp_offset = calculate_offset2(offset1, fp_distance)
+        write_value_at_offset(file_path, fp_offset, new_fp_value)
+        # Refresh the FP value to reflect the updated value
+        current_fp = find_value_at_offset(file_path, fp_offset)
+        current_fp_var.set(current_fp if current_fp is not None else "N/A")
+        messagebox.showinfo("Success", f"FP value updated to {new_fp_value}")
+    else:
+        messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
+
+#STAMINA UPDATE
+def update_stamina_value():
+    file_path = file_path_var.get()
+    if not file_path or not new_stamina_var.get():
+        messagebox.showerror("Input Error", "Please fill in the file path and new stamina value!")
+        return
+    
+    try:
+        new_stamina_value = int(new_stamina_var.get())
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter a valid decimal number for stamina.")
+        return
+
+    offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if offset1 is not None:
+        stamina_offset = calculate_offset2(offset1, stamina_distance)
+        write_value_at_offset(file_path, stamina_offset, new_stamina_value)
+        # Refresh the stamina value to reflect the updated value
+        current_stamina = find_value_at_offset(file_path, stamina_offset)
+        current_stamina_var.set(current_stamina if current_stamina is not None else "N/A")
+        messagebox.showinfo("Success", f"Stamina value updated to {new_stamina_value}")
     else:
         messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
 
@@ -520,12 +604,12 @@ def display_boss_status(file_path):
         widget.destroy()
     
     # Create a frame inside the canvas
-    boss_list_frame = tk.Frame(boss_list_canvas)
+    boss_list_frame = ttk.Frame(boss_list_canvas)
     boss_list_canvas.create_window((0, 0), window=boss_list_frame, anchor="nw")
 
     # Populate the frame with the boss list
     for boss, status in bosses_status.items():
-        boss_frame = tk.Frame(boss_list_frame)
+        boss_frame = ttk.Frame(boss_list_frame)
         boss_frame.pack(fill="x", padx=10, pady=5)
         
         tk.Label(boss_frame, text=f"{boss} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
@@ -613,12 +697,12 @@ def display_bonfire_status(file_path):
         widget.destroy()
     
     # Create a frame inside the canvas
-    bonfire_list_frame = tk.Frame(bonfire_list_canvas)
+    bonfire_list_frame = ttk.Frame(bonfire_list_canvas)
     bonfire_list_canvas.create_window((0, 0), window=bonfire_list_frame, anchor="nw")
 
     # Populate the frame with the bonfire list
     for bonfire, status in bonfire_status.items():
-        bonfire_frame = tk.Frame(bonfire_list_frame)
+        bonfire_frame = ttk.Frame(bonfire_list_frame)
         bonfire_frame.pack(fill="x", padx=10, pady=5)
         
         tk.Label(bonfire_frame, text=f"{bonfire} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
@@ -674,7 +758,7 @@ def refresh_ring_list(file_path):
         # Create a canvas and scrollbar to contain the rings
         ring_list_canvas = tk.Canvas(ring_list_frame)
         ring_list_scrollbar = Scrollbar(ring_list_frame, orient="vertical", command=ring_list_canvas.yview)
-        ring_list_frame_inner = tk.Frame(ring_list_canvas)
+        ring_list_frame_inner = ttk.Frame(ring_list_canvas)
 
         ring_list_frame_inner.bind(
             "<Configure>",
@@ -691,13 +775,13 @@ def refresh_ring_list(file_path):
 
         # Add rings to the inner frame
         for ring_name, quantity in updated_rings:
-            ring_frame = tk.Frame(ring_list_frame_inner)
+            ring_frame = ttk.Frame(ring_list_frame_inner)
             ring_frame.pack(fill="x", padx=10, pady=5)
 
             ring_label = tk.Label(ring_frame, text=f"{ring_name} (Quantity: {quantity})", anchor="w")
             ring_label.pack(side="left", fill="x", padx=5)
 
-            replace_button = tk.Button(ring_frame, text="Replace", command=lambda ring=ring_name: choose_ring_replacement(ring))
+            replace_button = ttk.Button(ring_frame, text="Replace", command=lambda ring=ring_name: choose_ring_replacement(ring))
             replace_button.pack(side="right", padx=5)
     else:
         messagebox.showinfo("Info", "No rings found.")
@@ -707,16 +791,16 @@ def choose_ring_replacement(ring_name):
     window2.title(f"Choose replacement for {ring_name}")
 
     tk.Label(window2, text="Choose replacement ring:").pack(pady=5)
-    search_bar_frame = tk.Frame(window2)
+    search_bar_frame = ttk.Frame(window2)
     search_bar_frame.pack(pady=5)
     tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = tk.Entry(search_bar_frame, textvariable=ring_search_var)
+    search_entry = ttk.Entry(search_bar_frame, textvariable=ring_search_var)
     search_entry.pack(side="left", padx=5)
     search_entry.bind("<KeyRelease>", lambda event: filter_ring_replacement_list())
 
     canvas = tk.Canvas(window2)
     scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    scrollable_frame = ttk.Frame(canvas)
 
     scrollable_frame.bind(
         "<Configure>",
@@ -749,7 +833,7 @@ def choose_ring_replacement(ring_name):
                     replace_ring(file_path_var.get(), ring_name, replacement_hex, new_quantity=quantity)
                 window2.destroy()
 
-            replacement_button = tk.Button(filter_ring_replacement_list_frame, text=name, command=on_replace_click)
+            replacement_button = ttk.Button(filter_ring_replacement_list_frame, text=name, command=on_replace_click)
             replacement_button.grid(row=row, column=col, padx=5, pady=5)
             
             col += 1
@@ -926,17 +1010,17 @@ def refresh_storage_quantity_list(file_path):
 
     if updated_items:
         for item_name, quantity, item_offset in updated_items:
-            item_frame = tk.Frame(storage_list_frame)
+            item_frame = ttk.Frame(storage_list_frame)
             item_frame.pack(fill="x", padx=10, pady=5)
 
             item_label = tk.Label(item_frame, text=f"{item_name} (Quantity: {quantity})", anchor="w")
             item_label.pack(side="left", fill="x", padx=5)
 
             new_quantity_var = tk.StringVar()
-            new_quantity_entry = tk.Entry(item_frame, textvariable=new_quantity_var, width=10)
+            new_quantity_entry = ttk.Entry(item_frame, textvariable=new_quantity_var, width=10)
             new_quantity_entry.pack(side="left", padx=5)
 
-            update_button = tk.Button(item_frame, text="Update Quantity", command=lambda item_offset=item_offset, new_quantity_var=new_quantity_var: update_item_quantity_in_file(file_path, item_offset, new_quantity_var))
+            update_button = ttk.Button(item_frame, text="Update Quantity", command=lambda item_offset=item_offset, new_quantity_var=new_quantity_var: update_item_quantity_in_file(file_path, item_offset, new_quantity_var))
             update_button.pack(side="right", padx=5)
     else:
         messagebox.showinfo("Info", "No items found.")
@@ -965,19 +1049,19 @@ def choose_replacement(item):
     window2.title(f"Choose replacement for {item}")
     window2.geometry("400x300")  # Set window size to make it fit the screen better
 
-    search_bar_frame = tk.Frame(window2)
+    search_bar_frame = ttk.Frame(window2)
     search_bar_frame.pack(pady=5)
     tk.Label(window2, text="Choose replacement item:").pack(pady=5)
-    scrollable_frame = tk.Frame(window2)
+    scrollable_frame = ttk.Frame(window2)
     scrollable_frame.pack(padx=10, pady=5, fill="both", expand=True)
     tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = tk.Entry(search_bar_frame, textvariable=search_var)
+    search_entry = ttk.Entry(search_bar_frame, textvariable=search_var)
     search_entry.pack(side="left", padx=5)
     search_entry.bind("<KeyRelease>", lambda event: filter_replacement_list())
 
     canvas = tk.Canvas(window2)
     scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    scrollable_frame = ttk.Frame(canvas)
 
     scrollable_frame.bind(
         "<Configure>",
@@ -1009,7 +1093,7 @@ def choose_replacement(item):
                         replace_item(file_path_var.get(), item, replacement_hex, new_quantity=quantity)
                     
                     
-                replacement_button = tk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
+                replacement_button = ttk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
                 replacement_button.grid(row=row, column=col, padx=5, pady=5)
                 
                 col += 1
@@ -1026,19 +1110,19 @@ def choose_replacement_armor(item):
     window2.title(f"Choose replacement for {item}")
     window2.geometry("400x300")  # Set window size to make it fit the screen better
 
-    search_bar_frame = tk.Frame(window2)
+    search_bar_frame = ttk.Frame(window2)
     search_bar_frame.pack(pady=5)
     tk.Label(window2, text="Choose replacement item:").pack(pady=5)
-    scrollable_frame = tk.Frame(window2)
+    scrollable_frame = ttk.Frame(window2)
     scrollable_frame.pack(padx=10, pady=5, fill="both", expand=True)
     tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = tk.Entry(search_bar_frame, textvariable=armor_search_var)
+    search_entry = ttk.Entry(search_bar_frame, textvariable=armor_search_var)
     search_entry.pack(side="left", padx=5)
     search_entry.bind("<KeyRelease>", lambda event: filter_armor_replacement_list())
 
     canvas = tk.Canvas(window2)
     scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    scrollable_frame = ttk.Frame(canvas)
 
     scrollable_frame.bind(
         "<Configure>",
@@ -1069,7 +1153,7 @@ def choose_replacement_armor(item):
                     if quantity is not None:
                         replace_item(file_path_var.get(), item, replacement_hex, new_quantity=quantity)
 
-                replacement_button = tk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
+                replacement_button = ttk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
                 replacement_button.grid(row=row, column=col, padx=5, pady=5)
                 
                 col += 1
@@ -1167,7 +1251,7 @@ def refresh_item_list(file_path):
         # Create a canvas and scrollbar to contain the items
         items_list_canvas = tk.Canvas(items_list_frame)
         items_list_scrollbar = Scrollbar(items_list_frame, orient="vertical", command=items_list_canvas.yview)
-        items_list_frame_inner = tk.Frame(items_list_canvas)
+        items_list_frame_inner = ttk.Frame(items_list_canvas)
 
         items_list_frame_inner.bind(
             "<Configure>",
@@ -1184,13 +1268,13 @@ def refresh_item_list(file_path):
 
         # Now add the items to the inner frame
         for item_name, quantity in updated_items:
-            item_frame = tk.Frame(items_list_frame_inner)
+            item_frame = ttk.Frame(items_list_frame_inner)
             item_frame.pack(fill="x", padx=10, pady=5)
 
             item_label = tk.Label(item_frame, text=f"{item_name} (Quantity: {quantity})", anchor="w")
             item_label.pack(side="left", fill="x", padx=5)
 
-            replace_button = tk.Button(item_frame, text="Replace", command=lambda item=item_name: choose_replacement(item))
+            replace_button = ttk.Button(item_frame, text="Replace", command=lambda item=item_name: choose_replacement(item))
             replace_button.pack(side="right", padx=5)
     else:
         messagebox.showinfo("Info", "No items found.")
@@ -1212,7 +1296,7 @@ def refresh_weapon_list(file_path):
     if updated_weapons:
         canvas = tk.Canvas(weapons_list_frame)
         scrollbar = Scrollbar(weapons_list_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas)
+        scrollable_frame = ttk.Frame(canvas)
 
         scrollable_frame.bind(
             "<Configure>",
@@ -1228,13 +1312,13 @@ def refresh_weapon_list(file_path):
         scrollbar.pack(side="right", fill="y")
 
         for weapon_name in updated_weapons:
-            weapon_frame = tk.Frame(scrollable_frame)
+            weapon_frame = ttk.Frame(scrollable_frame)
             weapon_frame.pack(fill="x", padx=10, pady=5)
             
             weapon_label = tk.Label(weapon_frame, text=f"{weapon_name}", anchor="w")
             weapon_label.pack(side="left", fill="x", padx=5)
             
-            replace_button = tk.Button(weapon_frame, text="Replace", command=lambda weapon=weapon_name: replace_weapon(weapon))
+            replace_button = ttk.Button(weapon_frame, text="Replace", command=lambda weapon=weapon_name: replace_weapon(weapon))
             replace_button.pack(side="right", padx=5)
     else:
         messagebox.showinfo("Info", "No weapons found.")
@@ -1250,7 +1334,7 @@ def refresh_armor_list(file_path):
     if updated_armor:
         canvas = tk.Canvas(armor_list_frame)
         scrollbar = Scrollbar(armor_list_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas)
+        scrollable_frame = ttk.Frame(canvas)
 
         scrollable_frame.bind(
             "<Configure>",
@@ -1266,13 +1350,13 @@ def refresh_armor_list(file_path):
         scrollbar.pack(side="right", fill="y")
 
         for armor_name in updated_armor:
-            armor_frame = tk.Frame(scrollable_frame)
+            armor_frame = ttk.Frame(scrollable_frame)
             armor_frame.pack(fill="x", padx=10, pady=5)
             
             armor_label = tk.Label(armor_frame, text=f"{armor_name}", anchor="w")
             armor_label.pack(side="left", fill="x", padx=5)
             
-            replace_button = tk.Button(armor_frame, text="Replace", command=lambda armor=armor_name: replace_armor(armor))
+            replace_button = ttk.Button(armor_frame, text="Replace", command=lambda armor=armor_name: replace_armor(armor))
             replace_button.pack(side="right", padx=5)
     else:
         messagebox.showinfo("Info", "No armor found.")
@@ -1283,16 +1367,16 @@ def replace_weapon(weapon_name):
     window2.title(f"Replace {weapon_name}")
 
     tk.Label(window2, text="Choose replacement weapon:").pack(pady=5)
-    search_bar_frame = tk.Frame(window2)
+    search_bar_frame = ttk.Frame(window2)
     search_bar_frame.pack(pady=5)
     tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = tk.Entry(search_bar_frame, textvariable=weapon_search_var)
+    search_entry = ttk.Entry(search_bar_frame, textvariable=weapon_search_var)
     search_entry.pack(side="left", padx=5)
     search_entry.bind("<KeyRelease>", lambda event: filter_replacement_list())
 
     canvas = tk.Canvas(window2)
     scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    scrollable_frame = ttk.Frame(canvas)
 
     scrollable_frame.bind(
         "<Configure>",
@@ -1324,7 +1408,7 @@ def replace_weapon(weapon_name):
                 refresh_weapon_list(file_path_var.get())
                 window2.destroy()
 
-            replacement_button = tk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
+            replacement_button = ttk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
             replacement_button.grid(row=row, column=col, padx=5, pady=5)
             
             col += 1
@@ -1339,16 +1423,16 @@ def replace_armor(armor_name):
     window2.title(f"Replace {armor_name}")
 
     tk.Label(window2, text="Choose replacement armor:").pack(pady=5)
-    search_bar_frame = tk.Frame(window2)
+    search_bar_frame = ttk.Frame(window2)
     search_bar_frame.pack(pady=5)
     tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = tk.Entry(search_bar_frame, textvariable=armor_search_var)
+    search_entry = ttk.Entry(search_bar_frame, textvariable=armor_search_var)
     search_entry.pack(side="left", padx=5)
     search_entry.bind("<KeyRelease>", lambda event: filter_armor_replacement_list())
 
     canvas = tk.Canvas(window2)
     scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    scrollable_frame = ttk.Frame(canvas)
 
     scrollable_frame.bind(
         "<Configure>",
@@ -1380,14 +1464,13 @@ def replace_armor(armor_name):
                 refresh_armor_list(file_path_var.get())
                 window2.destroy()
 
-            replacement_button = tk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
+            replacement_button = ttk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
             replacement_button.grid(row=row, column=col, padx=5, pady=5)
             
             col += 1
             if col > 3:
                 col = 0
                 row += 1
-
 
 
 notebook = ttk.Notebook(window)
@@ -1420,21 +1503,21 @@ name_tab = ttk.Frame(notebook)
 tk.Label(name_tab, text="Current Character Name:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
 tk.Label(name_tab, textvariable=current_name_var).grid(row=0, column=1, padx=10, pady=10)
 tk.Label(name_tab, text="New Character Name:").grid(row=1, column=0, padx=10, pady=10, sticky="e")
-tk.Entry(name_tab, textvariable=new_name_var, width=20).grid(row=1, column=1, padx=10, pady=10)
-tk.Button(name_tab, text="Update Name", command=update_character_name).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Entry(name_tab, textvariable=new_name_var, width=20).grid(row=1, column=1, padx=10, pady=10)
+ttk.Button(name_tab, text="Update Name", command=update_character_name).grid(row=2, column=0, columnspan=2, pady=20)
 
 # Souls Tab
 souls_tab = ttk.Frame(notebook)
 tk.Label(souls_tab, text="Current Souls:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
 tk.Label(souls_tab, textvariable=current_souls_var).grid(row=0, column=1, padx=10, pady=10)
 tk.Label(souls_tab, text="New Souls Value (MAX 999999999):").grid(row=1, column=0, padx=10, pady=10, sticky="e")
-tk.Entry(souls_tab, textvariable=new_souls_var, width=20).grid(row=1, column=1, padx=10, pady=10)
-tk.Button(souls_tab, text="Update Souls", command=update_souls_value).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Entry(souls_tab, textvariable=new_souls_var, width=20).grid(row=1, column=1, padx=10, pady=10)
+ttk.Button(souls_tab, text="Update Souls", command=update_souls_value).grid(row=2, column=0, columnspan=2, pady=20)
 #rings
 rings_tab = ttk.Frame(sub_notebook)
-ring_list_frame = tk.Frame(rings_tab)
+ring_list_frame = ttk.Frame(rings_tab)
 ring_list_frame.pack(fill="x", padx=10, pady=5)
-refresh_ring_button = tk.Button(rings_tab, text="Refresh Ring List", command=lambda: refresh_ring_list(file_path_var.get()))
+refresh_ring_button = ttk.Button(rings_tab, text="Refresh Ring List", command=lambda: refresh_ring_list(file_path_var.get()))
 refresh_ring_button.pack(pady=10)
 
 
@@ -1442,55 +1525,72 @@ refresh_ring_button.pack(pady=10)
 tk.Label(name_tab, text="Current HP:").grid(row=5, column=0, padx=10, pady=10, sticky="e")
 tk.Label(name_tab, textvariable=current_hp_var).grid(row=5, column=1, padx=10, pady=10)
 tk.Label(name_tab, text="New HP:").grid(row=7, column=0, padx=10, pady=10, sticky="e")
-tk.Entry(name_tab, textvariable=new_hp_var, width=20).grid(row=7, column=1, padx=10, pady=10)
-tk.Button(name_tab, text="Update HP", command=update_hp_value).grid(row=8, column=0, columnspan=2, pady=20)
+ttk.Entry(name_tab, textvariable=new_hp_var, width=20).grid(row=7, column=1, padx=10, pady=10)
+ttk.Button(name_tab, text="Update HP", command=update_hp_value).grid(row=8, column=0, columnspan=2, pady=20)
+
+#FP Tap
+tk.Label(name_tab, text="Current FP:").grid(row=9, column=0, padx=10, pady=10, sticky="e")
+tk.Label(name_tab, textvariable=current_fp_var).grid(row=9, column=1, padx=10, pady=10)
+tk.Label(name_tab, text="New FP:").grid(row=11, column=0, padx=10, pady=10, sticky="e")
+ttk.Entry(name_tab, textvariable=new_fp_var, width=20).grid(row=11, column=1, padx=10, pady=10)
+ttk.Button(name_tab, text="Update FP", command=update_fp_value).grid(row=12, column=0, columnspan=2, pady=20)
+
+#STAMINA tap
+
+tk.Label(name_tab, text="Current Stamina:").grid(row=0, column=5, padx=10, pady=10, sticky="e")
+tk.Label(name_tab, textvariable=current_stamina_var).grid(row=0, column=4, padx=10, pady=10)
+tk.Label(name_tab, text="New Stamina:").grid(row=1, column=5, padx=10, pady=10, sticky="e")
+ttk.Entry(name_tab, textvariable=new_stamina_var, width=20).grid(row=1, column=4, padx=10, pady=10)
+ttk.Button(name_tab, text="Update Stamina", command=update_stamina_value).grid(row=2, column=5, columnspan=2, pady=20)
+
 
 # Stats Tab
 stats_tab = ttk.Frame(notebook)
 for idx, (stat, stat_offset) in enumerate(stats_offsets_for_stats_tap.items()):
     tk.Label(stats_tab, text=f"Current {stat}:").grid(row=idx, column=0, padx=10, pady=5, sticky="e")
     tk.Label(stats_tab, textvariable=current_stats_vars[stat]).grid(row=idx, column=1, padx=10, pady=5)
-    tk.Entry(stats_tab, textvariable=new_stats_vars[stat], width=10).grid(row=idx, column=2, padx=10, pady=5)
-    tk.Button(stats_tab, text=f"Update {stat}", command=lambda s=stat: update_stat(s)).grid(row=idx, column=3, padx=10, pady=5)
+    ttk.Entry(stats_tab, textvariable=new_stats_vars[stat], width=10).grid(row=idx, column=2, padx=10, pady=5)
+    ttk.Button(stats_tab, text=f"Update {stat}", command=lambda s=stat: update_stat(s)).grid(row=idx, column=3, padx=10, pady=5)
 
 # Storage Box Tab
-storage_box_tab = ttk.Frame(window)
+storage_box_tab = ttk.Frame(notebook)
 
-storage_list_frame = tk.Frame(storage_box_tab)
+storage_list_frame = ttk.Frame(storage_box_tab)
 storage_list_frame.pack(fill="x", padx=10, pady=5)
 
 
 # Items Tab
 items_tab = ttk.Frame(sub_notebook)
-items_list_frame = tk.Frame(items_tab)
+items_list_frame = ttk.Frame(items_tab)
 items_list_frame.pack(fill="x", padx=10, pady=5)
 
 
 #ddd
-left_frame = tk.Frame(window, width=200, bg="lightgrey")
+left_frame = ttk.Frame(window, width=200)
 left_frame.pack(side="left", fill="y")
 
 # Right frame for the main content
-right_frame = tk.Frame(window)
+right_frame = ttk.Frame(window)
 right_frame.pack(side="right", fill="both", expand=True)
 
 # Frame to display character names
-character_list_frame = tk.Frame(left_frame, bg="lightgrey")
+character_list_frame = ttk.Frame(left_frame)
 character_list_frame.pack(fill="y", padx=10, pady=10)
 
-# Add a button to open a folder and load character names
-tk.Button(left_frame, text="Load All Character", command=open_folder).pack(pady=10)
-tk.Button(left_frame, text="Load Signle Character", command=open_single_file).pack(pady=10)
+# Change to ttk.Button for Azure theme
+button_width = 15  # Adjust this value to make buttons wider or narrower
+ttk.Button(left_frame, text="Load Foler", width=button_width, command=open_folder).pack(pady=10)
+ttk.Button(left_frame, text="Load File", width=button_width, command=open_single_file).pack(pady=10)
 
 # Weapons Tab
 weapons_tab = ttk.Frame(sub_notebook)
-weapons_list_frame = tk.Frame(weapons_tab)
+weapons_list_frame = ttk.Frame(weapons_tab)
 weapons_list_frame.pack(fill="x", padx=10, pady=5)
 
 
 # armmor tap
 armor_tab = ttk.Frame(sub_notebook)
-armor_list_frame = tk.Frame(armor_tab)
+armor_list_frame = ttk.Frame(armor_tab)
 armor_list_frame.pack(fill="x", padx=10, pady=5)
 
 
@@ -1569,16 +1669,25 @@ def update_hp_value_and_refresh():
     update_hp_value()
     refresh_on_click()
 
+def update_fp_value_and_refresh():
+    update_fp_value()
+    refresh_on_click()
+
+def update_stamina_value_and_refresh():
+    update_stamina_value()
+    refresh_on_click()
+
 
 def refresh_storage_box_tab():
     storage_offset = find_hex_offset(file_path_var.get(), hex_pattern1_Fixed) + storage_box_distance
     refresh_storage_quantity_list(file_path_var.get())
 
-tk.Button(souls_tab, text="Update Souls", command=update_souls_value_and_refresh).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Button(souls_tab, text="Update Souls", command=update_souls_value_and_refresh).grid(row=2, column=0, columnspan=2, pady=20)
 
 # Character Tab
-tk.Button(name_tab, text="Update Name", command=update_character_name_and_refresh).grid(row=2, column=0, columnspan=2, pady=20)
-tk.Button(name_tab, text="Update HP", command=update_hp_value_and_refresh).grid(row=8, column=0, columnspan=2, pady=20)
+ttk.Button(name_tab, text="Update Name", command=update_character_name_and_refresh).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Button(name_tab, text="Update HP", command=update_hp_value_and_refresh).grid(row=8, column=0, columnspan=2, pady=20)
+
 storage_box_tab = ttk.Frame(notebook)
 
 sub_notebook.add(items_tab, text="Items")
@@ -1634,7 +1743,7 @@ gesture_tab = ttk.Frame(world_flag_sub_notebook)
 world_flag_sub_notebook.add(gesture_tab, text="Gestures")
 
 # Unlock All Gestures Button
-unlock_gesture_button = tk.Button(
+unlock_gesture_button = ttk.Button(
     gesture_tab,
     text="Unlock All Gestures",
     command=lambda: replace_gesture_hex_within_range(file_path_var.get())
@@ -1674,7 +1783,7 @@ def on_world_flag_tab_changed(event):
 notebook.pack(expand=1, fill="both")
 canvas = tk.Canvas(storage_box_tab)
 scrollbar = ttk.Scrollbar(storage_box_tab, orient="vertical", command=canvas.yview)
-storage_list_frame = tk.Frame(canvas)
+storage_list_frame = ttk.Frame(canvas)
 canvas.configure(yscrollcommand=scrollbar.set)
 
 # Pack the canvas and scrollbar in the storage box tab
@@ -1721,3 +1830,11 @@ we_label.pack(side="bottom", anchor="nw", padx=10, pady=5)
 
 # Run 
 window.mainloop()
+
+# Define styles for buttons
+style = ttk.Style()
+style.configure("Dark.TButton", background="black", foreground="white")
+style.configure("Light.TButton", background="white", foreground="black")
+style.configure("TButton", font=("Caskaydia Code NF", 12), padding=5)
+style.configure("TLabel", font=("Caskaydia Code NF", 12), background="lightgray")
+style.configure("TEntry", font=("Caskaydia Code NF", 12), padding=5)

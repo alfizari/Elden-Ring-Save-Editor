@@ -1,0 +1,64 @@
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags 
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Create Executable
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          python_ver: '3.8'
+          spec: 'src/build.spec'
+          upload_exe_with_name: 'Dark Souls 3 Save Editor-WIN'
+          options: --onefile --windowed
+
+      - name: Upload Windows Executable as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ds3-save-editor-windows
+          path: path/to/windows/executable
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Executable
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          python_ver: '3.8'
+          spec: 'src/build.spec'
+          upload_exe_with_name: 'Dark Souls 3 Save Editor-UNIX'
+          options: --onefile --windowed
+
+      - name: Upload Linux Executable as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ds3-save-editor-linux
+          path: path/to/linux/executable
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            path/to/windows/executable
+            path/to/linux/executable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
