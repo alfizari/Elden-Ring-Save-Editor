@@ -1,0 +1,36 @@
+name: BAWSDEEP  # You can change this to any name you prefer
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Create Windows Executable
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          python_ver: '3.8'
+          spec: 'src/build.spec'
+          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN'
+          options: '--onefile --windowed'
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Create Linux Executable
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          python_ver: '3.8'
+          spec: 'src/build.spec'
+          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_UNIX'
+          options: '--onefile --windowed'
