@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags 
+      - 'v*'  # Trigger on version tags
   workflow_dispatch:
 
 jobs:
@@ -13,14 +13,14 @@ jobs:
         with:
           python_ver: '3.8'
           spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark Souls 3 Save Editor-WIN'
+          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN'
           options: --onefile --windowed
 
       - name: Upload Windows Executable as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ds3-save-editor-windows
-          path: path/to/windows/executable
+          path: path/to/windows/executable  # Adjust this path to the actual file location
 
   build-linux:
     runs-on: ubuntu-latest
@@ -30,14 +30,14 @@ jobs:
         with:
           python_ver: '3.8'
           spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark Souls 3 Save Editor-UNIX'
+          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_UNIX'
           options: --onefile --windowed
 
       - name: Upload Linux Executable as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ds3-save-editor-linux
-          path: path/to/linux/executable
+          path: path/to/linux/executable  # Adjust this path to the actual file location
 
   create-release:
     runs-on: ubuntu-latest
@@ -53,12 +53,24 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
+      - name: Download Windows Executable Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ds3-save-editor-windows
+          path: ./artifacts/windows
+
+      - name: Download Linux Executable Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ds3-save-editor-linux
+          path: ./artifacts/linux
+
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            path/to/windows/executable
-            path/to/linux/executable
+            ./artifacts/windows/Dark_Souls_3_Save_Editor_WIN
+            ./artifacts/linux/Dark_Souls_3_Save_Editor_UNIX
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

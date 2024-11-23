@@ -6,8 +6,8 @@ a = Analysis(
     ['Final.py'],
     pathex=[os.getcwd()],
     binaries=[],
-datas=[
-    (os.path.join(os.getcwd(), 'src', 'Resources'), 'Resources'),
+    datas=[
+        (os.path.join(os.getcwd(), 'src', 'Resources'), 'Resources'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -20,13 +20,36 @@ datas=[
 
 pyz = PYZ(a.pure)
 
-exe = EXE(
+# Windows executable
+exe_windows = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.datas,
     [],
-    name='DarkSouls3_SaveEdit',
+    name='Dark_Souls_3_Save_Editor_WIN',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+
+# Linux executable
+exe_linux = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name='Dark_Souls_3_Save_Editor_UNIX',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
