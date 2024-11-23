@@ -40,7 +40,7 @@ jobs:
 
       - name: Create Windows Executable (32-bit)
         run: |
-          pyinstaller --onefile --windowed src/build.spec
+          pyinstaller src/build.spec
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
