@@ -2,8 +2,9 @@ name: BAWSDEEP  # You can change this to any name you prefer
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger on version tags
+    branches:
+      - main  # Trigger on pushes to the main branch
+      # You can add more branches if needed, e.g., - develop
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
