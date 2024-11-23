@@ -23,7 +23,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_WIN
-          path: ./dist/Dark_Souls_3_Save_Editor_WIN.exe  # Ensure this path is correct
+          path: D:\a\Dark-souls-3-editor-PS4\Dark-souls-3-editor-PS4\dist\Dark_Souls_3_Save_Editor_WIN.exe  # Updated path
 
   build-linux:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_UNIX
-          path: ./dist/Dark_Souls_3_Save_Editor_UNIX  # Ensure this path is correct
+          path: /home/runner/work/Dark-souls-3-editor-PS4/Dark-souls-3-editor-PS4/dist/Dark_Souls_3_Save_Editor_UNIX  # Specified upload path
 
   create-release:
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
       - name: Download Windows Executable Artifact
         uses: actions/download-artifact@v3
         with:
-          name: Dark_Souls_3_Save_Editor_WIN  # Updated to match the new name
+          name: Dark_Souls_3_Save_Editor_WIN  # Ensure this matches the upload name
 
       - name: Download Linux Executable Artifact
         uses: actions/download-artifact@v3
