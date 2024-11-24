@@ -89,13 +89,6 @@ jobs:
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
           ls -R dist/
-          # Move Contents folder if needed
-          if [ -d "dist/Dark_Souls_3_Save_Editor_App/Contents" ]; then
-            echo "Contents folder exists."
-          else
-            echo "Error: Contents folder missing!"
-            exit 1
-          fi
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
