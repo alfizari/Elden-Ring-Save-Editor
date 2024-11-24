@@ -19,8 +19,7 @@ jobs:
           python_ver: '3.8'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
-          options: '--onefile --windowed'
-
+ 
   build-windows-32bit:
     runs-on: windows-latest
     steps:
@@ -50,7 +49,7 @@ jobs:
           name: Dark_Souls_3_Save_Editor_WIN32
           path: dist/Dark_Souls_3_Save_Editor.exe
 
-  build-linux:
+  build-linux_x86_64:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -61,10 +60,38 @@ jobs:
         with:
           python_ver: '3.8'
           spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_UNIX'
-          options: '--onefile --windowed'
-
-  build-macos:
+          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
+          
+  build-linux-i386:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+                
+      - name: Setup Python (32-bit)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          architecture: 'x86'  # Specifies 32-bit Python
+                
+      - name: Install PyInstaller
+        run: |
+           python -m pip install --upgrade pip
+           pip install pyinstaller
+                
+      - name: Create Linux Executable (32-bit)
+        run: |
+          pyinstaller src/build.spec
+        env:
+          PYTHONPATH: ${{ runner.workspace }}/src
+                
+      - name: Upload 32-Bit Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dark_Souls_3_Save_Editor_LINUX_i386
+          path: dist/Dark_Souls_3_Save_Editor
+  
+  build-macos_silicon:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
@@ -114,5 +141,5 @@ jobs:
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v3
         with:
-          name: Dark_Souls_3_Save_Editor_MAC
+          name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_Final.zip
