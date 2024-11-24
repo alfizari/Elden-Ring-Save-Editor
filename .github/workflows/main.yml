@@ -144,6 +144,14 @@ jobs:
           which python3.8  # Ensure python3.8 is being used
           which pip  # Ensure pip from python3.8 is being used
 
+      - name: Clear Python dependency cache
+        run: |
+          rm -rf ~/.cache/pip  # Remove pip cache to clear old packages
+          rm -rf $HOME/.cache/pypoetry  # If using poetry
+          rm -rf venv  # Remove any existing virtual environments
+          # Add other caches if necessary
+        shell: bash
+
       - name: Setup Virtual Environment
         run: |
           rm -rf venv  # Remove any previous virtual environments
