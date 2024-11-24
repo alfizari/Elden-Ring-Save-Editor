@@ -62,35 +62,6 @@ jobs:
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
           
-  build-linux-i386:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-                
-      - name: Setup Python (32-bit)
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          architecture: 'x86'  # Specifies 32-bit Python
-                
-      - name: Install PyInstaller
-        run: |
-           python -m pip install --upgrade pip
-           pip install pyinstaller
-                
-      - name: Create Linux Executable (32-bit)
-        run: |
-          pyinstaller src/build.spec
-        env:
-          PYTHONPATH: ${{ runner.workspace }}/src
-                
-      - name: Upload 32-Bit Executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: Dark_Souls_3_Save_Editor_LINUX_i386
-          path: dist/Dark_Souls_3_Save_Editor
-  
   build-macos_silicon:
     runs-on: macos-latest
     steps:
@@ -143,3 +114,57 @@ jobs:
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_Final.zip
+
+  build-macos_intel:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m venv venv  # Create a virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+
+      - name: Create macOS Intel Executable
+        run: |
+          source venv/bin/activate  # Activate the virtual environment
+          # Set environment variables to build for Intel architecture (x86_64)
+          arch -x86_64 pyinstaller src/build_mac.spec
+          # Debug the dist directory to verify output structure
+          echo "Listing contents of dist/ directory:"
+          ls -R dist/
+        env:
+          PYTHONPATH: ${{ runner.workspace }}/src
+
+      - name: Verify .app Structure
+        run: |
+          # Check if the .app structure is correct
+          APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
+          if [ -d "$APP_BUNDLE" ]; then
+            echo ".app bundle exists. Listing contents of the .app bundle:"
+            ls -R "$APP_BUNDLE"
+          else
+            echo "Error: .app bundle not found!"
+            exit 1
+          fi
+
+      - name: Create ZIP of .app Bundle
+        run: |
+          # Go to the dist directory and zip the entire .app bundle (not just Contents)
+          cd dist
+          zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
+          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_Final.zip
+
+      - name: Upload macOS Intel Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dark_Souls_3_Save_Editor_MAC-Intel
+          path: Dark_Souls_3_Save_Editor_MAC_Final.zip        
