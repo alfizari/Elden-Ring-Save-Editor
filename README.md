@@ -1,68 +1,152 @@
-![lgogoog](https://github.com/user-attachments/assets/492ede59-3360-47d5-b006-7a307797785c)
 
-DARK SOULS 3 SAVE EDITOR FOR PS4/PS5
+# Dark Souls 3 Save Editor for PS4/PS5
 
-USE AT YOUR OWN RISK
+![Logo](https://github.com/user-attachments/assets/492ede59-3360-47d5-b006-7a307797785c)
 
-Thanks for bawsdeep for code and UI optimization
-(https://github.com/bawsdeep)
+**USE AT YOUR OWN RISK**
 
-Also thanks to Nox for explaining how offsets work
-check out his Bloodborn editor https://github.com/Noxde/Bloodborne-save-editor
-(REQUIRES DECRYPTED SAVE)
+A comprehensive save editor for Dark Souls 3 on PS4/PS5. Enables editing save files to modify characters, items, and game states. Requires a decrypted save file.
 
-## CURRENT FEATURES
+---
 
-#  -See all characters in the save
-![load all](https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566)
+## Table of Contents
+1. [Features](#features)
+2. [Screenshots](#screenshots)
+3. [Getting Started](#getting-started)
+   - [Option 1: Download Compiled Binary](#option-1-download-compiled-binary)
+   - [Option 2: Run from Source](#option-2-build-from-source)
+4. [Usage](#usage)
+5. [Contributing](#contributing)
+6. [License](#license)
+7. [Acknowledgments](#acknowledgments)
 
-#  -Replace weapons 
+---
 
-![weaponssw](https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba)
+## Features
 
-#  -Replace rings
+- See all characters in the save file.
+- Replace weapons, rings, goods, magic, and armor.
+- Modify character attributes (name, HP, stats, estus numbers, etc.).
+- Edit souls and storage box item quantities.
+- Unlock all bonfires and gestures.
+- Kill or revive bosses and unlock the endgame.
 
-![Rings](https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0)
+---
 
-#  -Replace goods and magic
+## Screenshots
 
-![Goods](https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258)
+Below are screenshots showcasing the features of the Dark Souls 3 Save Editor. Click any image to view it in full size.
 
-#  -Replace armor
+<div align="center">
 
-![Armors](https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede)
+### View All Characters in Save
+<a href="https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566" target="_blank">
+<img src="https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566" alt="View All Characters" style="border: 1px solid black; width: 200px;">
+</a>
 
-#  -Modify character name and HP
+### Replace Weapons
+<a href="https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba" target="_blank">
+<img src="https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba" alt="Replace Weapons" style="border: 1px solid black; width: 200px;">
+</a>
 
-![name](https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1)
+### Replace Rings
+<a href="https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0" target="_blank">
+<img src="https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0" alt="Replace Rings" style="border: 1px solid black; width: 200px;">
+</a>
 
-#  -Edit Souls number
+### Replace Goods and Magic
+<a href="https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258" target="_blank">
+<img src="https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258" alt="Replace Goods and Magic" style="border: 1px solid black; width: 200px;">
+</a>
 
-![souls](https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90)
+### Replace Armor
+<a href="https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede" target="_blank">
+<img src="https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede" alt="Replace Armor" style="border: 1px solid black; width: 200px;">
+</a>
 
-#  -Edit Stats and estus number
+### Edit Character Name and HP
+<a href="https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1" target="_blank">
+<img src="https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1" alt="Edit Name and HP" style="border: 1px solid black; width: 200px;">
+</a>
 
-![stats](https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3)
+### Edit Souls
+<a href="https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90" target="_blank">
+<img src="https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90" alt="Edit Souls" style="border: 1px solid black; width: 200px;">
+</a>
 
-#  -Modify storage box items quantity 
+### Edit Stats and Estus Numbers
+<a href="https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3" target="_blank">
+<img src="https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3" alt="Edit Stats and Estus" style="border: 1px solid black; width: 200px;">
+</a>
 
-![storages](https://github.com/user-attachments/assets/b1ee3ac5-a9b5-473d-a111-e35b0c8c81bc)
+</div>
 
-#  -Unlock all bonfires
+---
 
-![bonfires](https://github.com/user-attachments/assets/05bf0a08-ff43-4c7c-b826-bc9dcbb0c34e)
+## Getting Started
 
-#  -Unlock all gestures 
+You have two options to get started with the Dark Souls 3 Save Editor:
 
-![Geastues](https://github.com/user-attachments/assets/011bf185-bad9-4709-948e-a7b26326b43c)
+### Option 1: Download Compiled Binary available for Windows Mac and Linux (32 and 64bit)
+The easiest way is to download the pre-compiled binary:
+- Visit the [Releases Page](https://github.com/alfizari/Dark-souls-3-editor-PS4/releases/latest) for the latest stable release.
+- Or grab the [Latest Artifact](https://github.com/alfizari/Dark-souls-3-editor-PS4/actions/) from the latest GitHub Actions build.
 
-#  -Kill or revive bosses and unlock end game
+Simply download the appropriate binary for your operating system, then run the executable.
 
-![bosses](https://github.com/user-attachments/assets/6e622fd1-fead-4b41-9b91-789d6a4cbeee)
+### Option 2: Run from Source
 
+#### Prerequisites
+- A decrypted save file.
+- Python 3.x installed on your system.
 
+#### Installation
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/alfizari/Dark-souls-3-editor-PS4
+   ```
+---
 
+## Usage
 
+1. Launch the application:
+   ```bash
+   python Final.py
+   ```
+2. Load your decrypted save file or Folder.
+3. Modify desired settings.
 
+---
 
+## Contributing
+
+We welcome contributions! Follow these steps to contribute:
+
+1. Fork the repository.
+2. Create your feature branch:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m "Add some feature"
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature-name
+   ```
+5. Open a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- **[bawsdeep](https://github.com/bawsdeep):** UI/Code optimization github Workflow to compile binaries for Linux Windows and Mac.
+- **[Nox](https://github.com/Noxde/Bloodborne-save-editor):** Insights on offsets and save editing. Check out his amaizing Bloodborne Save Editor.
 
