@@ -34,4 +34,4 @@ exe = EXE(
     upx=True,
     console=False,
     windowed=True,
-)  #
+)
