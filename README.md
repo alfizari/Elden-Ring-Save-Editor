@@ -14,7 +14,7 @@ A comprehensive save editor for Dark Souls 3 on PS4/PS5. Enables editing save fi
 2. [Screenshots](#screenshots)
 3. [Getting Started](#getting-started)
    - [Option 1: Download Compiled Binary](#option-1-download-compiled-binary)
-   - [Option 2: Build from Source](#option-2-build-from-source)
+   - [Option 2: Run from Source](#option-2-build-from-source)
 4. [Usage](#usage)
 5. [Contributing](#contributing)
 6. [License](#license)
@@ -89,8 +89,13 @@ You have two options to get started with the Dark Souls 3 Save Editor:
 
 ### Option 1: Download Compiled Binary available for Windows Mac and Linux (32 and 64bit)
 The easiest way is to download the pre-compiled binary:
+<<<<<<< HEAD
 - Visit the [Releases Page](https://github.com/alfizari/ds3-save-editor/releases/latest) for the latest stable release.
 - Or grab the [Latest Artifact](https://github.com/alfizari/ds3-save-editor/actions/) from the latest GitHub Actions build.
+=======
+- Visit the [Releases Page](https://github.com/alfizari/Dark-souls-3-editor-PS4/releases/latest) for the latest stable release.
+- Or grab the [Latest Artifact](https://github.com/alfizari/Dark-souls-3-editor-PS4/actions/) from the latest GitHub Actions build.
+>>>>>>> ce9619cfef9b35e936d4558a59c21e76253995ba
 
 Simply download the appropriate binary for your operating system, then run the executable.
 
