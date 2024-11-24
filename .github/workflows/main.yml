@@ -105,8 +105,11 @@ jobs:
           fi
 
       - name: Upload macOS Executable
-        uses: actions/upload-artifact@v3
-        with:
+        run: |
+          # Create a zip file containing the Contents directory
+          zip -r Dark_Souls_3_Save_Editor_MAC.zip dist/Dark_Souls_3_Save_Editor_App.app/Contents
+          uses: actions/upload-artifact@v3
+          with:
           name: Dark_Souls_3_Save_Editor_MAC
-          path: dist/Dark_Souls_3_Save_Editor_App.app
+          path: Dark_Souls_3_Save_Editor_MAC.zip
 
