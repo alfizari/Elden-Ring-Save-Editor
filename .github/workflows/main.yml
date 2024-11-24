@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create Windows Executable (64-bit)
         uses: sayyid5416/pyinstaller@v1
@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python (32-bit)
         uses: actions/setup-python@v4
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create Linux Executable
         uses: sayyid5416/pyinstaller@v1
@@ -66,7 +66,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -110,7 +110,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
@@ -119,7 +119,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -164,7 +164,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
           path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip
