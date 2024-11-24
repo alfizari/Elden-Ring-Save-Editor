@@ -14,7 +14,7 @@ A comprehensive save editor for Dark Souls 3 on PS4/PS5. Enables editing save fi
 2. [Screenshots](#screenshots)
 3. [Getting Started](#getting-started)
    - [Option 1: Download Compiled Binary](#option-1-download-compiled-binary)
-   - [Option 2: Build from Source](#option-2-build-from-source)
+   - [Option 2: Run from Source](#option-2-build-from-source)
 4. [Usage](#usage)
 5. [Contributing](#contributing)
 6. [License](#license)
