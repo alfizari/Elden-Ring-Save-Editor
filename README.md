@@ -149,4 +149,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **[bawsdeep](https://github.com/bawsdeep):** UI/Code optimization github Workflow to compile binaries for Linux Windows and Mac.
 - **[Nox](https://github.com/Noxde/Bloodborne-save-editor):** Insights on offsets and save editing. Check out his amaizing Bloodborne Save Editor.
-

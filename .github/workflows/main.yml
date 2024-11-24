@@ -11,12 +11,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
+      
       - name: Create Windows Executable (64-bit)
         uses: sayyid5416/pyinstaller@v1
         with:
-          python_ver: '3.8'
+          python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
  
@@ -24,12 +24,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python (32-bit)
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.12'
           architecture: 'x86'
 
       - name: Install PyInstaller
@@ -44,7 +44,7 @@ jobs:
           PYTHONPATH: ${{ runner.workspace }}/src
 
       - name: Upload 32-Bit Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
           path: dist/Dark_Souls_3_Save_Editor.exe
@@ -53,32 +53,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create Linux Executable
         uses: sayyid5416/pyinstaller@v1
         with:
-          python_ver: '3.8'
+          python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
-          
+
   build-macos_silicon:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.12'
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip globally
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
-          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          python3 -m pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
+          python3 -m pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          python3 -m pip --version  # Debug: Check pip version
 
       - name: Create macOS Executable
         run: |
@@ -110,7 +112,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
@@ -119,20 +121,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.12'
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip globally
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
-          pip install pyinstaller  # Install PyInstaller inside the virtual environment
-
+          python3 -m pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
+          python3 -m pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          python3 -m pip --version  # Debug: Check pip version
       - name: Create macOS Intel Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
@@ -164,7 +167,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
           path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip
