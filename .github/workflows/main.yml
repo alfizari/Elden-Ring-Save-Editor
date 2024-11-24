@@ -61,7 +61,7 @@ jobs:
           python_ver: '3.8'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
-          
+
   build-macos_silicon:
     runs-on: macos-latest
     steps:
@@ -73,27 +73,16 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Upgrade System pip
-        run: |
-          python3.8 -m pip install --upgrade pip
-          python3.8 -m pip --version  # Verify pip version
-    
-      - name: Setup Virtual Environment
-        run: |
-          rm -rf venv
-          python3.8 -m venv venv  # Create the virtual environment
-
       - name: Install Dependencies
         run: |
-          source venv/bin/activate
-          python3.8 -m pip install --upgrade pip
-          pip install setuptools wheel pyinstaller
-        
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m venv venv  # Create a virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip  # Upgrade pip in venv
-          python3.8 -m pip --version  # Verify venv pip version
           pyinstaller src/build_mac.spec
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
@@ -121,7 +110,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
@@ -137,47 +126,16 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Upgrade System pip
-        run: |
-          python3.8 -m pip install --upgrade pip
-          python3.8 -m pip --version  # Verify system pip version
-          which python3.8  # Ensure python3.8 is being used
-          which pip  # Ensure pip from python3.8 is being used
-
-      - name: Clear Python dependency cache
-        run: |
-          rm -rf ~/.cache/pip  # Remove pip cache to clear old packages
-          rm -rf $HOME/.cache/pypoetry  # If using poetry
-          rm -rf venv  # Remove any existing virtual environments
-          # Add other caches if necessary
-        shell: bash
-
-      - name: Setup Virtual Environment
-        run: |
-          rm -rf venv  # Remove any previous virtual environments
-          python3.8 -m venv venv  # Create the virtual environment
-          source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip
-          python3.8 -m pip --version  # Verify pip version in virtual environment
-          which python  # Verify which python binary is being used in venv
-          which pip  # Verify which pip binary is being used in venv
-
       - name: Install Dependencies
         run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip  # Ensure pip is the latest version in venv
-          python3.8 -m pip --version  # Verify venv pip version
-          which python  # Ensure correct python is used inside venv
-          which pip  # Ensure correct pip is used inside venv
-          pip install setuptools wheel pyinstaller
+          pip install pyinstaller  # Install PyInstaller inside the virtual environment
 
       - name: Create macOS Intel Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip  # Ensure pip is the latest version in venv before building
-          python3.8 -m pip --version  # Verify pip version before building
-          which python  # Ensure correct python is used inside venv before building
-          which pip  # Ensure correct pip is used inside venv before building
           # Set environment variables to build for Intel architecture (x86_64)
           arch -x86_64 pyinstaller src/build_mac.spec
           # Debug the dist directory to verify output structure
@@ -206,7 +164,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
-          path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip 
+          path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip
