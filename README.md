@@ -35,49 +35,33 @@ A comprehensive save editor for Dark Souls 3 on PS4/PS5. Enables editing save fi
 
 ## Screenshots
 
-Below are screenshots showcasing the features of the Dark Souls 3 Save Editor. Click any image to view it in full size.
+Below is a gallery of screenshots. Click on an image to view the next one.
 
 <div align="center">
 
-### View All Characters in Save
-<a href="https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566" target="_blank">
-<img src="https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566" alt="View All Characters" style="border: 1px solid black; width: 200px;">
-</a>
+[![View All Characters](https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566)](https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba)  
+<sub>View All Characters</sub>
 
-### Replace Weapons
-<a href="https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba" target="_blank">
-<img src="https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba" alt="Replace Weapons" style="border: 1px solid black; width: 200px;">
-</a>
+[![Replace Weapons](https://github.com/user-attachments/assets/db5096c5-3e4e-4761-bd9f-8fe3f2312fba)](https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0)  
+<sub>Replace Weapons</sub>
 
-### Replace Rings
-<a href="https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0" target="_blank">
-<img src="https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0" alt="Replace Rings" style="border: 1px solid black; width: 200px;">
-</a>
+[![Replace Rings](https://github.com/user-attachments/assets/1ac3a745-f6e7-49b2-a761-61fab72633b0)](https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258)  
+<sub>Replace Rings</sub>
 
-### Replace Goods and Magic
-<a href="https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258" target="_blank">
-<img src="https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258" alt="Replace Goods and Magic" style="border: 1px solid black; width: 200px;">
-</a>
+[![Replace Goods and Magic](https://github.com/user-attachments/assets/25e7c71b-490f-4b13-b1c2-85acb430e258)](https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede)  
+<sub>Replace Goods and Magic</sub>
 
-### Replace Armor
-<a href="https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede" target="_blank">
-<img src="https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede" alt="Replace Armor" style="border: 1px solid black; width: 200px;">
-</a>
+[![Replace Armor](https://github.com/user-attachments/assets/cf61b444-e5bd-4fd7-9459-20565557fede)](https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1)  
+<sub>Replace Armor</sub>
 
-### Edit Character Name and HP
-<a href="https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1" target="_blank">
-<img src="https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1" alt="Edit Name and HP" style="border: 1px solid black; width: 200px;">
-</a>
+[![Edit Character Name and HP](https://github.com/user-attachments/assets/b9d32b07-0a05-4c46-b169-545d9ff392a1)](https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90)  
+<sub>Edit Character Name and HP</sub>
 
-### Edit Souls
-<a href="https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90" target="_blank">
-<img src="https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90" alt="Edit Souls" style="border: 1px solid black; width: 200px;">
-</a>
+[![Edit Souls](https://github.com/user-attachments/assets/b03a3b80-3d32-47b3-a18d-526205712d90)](https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3)  
+<sub>Edit Souls</sub>
 
-### Edit Stats and Estus Numbers
-<a href="https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3" target="_blank">
-<img src="https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3" alt="Edit Stats and Estus" style="border: 1px solid black; width: 200px;">
-</a>
+[![Edit Stats and Estus Numbers](https://github.com/user-attachments/assets/179e28e7-6f7a-4f4e-bfc8-d20623ad72e3)](https://github.com/user-attachments/assets/26ef2100-fe74-4efc-befb-bd698f051566)  
+<sub>Edit Stats and Estus Numbers</sub>
 
 </div>
 
