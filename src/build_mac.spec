@@ -27,7 +27,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='your_app_name',
+    name='Dark_Souls_3_Save_Editor',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
