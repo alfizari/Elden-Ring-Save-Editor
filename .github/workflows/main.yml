@@ -75,13 +75,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip
-          pip --version
+          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip globally
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
-          pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
-          pip --version
-          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          python3 -m pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
+          python3 -m pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          python3 -m pip --version  # Debug: Check pip version
 
       - name: Create macOS Executable
         run: |
