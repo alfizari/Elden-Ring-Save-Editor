@@ -73,15 +73,22 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Upgrade pip (explicit step)
-        run: python3.8 -m pip install --upgrade pip
-
+      - name: Upgrade System pip
+        run: |
+          python3.8 -m pip install --upgrade pip
+          python3.8 -m pip --version  # Verify pip version
+    
+      - name: Setup Virtual Environment and Upgrade pip
+        run: |
+          python3.8 -m venv venv  # Create the virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          python3 -m pip install --upgrade pip  # Upgrade pip in venv
+          python3 -m pip --version  # Verify venv pip version
+    
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m venv venv  # Create a virtual environment
-          source venv/bin/activate  # Activate the virtual environment
-          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          source venv/bin/activate
+          pip install setuptools wheel pyinstaller
         
       - name: Create macOS Executable
         run: |
@@ -129,15 +136,22 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Upgrade pip (explicit step)
-        run: python3.8 -m pip install --upgrade pip
-
+      - name: Upgrade System pip
+        run: |
+          python3.8 -m pip install --upgrade pip
+          python3.8 -m pip --version  # Verify pip version
+  
+      - name: Setup Virtual Environment and Upgrade pip
+        run: |
+          python3.8 -m venv venv  # Create the virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          python3 -m pip install --upgrade pip  # Upgrade pip in venv
+          python3 -m pip --version  # Verify venv pip version
+  
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m venv venv  # Create a virtual environment
-          source venv/bin/activate  # Activate the virtual environment
-          pip install pyinstaller  # Install PyInstaller inside the virtual environment
+          source venv/bin/activate
+          pip install setuptools wheel pyinstaller
 
       - name: Create macOS Intel Executable
         run: |
