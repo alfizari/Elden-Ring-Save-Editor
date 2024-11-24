@@ -71,7 +71,7 @@ jobs:
       - name: Setup Python (32-bit)
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
           architecture: 'x86'  # Specifies 32-bit Python
                 
       - name: Install PyInstaller
