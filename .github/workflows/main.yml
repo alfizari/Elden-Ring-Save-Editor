@@ -89,18 +89,36 @@ jobs:
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
-      - name: Fix macOS .app Bundle
+      - name: Create macOS .app Bundle
         run: |
-          # Define output paths
+          # Define paths
           APP_FOLDER="dist/Dark_Souls_3_Save_Editor_App"
           APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
           
-          # Check if PyInstaller created the Contents folder
-          if [ -d "$APP_FOLDER/Contents" ]; then
-            # Rename the directory to .app
-            mv "$APP_FOLDER" "$APP_BUNDLE"
+          # Check if output folder exists
+          if [ -d "$APP_FOLDER" ]; then
+            mkdir -p "$APP_BUNDLE/Contents/MacOS"  # Create .app structure
+            mv "$APP_FOLDER/"* "$APP_BUNDLE/Contents/MacOS/"  # Move binary files
+            
+            # Add a minimal Info.plist
+            cat <<EOF > "$APP_BUNDLE/Contents/Info.plist"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>CFBundleExecutable</key>
+                <string>Dark_Souls_3_Save_Editor</string>
+                <key>CFBundleName</key>
+                <string>Dark Souls 3 Save Editor</string>
+                <key>CFBundleVersion</key>
+                <string>1.0</string>
+                <key>CFBundlePackageType</key>
+                <string>APPL</string>
+            </dict>
+            </plist>
+            EOF
           else
-            echo "Error: Contents folder not found. Check PyInstaller output."
+            echo "Error: $APP_FOLDER not found. PyInstaller might have failed."
             exit 1
           fi
 
