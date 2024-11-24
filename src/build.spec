@@ -7,7 +7,7 @@ a = Analysis(
     pathex=[os.getcwd()],
     binaries=[],
     datas=[
-        (os.path.join(os.getcwd(), 'src', 'Resources'), 'Resources'),
+        (os.path.join(os.getcwd(), 'Resources'), 'Resources'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -33,10 +33,12 @@ exe_windows = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    onefile=True,
+    windowed=True
 )

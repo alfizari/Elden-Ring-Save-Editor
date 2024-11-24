@@ -44,7 +44,7 @@ jobs:
           PYTHONPATH: ${{ runner.workspace }}/src
 
       - name: Upload 32-Bit Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
           path: dist/Dark_Souls_3_Save_Editor.exe
@@ -80,6 +80,9 @@ jobs:
           source venv/bin/activate  # Activate the virtual environment
           pip install pyinstaller  # Install PyInstaller inside the virtual environment
 
+      - name: Upgrade pip (explicit step)
+        run: python3 -m pip install --upgrade pip
+        
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
@@ -110,7 +113,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
           path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
@@ -132,6 +135,9 @@ jobs:
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
           pip install pyinstaller  # Install PyInstaller inside the virtual environment
+
+      - name: Upgrade pip (explicit step)
+        run: python3 -m pip install --upgrade pip
 
       - name: Create macOS Intel Executable
         run: |
@@ -164,7 +170,7 @@ jobs:
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
           path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip
