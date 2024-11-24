@@ -35,3 +35,10 @@ exe = EXE(
     console=False,
     windowed=True,
 )
+
+app = BUNDLE(
+    exe,
+    name='Dark_Souls_3_Save_Editor',
+    icon=None,  
+    bundle_identifier=None,
+)
