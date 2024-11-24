@@ -38,7 +38,7 @@ exe = EXE(
 
 app = BUNDLE(
     exe,
-    name='Dark_Souls_3_Save_Editor_App.app'',
+    name='Dark_Souls_3_Save_Editor_App.app',
     icon=None,  
     bundle_identifier=None,
 )
