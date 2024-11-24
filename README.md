@@ -89,13 +89,8 @@ You have two options to get started with the Dark Souls 3 Save Editor:
 
 ### Option 1: Download Compiled Binary available for Windows Mac and Linux (32 and 64bit)
 The easiest way is to download the pre-compiled binary:
-<<<<<<< HEAD
-- Visit the [Releases Page](https://github.com/alfizari/ds3-save-editor/releases/latest) for the latest stable release.
-- Or grab the [Latest Artifact](https://github.com/alfizari/ds3-save-editor/actions/) from the latest GitHub Actions build.
-=======
 - Visit the [Releases Page](https://github.com/alfizari/Dark-souls-3-editor-PS4/releases/latest) for the latest stable release.
 - Or grab the [Latest Artifact](https://github.com/alfizari/Dark-souls-3-editor-PS4/actions/) from the latest GitHub Actions build.
->>>>>>> ce9619cfef9b35e936d4558a59c21e76253995ba
 
 Simply download the appropriate binary for your operating system, then run the executable.
 
@@ -154,4 +149,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **[bawsdeep](https://github.com/bawsdeep):** UI/Code optimization github Workflow to compile binaries for Linux Windows and Mac.
 - **[Nox](https://github.com/Noxde/Bloodborne-save-editor):** Insights on offsets and save editing. Check out his amaizing Bloodborne Save Editor.
-

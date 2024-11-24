@@ -7,7 +7,7 @@ a = Analysis(
     pathex=[os.getcwd()],
     binaries=[],
     datas=[
-        (os.path.join(os.getcwd(), 'Resources'), 'Resources'),
+        (os.path.join(os.getcwd(), 'src', 'Resources'), 'Resources'),
     ],
     hiddenimports=[],
     hookspath=[],
