@@ -86,7 +86,7 @@ jobs:
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
-          pyinstaller src/build.spec
+          pyinstaller src/build_mac.spec
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
