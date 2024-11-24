@@ -77,7 +77,6 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Install pyenv for managing python versions if needed
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
@@ -89,6 +88,21 @@ jobs:
           pyinstaller src/build_mac.spec
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
+
+      - name: Fix macOS .app Bundle
+        run: |
+          # Define output paths
+          APP_FOLDER="dist/Dark_Souls_3_Save_Editor_App"
+          APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
+          
+          # Check if PyInstaller created the Contents folder
+          if [ -d "$APP_FOLDER/Contents" ]; then
+            # Rename the directory to .app
+            mv "$APP_FOLDER" "$APP_BUNDLE"
+          else
+            echo "Error: Contents folder not found. Check PyInstaller output."
+            exit 1
+          fi
 
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v3
