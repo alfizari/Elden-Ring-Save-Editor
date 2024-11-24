@@ -67,54 +67,53 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.8'
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
 
-    - name: Install Dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m venv venv  # Create a virtual environment
-        source venv/bin/activate  # Activate the virtual environment
-        pip install pyinstaller  # Install PyInstaller inside the virtual environment
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m venv venv  # Create a virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          pip install pyinstaller  # Install PyInstaller inside the virtual environment
 
-    - name: Create macOS Executable
-      run: |
-        source venv/bin/activate  # Activate the virtual environment
-        pyinstaller src/build_mac.spec
-      env:
-        PYTHONPATH: ${{ runner.workspace }}/src
+      - name: Create macOS Executable
+        run: |
+          source venv/bin/activate  # Activate the virtual environment
+          pyinstaller src/build_mac.spec
+          # Debug the dist directory to verify output structure
+          echo "Listing contents of dist/ directory:"
+          ls -R dist/
+          # Move Contents folder if needed
+          if [ -d "dist/Dark_Souls_3_Save_Editor_App/Contents" ]; then
+            echo "Contents folder exists."
+          else
+            echo "Error: Contents folder missing!"
+            exit 1
+          fi
+        env:
+          PYTHONPATH: ${{ runner.workspace }}/src
 
-    - name: Debug PyInstaller Output
-      run: |
-        echo "Listing contents of dist/ directory:"
-        ls -R dist/
+      - name: Verify .app Structure
+        run: |
+          # Check if the .app structure is correct
+          APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
+          if [ -d "$APP_BUNDLE" ]; then
+            echo ".app bundle exists. Listing contents of the .app bundle:"
+            ls -R "$APP_BUNDLE"
+          else
+            echo "Error: .app bundle not found!"
+            exit 1
+          fi
 
-    - name: Move Contents Folder into .app Bundle
-      run: |
-        # Define paths
-        APP_FOLDER="dist/Dark_Souls_3_Save_Editor_App"
-        APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
-        
-        # Check if output folder exists
-        if [ -d "$APP_FOLDER" ]; then
-          # Create the .app folder if it doesn't exist
-          mkdir -p "$APP_BUNDLE/Contents"
-          
-          # Move the entire Contents folder into the .app structure
-          mv "$APP_FOLDER/Contents" "$APP_BUNDLE/"
-        else
-          echo "Error: $APP_FOLDER not found. PyInstaller might have failed."
-          exit 1
-        fi
-
-    - name: Upload macOS Executable
-      uses: actions/upload-artifact@v3
-      with:
-        name: Dark_Souls_3_Save_Editor_MAC
-        path: dist/Dark_Souls_3_Save_Editor_App.app
+      - name: Upload macOS Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dark_Souls_3_Save_Editor_MAC
+          path: dist/Dark_Souls_3_Save_Editor_App.app
 
