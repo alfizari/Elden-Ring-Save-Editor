@@ -107,13 +107,13 @@ jobs:
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
           zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
-          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_Final.zip
+          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Silicon
-          path: Dark_Souls_3_Save_Editor_MAC_Final.zip
+          path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
 
   build-macos_intel:
     runs-on: macos-latest
@@ -161,10 +161,10 @@ jobs:
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
           zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
-          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_Final.zip
+          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
-          path: Dark_Souls_3_Save_Editor_MAC_Final.zips
+          path: Dark_Souls_3_Save_Editor_MAC_INTEL.zips
