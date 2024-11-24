@@ -166,5 +166,5 @@ jobs:
       - name: Upload macOS Intel Executable
         uses: actions/upload-artifact@v3
         with:
-          name: Dark_Souls_3_Save_Editor_MAC-Intel
+          name: Dark_Souls_3_Save_Editor_MAC-INTEL
           path: Dark_Souls_3_Save_Editor_MAC_INTEL.zips
