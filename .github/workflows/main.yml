@@ -149,6 +149,7 @@ jobs:
           rm -rf venv  # Remove any previous virtual environments
           python3.8 -m venv venv  # Create the virtual environment
           source venv/bin/activate  # Activate the virtual environment
+          python3.8 -m pip install --upgrade pip
           python3.8 -m pip --version  # Verify pip version in virtual environment
           which python  # Verify which python binary is being used in venv
           which pip  # Verify which pip binary is being used in venv
@@ -201,4 +202,3 @@ jobs:
         with:
           name: Dark_Souls_3_Save_Editor_MAC-Intel
           path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip 
-        
