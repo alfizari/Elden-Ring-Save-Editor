@@ -78,13 +78,11 @@ jobs:
           python3.8 -m pip install --upgrade pip
           python3.8 -m pip --version  # Verify pip version
     
-      - name: Setup Virtual Environment upgrade pip
+      - name: Setup Virtual Environment
         run: |
+          rm -rf venv
           python3.8 -m venv venv  # Create the virtual environment
-          source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip  # Upgrade pip in venv
-          python3.8 -m pip --version  # Verify venv pip version
-    
+
       - name: Install Dependencies
         run: |
           source venv/bin/activate
@@ -93,6 +91,8 @@ jobs:
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
+          python3.8 -m pip install --upgrade pip  # Upgrade pip in venv
+          python3.8 -m pip --version  # Verify venv pip version
           pyinstaller src/build_mac.spec
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
@@ -141,13 +141,11 @@ jobs:
           python3.8 -m pip install --upgrade pip
           python3.8 -m pip --version  # Verify pip version
   
-      - name: Setup Virtual Environment and Upgrade pip
+      - name: Setup Virtual Environment
         run: |
+          rm -rf venv
           python3.8 -m venv venv  # Create the virtual environment
-          source venv/bin/activate  # Activate the virtual environment
-          python3.8 -m pip install --upgrade pip  # Upgrade pip in venv
-          python3.8 -m pip --version  # Verify venv pip version
-  
+
       - name: Install Dependencies
         run: |
           source venv/bin/activate
@@ -156,6 +154,8 @@ jobs:
       - name: Create macOS Intel Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
+          python3.8 -m pip install --upgrade pip  # Upgrade pip in venv
+          python3.8 -m pip --version  # Verify venv pip version
           # Set environment variables to build for Intel architecture (x86_64)
           arch -x86_64 pyinstaller src/build_mac.spec
           # Debug the dist directory to verify output structure
