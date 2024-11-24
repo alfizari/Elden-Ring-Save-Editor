@@ -75,9 +75,10 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
+          pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
           pip install pyinstaller  # Install PyInstaller inside the virtual environment
 
       - name: Create macOS Executable
@@ -128,9 +129,10 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade pip setuptools wheel  # Upgrade pip
           python3 -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
+          pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
           pip install pyinstaller  # Install PyInstaller inside the virtual environment
 
       - name: Create macOS Intel Executable
