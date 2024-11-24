@@ -104,8 +104,15 @@ jobs:
             exit 1
           fi
 
+      - name: Create ZIP of .app Bundle
+        run: |
+          # Go to the dist directory and zip the entire .app bundle (not just Contents)
+          cd dist
+          zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
+          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_Final.zip
+
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v3
         with:
           name: Dark_Souls_3_Save_Editor_MAC
-          path: dist/Dark_Souls_3_Save_Editor_App.app
+          path: Dark_Souls_3_Save_Editor_MAC_Final.zip
