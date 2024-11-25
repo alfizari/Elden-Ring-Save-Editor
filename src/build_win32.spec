@@ -17,7 +17,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-q
+
 pyz = PYZ(a.pure)
 
 exe_windows = EXE(
