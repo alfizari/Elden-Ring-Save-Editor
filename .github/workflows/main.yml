@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
-          path: dist/Dark_Souls_3_Save_Editor.exe
+          path: dist/Dark_Souls_3_Save_Editor_WIN32.exe
 
   build-linux_x86_64:
     runs-on: ubuntu-latest
