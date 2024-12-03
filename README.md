@@ -30,6 +30,11 @@ A comprehensive save editor for Dark Souls 3 on PS4/PS5. Enables editing save fi
 - Edit souls and storage box item quantities.
 - Unlock all bonfires and gestures.
 - Kill or revive bosses and unlock the endgame.
+- Add items
+- Add weapons
+- Add armors
+- Add rings
+- Revive NPC's
 
 ---
 
