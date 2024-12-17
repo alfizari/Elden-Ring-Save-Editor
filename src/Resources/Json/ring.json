@@ -52,7 +52,6 @@
     "Great Swamp Ring": "10 4F 00 20",
     "Witch's Ring": "11 4F 00 20",
     "Morne's Ring": "1A 4F 00 20",
-    "Ring of the Sun's First Born": "1B 4F 00 20",
     "Lingering Dragoncrest Ring": "2E 4F 00 20",
     "Lingering Dragoncrest Ring+1": "2F 4F 00 20",
     "Lingering Dragoncrest Ring+2": "30 4F 00 20",
@@ -64,9 +63,6 @@
     "Saint's Ring": "56 4F 00 20",
     "Deep Ring": "60 4F 00 20",
     "Darkmoon Ring": "6A 4F 00 20",
-    "Ring of the Sun's Firstborn": "74 4F 00 20",
-    "Darkmoon Blade Covenant Ring": "7E 4F 00 20",
-    "Leo Ring": "88 4F 00 20",
     "Hawk Ring": "92 4F 00 20",
     "Hornet Ring": "9C 4F 00 20",
     "Covetous Gold Serpent Ring": "A6 4F 00 20",
@@ -87,7 +83,6 @@
     "Lightning Clutch Ring": "14 50 00 20",
     "Fire Clutch Ring": "1E 50 00 20",
     "Dark Clutch Ring": "28 50 00 20",
-    "Baneful Bird Ring": "32 50 00 20",
     "Flynn's Ring": "3C 50 00 20",
     "Prisoner's Chain": "46 50 00 20",
     "Untrue Dark Ring": "50 50 00 20",
@@ -116,7 +111,6 @@
     "Covetous Gold Serpent Ring +3 DLC": "A9 4F 00 20",
     "Covetous Silver Serpent Ring +3 DLC": "B3 4F 00 20",
     "Wolf Ring +3 DLC": "E1 4E 00 20",
-    "Rare Ring of Sacrifice": "FC 4E 00 20",
     "Ring of Evil Eye +3": "71 50 00 20"
     
 }
