@@ -18,7 +18,7 @@ jobs:
         with:
           python_ver: '3.12'
           spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
+          upload_exe_with_name: 'Elden_Ring_Save_Editor_WIN64'
  
   build-windows-32bit:
     runs-on: windows-latest
@@ -46,8 +46,8 @@ jobs:
       - name: Upload 32-Bit Executable
         uses: actions/upload-artifact@v4
         with:
-          name: Dark_Souls_3_Save_Editor_WIN32
-          path: dist/Dark_Souls_3_Save_Editor_WIN32.exe
+          name: Elden_Ring_Save_Editor_WIN32
+          path: Elden_Ring_Save_Editor_WIN32.exe
 
   build-linux_x86_64:
     runs-on: ubuntu-latest
@@ -60,7 +60,7 @@ jobs:
         with:
           python_ver: '3.12'
           spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
+          upload_exe_with_name: 'Elden_Ring_Save_Editor_LINUX_x86_64'
 
   build-macos_silicon:
     runs-on: macos-latest
@@ -95,7 +95,7 @@ jobs:
       - name: Verify .app Structure
         run: |
           # Check if the .app structure is correct
-          APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
+          APP_BUNDLE="dist/Elden_Ring_Save_Editor_App.app"
           if [ -d "$APP_BUNDLE" ]; then
             echo ".app bundle exists. Listing contents of the .app bundle:"
             ls -R "$APP_BUNDLE"
@@ -108,14 +108,14 @@ jobs:
         run: |
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
-          zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
-          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
+          zip -r Elden_Ring_Save_Editor_MAC.zip Elden_Ring_Save_Editor_App.app
+          mv Elden_Ring_Save_Editor_MAC.zip ../Elden_Ring_Save_Editor_MAC_SILICON.zip
 
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v4
         with:
-          name: Dark_Souls_3_Save_Editor_MAC-Silicon
-          path: Dark_Souls_3_Save_Editor_MAC_SILICON.zip
+          name: Elden_Ring_Save_Editor_MAC-Silicon
+          path: Elden_Ring_Save_Editor_MAC_SILICON.zip
 
   build-macos_intel:
     runs-on: macos-latest
@@ -150,7 +150,7 @@ jobs:
       - name: Verify .app Structure
         run: |
           # Check if the .app structure is correct
-          APP_BUNDLE="dist/Dark_Souls_3_Save_Editor_App.app"
+          APP_BUNDLE="dist/Elden_Ring_Save_Editor_App.app"
           if [ -d "$APP_BUNDLE" ]; then
             echo ".app bundle exists. Listing contents of the .app bundle:"
             ls -R "$APP_BUNDLE"
@@ -163,11 +163,11 @@ jobs:
         run: |
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
-          zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
-          mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
+          zip -r Elden_Ring_Save_Editor_MAC.zip Elden_Ring_Save_Editor_App.app
+          mv Elden_Ring_Save_Editor_MAC.zip ../Elden_Ring_Save_Editor_MAC_INTEL.zip
 
       - name: Upload macOS Intel Executable
         uses: actions/upload-artifact@v4
         with:
-          name: Dark_Souls_3_Save_Editor_MAC-Intel
-          path: Dark_Souls_3_Save_Editor_MAC_INTEL.zip
+          name: Elden_Ring_Save_Editor_MAC-Intel
+          path: Elden_Ring_Save_Editor_MAC_INTEL.zip
