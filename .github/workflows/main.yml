@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Elden_Ring_Save_Editor_WIN32
-          path: Elden_Ring_Save_Editor_WIN32.exe
+          path: dist/Elden_Ring_Save_Editor_WIN32.exe
 
   build-linux_x86_64:
     runs-on: ubuntu-latest
