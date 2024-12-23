@@ -249,326 +249,6 @@ def update_character_name():
     
     messagebox.showerror("Error", "Could not find name offset in the selected section.")
 
-## Add rings( similar to items)
-def find_and_replace_pattern_with_ring_and_update_counters(ring_name):
-    try:
-        # Validate item name and fetch its ID
-        ring_id = inventory_ring_hex_patterns.get(ring_name)
-        if not ring_id:
-            messagebox.showerror("Error", f"Item '{ring_name}' not found in ring.json.")
-            return
-
-        ring_id_bytes = bytes.fromhex(ring_id)
-        if len(ring_id_bytes) != 4:
-            messagebox.showerror("Error", f"Invalid ID for '{ring_name}'. ID must be exactly 4 bytes.")
-            return
-
-
-        # Get file path
-        file_path = file_path_var.get()
-        section_number = current_section_var.get()
-        if not file_path or section_number == 0:
-            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
-            return
-
-        # Get section information
-        section_info = SECTIONS[section_number]
-        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
-
-        # Locate Fixed Pattern 1
-        fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
-        if fixed_pattern_offset is None:
-            messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
-            return
-
-        search_start = fixed_pattern_offset
-        search_range = 10000  # Range to search for the item
-        with open(file_path, 'r+b') as file:
-            file.seek(section_info['start'] + search_start)
-            data_chunk = file.read(search_range)
-
-
-            # Add new ring if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
-            empty_offset = data_chunk.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item.")
-                return
-
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + search_start + empty_offset
-
-            # Create the default pattern
-            default_pattern = bytearray.fromhex("20 4E 00 A0 20 4E 00 20 01 00 00 00 9B 40 E8 04")
-            default_pattern[:3] = ring_id_bytes[:3]  # First 3 bytes from the item ID
-            default_pattern[4:8] = ring_id_bytes  # Full 4 bytes after B0
-            ###
-            reference_offset = actual_offset - 4
-            file.seek(reference_offset)
-            reference_value = int.from_bytes(file.read(1), 'little')
-
-            # Calculate new third counter value
-            new_third_counter_value = (reference_value + 1) & 0xFF
-
-
-            default_pattern[12] = new_third_counter_value
-
-            # Fourth counter logic: Extract the second nibble (0-9) of the 3rd byte behind the search range pattern
-            reference_offset_4th = actual_offset - 3
-            file.seek(reference_offset_4th)
-            third_byte_value = int.from_bytes(file.read(1), 'little')
-
-            # Extract the decimal value (0-9) from the second nibble (bits 0–3)
-            decimal_value = third_byte_value & 0xF  # Mask to keep only the lower nibble (bits 0-3)
-
-            # Ensure the value is within 0-9 range
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-
-            # Check if the third counter rolled over
-            if new_third_counter_value == 0:  # Rollover happened
-                # Increment the fourth counter (represented by the second nibble of the 14th byte)
-                decimal_value = (decimal_value + 1) % 10  # Increment within the range 0-9
-
-            # Update the corresponding bits of the 14th byte in the default pattern
-            # Store the decimal digit (0-9) in the least significant nibble of the 14th byte
-            default_pattern[13] = (default_pattern[13] & 0xF0) | decimal_value
-
-
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-
-            # Update counters
-            increment_counters(file, section_info['start'] + fixed_pattern_offset)
-
-            # Success message
-            messagebox.showinfo("Success", f"Added '{ring_name}'")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to add ring: {e}")
-
-
-def add_ring_from_ring(ring_name, ring_id):
-    
-    find_and_replace_pattern_with_ring_and_update_counters(ring_name)
-
-def find_and_replace_pattern_with_ring_and_update_counters_bulk(ring_name, ring_id):
-    try:
-        ring_id_bytes = bytes.fromhex(ring_id)
-        if len(ring_id_bytes) != 4:
-            raise ValueError(f"Invalid ID for '{ring_name}'. ID must be exactly 4 bytes.")
-
-
-        # Get file path
-        file_path = file_path_var.get()
-        section_number = current_section_var.get()
-        if not file_path or section_number == 0:
-            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
-            return
-
-        # Get section information
-        section_info = SECTIONS[section_number]
-        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
-
-        # Locate Fixed Pattern 1
-        fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
-        if fixed_pattern_offset is None:
-            messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
-            return
-
-        search_start = fixed_pattern_offset
-        search_range = 100000  # Range to search for the item
-        with open(file_path, 'r+b') as file:
-            file.seek(section_info['start'] + search_start)
-            data_chunk = file.read(search_range)
-
-
-            # Add new ring if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF0")
-            empty_offset = data_chunk.find(empty_pattern)
-            if empty_offset == -1:
-                raise ValueError("No empty slot found to add the item.")
-
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + search_start + empty_offset
-
-            # Create the default pattern
-            default_pattern = bytearray.fromhex("20 4E 00 A0 20 4E 00 20 01 00 00 00 9B 40 E8 04")
-            default_pattern[:3] = ring_id_bytes[:3]  # First 3 bytes from the item ID
-            default_pattern[4:8] = ring_id_bytes  # Full 4 bytes after B0
-            ###
-            reference_offset = actual_offset - 4
-            file.seek(reference_offset)
-            reference_value = int.from_bytes(file.read(1), 'little')
-
-            # Calculate new third counter value
-            new_third_counter_value = (reference_value + 1) & 0xFF
-
-
-            default_pattern[12] = new_third_counter_value
-
-            # Fourth counter logic: Extract the second nibble (0-9) of the 3rd byte behind the search range pattern
-            reference_offset_4th = actual_offset - 3
-            file.seek(reference_offset_4th)
-            third_byte_value = int.from_bytes(file.read(1), 'little')
-
-            # Extract the decimal value (0-9) from the second nibble (bits 0–3)
-            decimal_value = third_byte_value & 0xF  # Mask to keep only the lower nibble (bits 0-3)
-
-            # Ensure the value is within 0-9 range
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-
-            # Check if the third counter rolled over
-            if new_third_counter_value == 0:  # Rollover happened
-                # Increment the fourth counter (represented by the second nibble of the 14th byte)
-                decimal_value = (decimal_value + 1) % 10  # Increment within the range 0-9
-
-            # Update the corresponding bits of the 14th byte in the default pattern
-            # Store the decimal digit (0-9) in the least significant nibble of the 14th byte
-            default_pattern[13] = (default_pattern[13] & 0xF0) | decimal_value
-
-    
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-
-            # Update counters
-            increment_counters(file, section_info['start'] + fixed_pattern_offset)
-
-    
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to add ring: {e}")
-
-
-def add_all_rings(filtered_rings):
-    try:
-        for ring_name, ring_id in filtered_rings.items():
-            find_and_replace_pattern_with_ring_and_update_counters_bulk(ring_name, ring_id)
-        messagebox.showinfo("Success", "All items added successfully!")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to add all items: {e}")
-
-def show_ring_from_list_bulk():
-    ring_window = tk.Toplevel(window)
-    ring_window.title("Add Rings")
-    ring_window.geometry("600x400")
-    ring_window.attributes("-topmost", True)  # Keeps the window on top
-    ring_window.focus_force()  # Brings the window into focus
-
-    # Search bar for filtering items
-    search_frame = ttk.Frame(ring_window)
-    search_frame.pack(fill="x", padx=10, pady=5)
-    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
-    search_var = tk.StringVar()
-    search_entry = ttk.Entry(search_frame, textvariable=search_var)
-    search_entry.pack(side="left", fill="x", expand=True, padx=5)
-
-    # Create a scrollable frame for the item list
-    canvas = tk.Canvas(ring_window)
-    scrollbar = ttk.Scrollbar(ring_window, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    def filter_items():
-        for widget in scrollable_frame.winfo_children():
-            widget.destroy()
-
-        search_term = search_var.get().lower()
-        filtered_rings = {k: v for k, v in inventory_ring_hex_patterns.items() if search_term in k.lower()}
-
-        # Add "Add All" button
-        add_all_button = ttk.Button(
-            scrollable_frame,
-            text="Add All",
-            command=lambda: add_all_rings(filtered_rings)
-        )
-        add_all_button.pack(fill="x", pady=5)
-
-        for ring_name, ring_id in filtered_rings.items():
-            ring_frame = ttk.Frame(scrollable_frame)
-            ring_frame.pack(fill="x", padx=5, pady=2)
-
-            # Display item name
-            tk.Label(ring_frame, text=ring_name, anchor="w").pack(side="left", fill="x", expand=True)
-
-    # Filter items on search input
-    search_entry.bind("<KeyRelease>", lambda event: filter_items())
-
-    # Initially populate the list with all items
-    filter_items()
-
-def show_ring_from_list():
-    
-    ring_window = tk.Toplevel(window)
-    ring_window.title("Add Rings")
-    ring_window.geometry("600x400")
-    ring_window.attributes("-topmost", True)  # Keeps the window on top
-    ring_window.focus_force()  # Brings the window into focus
-
-    # Search bar for filtering items
-    search_frame = ttk.Frame(ring_window)
-    search_frame.pack(fill="x", padx=10, pady=5)
-    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
-    search_var = tk.StringVar()
-    search_entry = ttk.Entry(search_frame, textvariable=search_var)
-    search_entry.pack(side="left", fill="x", expand=True, padx=5)
-
-    # Create a scrollable frame for the item list
-    canvas = tk.Canvas(ring_window)
-    scrollbar = ttk.Scrollbar(ring_window, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    def filter_items():
-        
-        for widget in scrollable_frame.winfo_children():
-            widget.destroy()
-
-        search_term = search_var.get().lower()
-        filtered_ring = {k: v for k, v in inventory_ring_hex_patterns.items() if search_term in k.lower()}
-
-        for ring_name, ring_id in filtered_ring.items():
-            ring_frame = ttk.Frame(scrollable_frame)
-            ring_frame.pack(fill="x", padx=5, pady=2)
-
-            # Display item name
-            tk.Label(ring_frame, text=ring_name, anchor="w").pack(side="left", fill="x", expand=True)
-
-            # "Add/Update" button for each item
-            add_button = ttk.Button(
-                ring_frame,
-                text="Add",
-                command=lambda name=ring_name, hex_id=ring_id: add_ring_from_ring(name, hex_id)
-            )
-            add_button.pack(side="right", padx=5)
-
-    # Filter items on search input
-    search_entry.bind("<KeyRelease>", lambda event: filter_items())
-
-    # Initially populate the list with all items
-    filter_items()
-
 
 ## ADD items
 def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
@@ -612,6 +292,7 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
             return
 
         with open(file_path, 'r+b') as file:
+            loaded_file_data = bytearray(file.read())
             # Check if item exists in current section
             for idx in range(len(section_data) - 4):
                 if section_data[idx:idx + 4] == item_id_bytes:
@@ -949,60 +630,92 @@ def show_goods_magic_list():
     # Initially populate the list with all items
     filter_items()
 
-hex_pattern3_fixed = (
-    "00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-    "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-    "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-    "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-    "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00"
-)
+def find_last_fixed_pattern_1_above_character(section_data, fixed_pattern_1, char_name_offset):
+    fixed_pattern_1_bytes = bytes.fromhex(fixed_pattern_1)
+    
+    # Initialize variables for searching
+    last_fixed_pattern_1_offset = -1
+    start_search = 0
+    
+    while True:
+        # Find the next occurrence of fixed_pattern_1 starting from the last found position
+        offset = section_data.find(fixed_pattern_1_bytes, start_search)
+        if offset == -1 or offset >= char_name_offset:
+            break  # Stop searching once we go beyond the character name or no more patterns are found
+        
+        # Update the last known position of fixed_pattern_1
+        last_fixed_pattern_1_offset = offset
+        # Move search forward
+        start_search = offset + 1
 
+    # Return the last occurrence, or raise an error if not found
+    if last_fixed_pattern_1_offset == -1:
+        raise ValueError("No Fixed Pattern 1 found above the character name.")
+    
+    return last_fixed_pattern_1_offset
 
-
-def delete_fixed_pattern_3_bytes(file, fixed_pattern_offset):
-    """
-    Search for a specific pattern and delete the trailing bytes.
-    """
-
-    # Define the large pattern to search for
+def delete_fixed_pattern_3_bytes(file, section_start, section_end, fixed_pattern_offset, distance_above_large_pattern):
+    # Define the patterns
     large_pattern = bytes.fromhex(
-        "'00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF"
+        "00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 "
+        "00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
+        "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 "
+        "00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
+        "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 "
+        "00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
+        "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 "
+        "00 00 00 00 00 00 00 00 FF FF FF FF"
     )
-
-    # Define the trailing bytes to remove
     trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
 
-    # Read a reasonable range to find the large pattern
-    search_range = 250000  # Define how much of the file to search
-    file.seek(max(0, fixed_pattern_offset - search_range))
-    data_chunk = file.read(search_range + len(large_pattern))
+    # Calculate absolute fixed pattern offset
+    absolute_fixed_pattern_offset = section_start + fixed_pattern_offset
 
-    # Find the large pattern
-    large_pattern_offset = data_chunk.find(large_pattern)
-    if large_pattern_offset == -1:
-        print("Large pattern not found.")
+    if not (section_start <= absolute_fixed_pattern_offset < section_end):
+        print("Fixed pattern offset is outside the specified section.")
         return
 
-    # Find the last occurrence of the trailing pattern within the large pattern
-    trailing_offset = data_chunk.find(trailing_pattern, large_pattern_offset)
+    # Read the entire section
+    file.seek(section_start)
+    section_data = bytearray(file.read(section_end - section_start))
+
+    # Find the patterns within the section
+    search_start = absolute_fixed_pattern_offset - section_start
+    large_pattern_offset = section_data.find(large_pattern, search_start)
+    
+    if large_pattern_offset == -1:
+        print("Large pattern not found within the section.")
+        return
+
+    # Calculate where to look for trailing pattern
+    target_offset = large_pattern_offset + distance_above_large_pattern
+    trailing_offset = section_data.find(trailing_pattern, target_offset)
+
     if trailing_offset == -1:
         print("Trailing pattern not found after the large pattern.")
         return
 
-    # Calculate the absolute file offset of the trailing pattern
-    absolute_offset = max(0, fixed_pattern_offset - search_range) + trailing_offset
+    # Remove only the trailing pattern bytes
+    del section_data[trailing_offset:trailing_offset + len(trailing_pattern)]
 
-    # Delete the trailing bytes by rewriting the file without them
-    file.seek(0)
-    before_trailing_pattern = file.read(absolute_offset)
+    # Write the modified data back to the file
+    file.seek(section_start)
+    file.write(section_data)
+    
+    # Properly handle the file size
+    remaining_data_start = section_end
+    
+    # Copy any remaining data after the section
+    file.seek(remaining_data_start)
+    remaining_data = file.read()
+    file.write(remaining_data)
+    
+    # Truncate to the correct length
+    file.truncate(file.tell() - len(trailing_pattern))
 
-    file.seek(absolute_offset + len(trailing_pattern))
-    after_trailing_pattern = file.read()
+    print(f"Trailing pattern successfully deleted ({len(trailing_pattern)} bytes removed).")
 
-    # Write the updated content to the file
-    file.seek(0)
-    file.write(before_trailing_pattern + after_trailing_pattern)
-    file.truncate()
+
 
 
 
@@ -1063,36 +776,54 @@ def delete_bytes_dynamically_from_section_end(distance_from_end, bytes_to_delete
 
 
 def search_fixed_pattern(file_path, pattern_hex, start_offset):
-   
-    pattern = bytes.fromhex(pattern_hex)
-    pattern_length = len(pattern)
-    
-    with open(file_path, 'rb') as file:
-        offset = start_offset
-
-        while offset >= 0:
-            file.seek(offset)
-            chunk = file.read(pattern_length)
-            
-            if chunk == pattern:
-                return offset  # Pattern found
-            
-            offset -= 1  # Move upward byte by byte
-
-    return None  # Pattern not found
-
-
+   try:
+       # Convert pattern_hex to bytes if it's a string
+       if isinstance(pattern_hex, str):
+           pattern = bytes.fromhex(pattern_hex.replace(" ", ""))
+       else:
+           pattern = pattern_hex
+          
+       pattern_length = len(pattern)
+      
+       # If file_path is actually bytes/bytearray data
+       if isinstance(file_path, (bytes, bytearray)):
+           data = file_path
+           current_offset = start_offset
+           
+           # Search upwards from start_offset
+           while current_offset >= 0:
+               if data[current_offset:current_offset + pattern_length] == pattern:
+                   return current_offset
+               current_offset -= 1
+           return None
+          
+       # If file_path is an actual file path
+       with open(file_path, 'rb') as file:
+           current_offset = start_offset
+           
+           # Search upwards from start_offset
+           while current_offset >= 0:
+               file.seek(current_offset)
+               chunk = file.read(pattern_length)
+               
+               if chunk == pattern:
+                   return current_offset
+               
+               current_offset -= 1
+               
+       return None
+   except Exception as e:
+       print(f"Error in search_fixed_pattern: {e}")
+       return None
 
 def add_weapon(item_name, upgrade_level, parent_window):
-    
     try:
-        
+        global loaded_file_data
         # Validate weapon name and fetch its ID
         weapon_id = inventory_weapons_hex_patterns.get(item_name)
         if not weapon_id:
             messagebox.showerror("Error", f"Weapon '{item_name}' not found in weapons.json.")
             return
-
         weapon_id_bytes = bytearray.fromhex(weapon_id)
         if len(weapon_id_bytes) != 4:
             messagebox.showerror("Error", f"Invalid ID for '{item_name}'. ID must be exactly 4 bytes.")
@@ -1104,7 +835,7 @@ def add_weapon(item_name, upgrade_level, parent_window):
             return
 
         # Increment the first byte of the weapon ID by the upgrade level
-        weapon_id_bytes[0] = (weapon_id_bytes[0] + upgrade_level) & 0xFF  # Wrap to a single byte in hex
+        weapon_id_bytes[0] = (weapon_id_bytes[0] + upgrade_level) & 0xFF
 
         # Get the file path
         file_path = file_path_var.get()
@@ -1113,200 +844,224 @@ def add_weapon(item_name, upgrade_level, parent_window):
             messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
             return
 
-        # Get section information
         section_info = SECTIONS[section_number]
-        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
-
-        # Define Fixed Patterns
-        fixed_pattern_3 = bytes.fromhex(
-            "00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-            "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-            "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-            "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 "
-            "FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00"
-        )
-
-        # Locate Fixed Pattern 3
-        fixed_pattern_3_offset = find_hex_offset(section_data, fixed_pattern_3.hex())
-        if fixed_pattern_3_offset is None:
-            messagebox.showerror("Error", "Fixed Pattern 3 not found in the file.")
-            return
-        fixed_pattern_1_offset = search_fixed_pattern(
-            section_data,
-            "80 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00",
-            fixed_pattern_3_offset
-        )
-        
+        section_start = section_info['start']
+        section_end = section_info['end']
 
         with open(file_path, 'r+b') as file:
-            increment_counters(file, section_info['start'] + fixed_pattern_3_offset)
+            # Read the entire file content
+            file.seek(0)
+            entire_file = bytearray(file.read())
+            original_size = len(entire_file)
             
-            # Inject Default Pattern 1
-            # Inject Default Pattern 1
-            inject_offset = fixed_pattern_1_offset + section_info['start'] + 5  # Offset for injection
-            default_pattern_1 = bytearray.fromhex(
-                "B7 12 80 80 90 AB 1E 00 46 00 00 00 02 00 00 00 01 00 00 00 00 00 00 80 "
-                "00 00 00 00 00 00 00 80 00 00 00 00 00 00 00 80 00 00 00 00 00 00 00 80 "
-                "00 00 00 00 00 00 00 80 00 00 00 00"
+            # Read section data
+            section_data = entire_file[section_start:section_end + 1]
+            
+            
+
+            # Define Fixed Pattern 3
+            fixed_pattern_3 = bytearray.fromhex(
+                "00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF"
             )
-            default_pattern_1[4:8] = weapon_id_bytes  # Assign weapon ID
 
-            # Inject the new pattern
-            file.seek(inject_offset)
-            remaining_data = file.read(section_info['end'] - inject_offset + 1)
-  
-            file.seek(inject_offset)
-            file.write(default_pattern_1 + remaining_data)
-            file.flush()  # Ensure data is written immediately
+            # Locate Fixed Pattern 3
+            fixed_pattern_3_offset = find_hex_offset(section_data, fixed_pattern_3.hex())
+            if fixed_pattern_3_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 3 not found in the file.")
+                return
+            # Update counters FIRST and write them immediately
+            counter1_offset = section_info['start'] + fixed_pattern_3_offset + 501
+            counter2_offset = section_info['start'] + fixed_pattern_3_offset + 37373
+            counter3_offset = section_info['start'] + fixed_pattern_3_offset + 37377
+            # Read current counter values
+            file.seek(counter1_offset)
+            counter1_value = int.from_bytes(file.read(2), 'little')
+            file.seek(counter2_offset)
+            counter2_value = int.from_bytes(file.read(2), 'little')
+            file.seek(counter3_offset)
+            counter3_value = int.from_bytes(file.read(2), 'little')
+            # Calculate new values
+            counter1_new_value = (counter1_value + 1) & 0xFFFF
+            counter2_new_value = (counter2_value + 1) & 0xFFFF
+            counter3_new_value = (counter3_value + 1) & 0xFFFF
+            # Write new counter values immediately
+            file.seek(counter1_offset)
+            file.write(counter1_new_value.to_bytes(2, 'little'))
+            file.seek(counter2_offset)
+            file.write(counter2_new_value.to_bytes(2, 'little'))
+            file.seek(counter3_offset)
+            file.write(counter3_new_value.to_bytes(2, 'little'))
+            
+            # Ensure counter updates are written to disk
+            file.flush()
+            os.fsync(file.fileno())
+            print(f"Counters updated successfully:")
+            print(f"Counter 1: {counter1_value} -> {counter1_new_value} at offset {counter1_offset}")
+            print(f"Counter 2: {counter2_value} -> {counter2_new_value} at offset {counter2_offset}")
+            print(f"Counter 3: {counter3_value} -> {counter3_new_value} at offset {counter3_offset}")
+            # Now proceed with weapon addition
+            file.seek(0)
+            entire_file = bytearray(file.read())
+            section_data = entire_file[section_info['start']:section_info['end']+1]
+            
+            # Search for Fixed Pattern 1
+            pattern_1_hex = "00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF"
+            fixed_pattern_1 = bytearray.fromhex(pattern_1_hex)
 
+            fixed_pattern_1_offset = search_fixed_pattern(
+                section_data,
+                fixed_pattern_1,
+                fixed_pattern_3_offset
+            )
 
-            # Calculate offsets for the 60th and 59th bytes **relative to the new pattern**
-            byte_60th_offset = inject_offset - 60
-            byte_59th_offset = inject_offset - 59
-
-
-            # Read the current values of the 60th and 59th bytes for the new pattern
-            file.seek(byte_60th_offset)
-            byte_60th = int.from_bytes(file.read(1), 'little')
-
-            file.seek(byte_59th_offset)
-            byte_59th = int.from_bytes(file.read(1), 'little')
-
-            # Update the values for the fifth counter
-            new_byte_60th = (byte_60th + 1) & 0xFF  # Increment 60th byte
-            default_pattern_1[0] = new_byte_60th  # Update first byte of the new pattern
-            default_pattern_1[1] = byte_59th  # Keep 59th byte unchanged unless overflow
-
-            # Handle overflow logic
-            if new_byte_60th == 0:  # Overflow occurred
-                new_byte_59th = (byte_59th + 1) & 0xFF
-                default_pattern_1[1] = new_byte_59th  # Update second byte of the new pattern
-
-            with open(file_path, 'r+b') as file:
-                # Inject Default Pattern 1
-                file.seek(inject_offset)
-                file.write(default_pattern_1)
-                file.flush()  # Ensure immediate write
-
-                # Search for Default Pattern 2 within the section
-                search_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
-                search_range = min(100000, section_info['end'] - fixed_pattern_3_offset + 1)  # Ensure search range is within bounds
-                search_start = section_info['start'] + fixed_pattern_3_offset
-                file.seek(search_start)
-                data_chunk = file.read(search_range)
-                pattern_offset = data_chunk.find(search_pattern)
-
-                if pattern_offset == -1:
-                    messagebox.showerror("Error", "Pattern not found in the specified range for Default Pattern 2.")
-                    return
-
-                default_pattern_2_offset = search_start + pattern_offset
-                default_pattern_2 = bytearray.fromhex("B7 12 80 80 90 AB 1E 00 01 00 00 00 81 00 96 C9")
-                default_pattern_2[0] = new_byte_60th      # Use the 60th byte for a specific field
-                default_pattern_2[1] = byte_59th          # Use the 59th byte for another specific field
-                default_pattern_2[4:8] = weapon_id_bytes  # Assign weapon ID
-
-                # Third Counter Logic
-                third_counter_offset = default_pattern_2_offset - 4
-                if third_counter_offset < section_info['start']:
-                    raise ValueError("Third counter offset is out of section bounds.")
-
-                file.seek(third_counter_offset)
-                reference_value = int.from_bytes(file.read(1), "little")
-
-                # Calculate new third counter value
-                new_third_counter_value = (reference_value + 1) & 0xFF
-                default_pattern_2[12] = new_third_counter_value
-
-                # Fourth Counter Logic
-                reference_offset_4th = default_pattern_2_offset - 3
-                if reference_offset_4th < section_info['start']:
-                    raise ValueError("Fourth counter reference offset is out of section bounds.")
-
-                file.seek(reference_offset_4th)
-                third_byte_value = int.from_bytes(file.read(1), 'little')
-
-                # Extract the decimal value (0-9) from the second nibble (bits 0–3)
-                decimal_value = third_byte_value & 0xF  # Mask to keep only the lower nibble (bits 0-3)
-
-                # Ensure the value is within the 0-9 range
-                if decimal_value > 9:
-                    decimal_value = decimal_value % 10
-
-                # Check if the third counter rolled over
-                if new_third_counter_value == 0:  # Rollover happened
-                    decimal_value = (decimal_value + 1) % 10  # Increment within the range 0-9
-
-                # Update the corresponding bits of the 14th byte in the default pattern
-                default_pattern_2[13] = (default_pattern_2[13] & 0xF0) | decimal_value
-
-                # Write Default Pattern 2
-                if default_pattern_2_offset > section_info['end']:
-                    raise ValueError("Default Pattern 2 offset exceeds the section bounds.")
-
-                file.seek(default_pattern_2_offset)  # Move to the start of the pattern offset
-                file.write(default_pattern_2)  # Write Default Pattern 2
-
+            if fixed_pattern_1_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 1 not found in the file.")
+                return
 
             
+            default_pattern_1= bytearray.fromhex("0B 11 80 80 F0 3B 2E 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+        
+            weapon_id_offset = 4
+            byte_60th_offset = fixed_pattern_1_offset + 8 - 21
+            byte_59th_offset = fixed_pattern_1_offset + 8 - 20
 
-            # Cleanup actions
-            delete_fixed_pattern_3_bytes(file, section_info['start'] + fixed_pattern_3_offset)
-            delete_bytes_dynamically_from_section_end(100, 20)
+            # Update default pattern with weapon ID and counter values
+            default_pattern_1[weapon_id_offset:weapon_id_offset + 4] = weapon_id_bytes
+
+            # Read and update counter values
+            byte_60th = section_data[byte_60th_offset]
+            byte_59th = section_data[byte_59th_offset]
+            new_byte_60th = (byte_60th + 1) & 0xFF
+            default_pattern_1[0] = new_byte_60th
+            if new_byte_60th == 0:
+                new_byte_59th = (byte_59th + 1) & 0xFF
+                default_pattern_1[1] = new_byte_59th
+            else:
+                default_pattern_1[1] = byte_59th
+                    
+            # Inject first pattern
+            inject_offset = fixed_pattern_1_offset + 8
+            section_data[inject_offset:inject_offset] = default_pattern_1
 
 
+            # Search for empty pattern
+            empty_pattern = bytes.fromhex("00" * 1024)  # 1024 zeros
+            empty_offset = section_data.find(empty_pattern)
+            if empty_offset == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset = empty_offset + 2
+
+            # Create and update default pattern 2
+            default_pattern_2 = bytearray.fromhex("35 02 80 80 01 00 00 00 6B 01")
+            default_pattern_2[0] = new_byte_60th
+            default_pattern_2[1] = byte_59th
+
+            # Update counters for pattern 2
+            reference_value = section_data[actual_offset - 4]
+            new_third_counter_value = (reference_value + 2) & 0xFF
+            default_pattern_2[8] = new_third_counter_value
+
+            third_byte_value = section_data[actual_offset - 3]
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+            if new_third_counter_value == 0:
+                decimal_value = (decimal_value + 1) % 10
+            default_pattern_2[9] = (default_pattern_2[9] & 0xF0) | decimal_value
+
+            # Inject second pattern
+            section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
+
+            trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
+            section_trailing_offset = search_fixed_pattern(
+                section_data,
+                trailing_pattern,
+                fixed_pattern_3_offset
+            )
+            
+            if section_trailing_offset != -1 and section_trailing_offset is not None:
+                # Remove the trailing pattern from section_data
+                section_data = section_data[:section_trailing_offset] + section_data[section_trailing_offset + 8:]
+                
+                # Update the section in the entire file
+                entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
+                print(f"Trailing pattern removed at section offset {section_trailing_offset}")
+            else:
+                print("No trailing pattern found above Fixed Pattern 3 within section boundaries")
+
+            # Remove bytes from section end
+            bytes_to_remove = 13
+
+            # Find the new position of the section's end based on bytes_to_remove
+            # Remove bytes from above the end of the section (above section_end)
+            section_data = section_data[:-bytes_to_remove]
+            if len(section_data) > section_end - section_start + 1:
+                section_data = section_data[:section_end - section_start + 1]
+            entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
+            
+
+            # Write the entire updated file content
+            file.seek(0)
+            file.write(entire_file)
+            file.flush()
+            os.fsync(file.fileno())
+            file.truncate()
+            file.seek(0)
+            loaded_file_data = bytearray(file.read())
     except Exception as e:
-        messagebox.showerror("Error", f"Failed to add weapon: {e}")
+        messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
+
+
     
 
-def increment_counters(file, fixed_pattern_offset, counter1_distance=501, counter2_distance=37373, counter3_distance= 37377, should_increment=True):
- 
+def increment_counters(file, fixed_pattern_offset, counter1_distance=501, counter2_distance=37373, counter3_distance=37377, should_increment=True):
     try:
         if not should_increment:
             print("No new item added. Counters not incremented.")
             return
-
-        # Counter 1
+            # Store original file position
+        original_position = file.tell()
+            # Counter 1
         counter1_offset = fixed_pattern_offset + counter1_distance
         file.seek(counter1_offset)
-        counter1_value = int.from_bytes(file.read(2), 'little')  # Read 2 bytes
-
-        # Increment the counter
-        counter1_new_value = (counter1_value + 1) & 0xFFFF  # Ensure it stays within 2 bytes
-        file.seek(counter1_offset)
-        file.write(counter1_new_value.to_bytes(2, 'little'))
-
-
-        # Counter 2
+        counter1_value = int.from_bytes(file.read(2), 'little')
+        counter1_new_value = (counter1_value + 1) & 0xFFFF
+            # Counter 2
         counter2_offset = fixed_pattern_offset + counter2_distance
         file.seek(counter2_offset)
-        counter2_value = int.from_bytes(file.read(2), 'little')  # Read 2 bytes
-        
-
-        # Increment the counter
-        counter2_new_value = (counter2_value + 1) & 0xFFFF  # Ensure it stays within 2 bytes
-        file.seek(counter2_offset)
-        file.write(counter2_new_value.to_bytes(2, 'little'))
-
-        # Counter 3
+        counter2_value = int.from_bytes(file.read(2), 'little')
+        counter2_new_value = (counter2_value + 1) & 0xFFFF
+            # Counter 3
         counter3_offset = fixed_pattern_offset + counter3_distance
         file.seek(counter3_offset)
-        counter3_value = int.from_bytes(file.read(2), 'little')  # Read 2 bytes
+        counter3_value = int.from_bytes(file.read(2), 'little')
+        counter3_new_value = (counter3_value + 1) & 0xFFFF
+            # Write all counter values back to file
+        file.seek(counter1_offset)
+        file.write(counter1_new_value.to_bytes(2, 'little'))
         
-
-        # Increment the counter
-        counter3_new_value = (counter3_value + 1) & 0xFFFF  # Ensure it stays within 2 bytes
+        file.seek(counter2_offset)
+        file.write(counter2_new_value.to_bytes(2, 'little'))
+        
         file.seek(counter3_offset)
         file.write(counter3_new_value.to_bytes(2, 'little'))
-        
-
-        # Log the updated file data at the offsets
-        log_file_data_at_offset(file, counter1_offset, length=2)
-        log_file_data_at_offset(file, counter2_offset, length=2)
-
+            # Ensure changes are written to disk
+        file.flush()
+        os.fsync(file.fileno())
+            # Restore original file position
+        file.seek(original_position)
+        print(f"Counters updated successfully:")
+        print(f"Counter 1: {counter1_value} -> {counter1_new_value} at offset {counter1_offset}")
+        print(f"Counter 2: {counter2_value} -> {counter2_new_value} at offset {counter2_offset}")
+        print(f"Counter 3: {counter3_value} -> {counter3_new_value} at offset {counter3_offset}")
     except Exception as e:
         print(f"Error incrementing counters: {e}")
         raise
+
+
 
 def log_file_data_at_offset(file, offset, length=16):
     file.seek(offset)
@@ -1544,21 +1299,6 @@ tk.Label(
     anchor="nw"
 ).pack(padx=10, pady=10, fill="x")
 
-# Add "Add Rings" tab
-add_ring_tab = ttk.Frame(add_sub_notebook)
-add_sub_notebook.add(add_ring_tab, text="Add Rings")
-
-ttk.Button(
-    add_ring_tab,
-    text="Add Rings",
-    command=show_ring_from_list  # Opens the item list window
-).pack(pady=20, padx=20)
-
-ttk.Button(
-    add_ring_tab,
-    text="Add All Rings",
-    command=show_ring_from_list_bulk  # Opens the item list window
-).pack(pady=20, padx=20)
 
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
 my_label.pack(side="top", anchor="ne", padx=10, pady=5)
