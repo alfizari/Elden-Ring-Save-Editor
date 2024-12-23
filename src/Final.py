@@ -55,7 +55,7 @@ talisman_item_patterns = inventory_talisman_hex_patterns
 
 # Main window
 window = tk.Tk()
-window.title("Dark Souls 3 Save Editor - Section-Based")
+window.title("Elden Ring Save Editor")
 
 # Global variables
 file_path_var = tk.StringVar()
