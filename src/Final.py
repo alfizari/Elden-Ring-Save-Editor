@@ -47,7 +47,11 @@ item_hex_patterns = inventory_goods_magic_hex_patterns
 
 inventory_weapons_hex_patterns = load_and_copy_json("weapons.json")
 weapon_item_patterns = inventory_weapons_hex_patterns.copy()
+inventory_armor_hex_patterns = load_and_copy_json("armor.json")
+armor_item_patterns = inventory_armor_hex_patterns
 
+inventory_talisman_hex_patterns = load_and_copy_json("talisman.json")
+talisman_item_patterns = inventory_talisman_hex_patterns
 
 # Main window
 window = tk.Tk()
@@ -361,6 +365,93 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
+##Talisman
+def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
+    global loaded_file_data  # Add this to ensure we can modify the global variable
+    try:
+        # Validate item name and fetch its ID
+        item_id = inventory_talisman_hex_patterns.get(item_name)
+        if not item_id:
+            messagebox.showerror("Error", f"Item '{item_name}' not found in goods_magic.json.")
+            return
+
+        item_id_bytes = bytes.fromhex(item_id)
+        if len(item_id_bytes) != 4:
+            messagebox.showerror("Error", f"Invalid ID for '{item_name}'. ID must be exactly 4 bytes.")
+            return
+
+        # Get file path
+        file_path = file_path_var.get()
+        section_number = current_section_var.get()
+        if not file_path or section_number == 0:
+            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+            return
+
+        # Get section information
+        section_info = SECTIONS[section_number]
+        
+        # Convert loaded_file_data to bytearray if it's not already
+        if isinstance(loaded_file_data, bytes):
+            loaded_file_data = bytearray(loaded_file_data)
+        
+        # Get current section data from loaded_file_data
+        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+
+        # Locate Fixed Pattern 1
+        fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        if fixed_pattern_offset is None:
+            messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
+            return
+
+        with open(file_path, 'r+b') as file:
+            loaded_file_data = bytearray(file.read())
+            # Add new item if it doesn't exist
+            empty_pattern = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            empty_offset = section_data.find(empty_pattern)
+            if empty_offset == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset = section_info['start'] + empty_offset + 2
+
+            # Create the default pattern
+            default_pattern = bytearray.fromhex("B2 1B 00 A0 01 00 00 00 AE 00")
+            default_pattern[:2] = item_id_bytes[:2]  # First 3 bytes from the item ID
+            
+            
+            # Counters logic
+            reference_offset = actual_offset - 4
+            file.seek(reference_offset)
+            reference_value = int.from_bytes(file.read(1), 'little')
+            new_third_counter_value = (reference_value + 2) & 0xFF
+            default_pattern[8] = new_third_counter_value
+
+            # Fourth counter logic
+            reference_offset_4th = actual_offset - 3
+            file.seek(reference_offset_4th)
+            third_byte_value = int.from_bytes(file.read(1), 'little')
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+            if new_third_counter_value == 0:  # Rollover happened
+                decimal_value = (decimal_value + 1) % 10
+            default_pattern[9] = (default_pattern[9] & 0xF0) | decimal_value
+
+            # Write the new item pattern
+            file.seek(actual_offset)
+            file.write(default_pattern)
+
+            # Update the in-memory section data
+            for i, byte in enumerate(default_pattern):
+                loaded_file_data[actual_offset + i] = byte
+
+            # Increment counters because a new item was added
+            increment_counters(file, section_info['start'] + fixed_pattern_offset)
+
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to add or update item: {e}")
 
 def find_and_replace_pattern_with_item_and_update_counters_bulk(item_name, quantity):
     global loaded_file_data  # Add this to ensure we can modify the global variable
@@ -469,8 +560,144 @@ def find_and_replace_pattern_with_item_and_update_counters_bulk(item_name, quant
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
+###Talisman
+def show_talisman_list_bulk():
+    talisman_window = tk.Toplevel(window)
+    talisman_window.title("Add or Update Items by Category")
+    talisman_window.geometry("600x600")
+    talisman_window.attributes("-topmost", True)
+    talisman_window.focus_force()
+
+    # Define categories
+    categories = {
+        "Base Game": list(inventory_talisman_hex_patterns.items())[:115],
+        "DLC": list(inventory_talisman_hex_patterns.items())[115:155],
+    }
+
+    # Store the selected categories
+    selected_categories = {category: tk.BooleanVar() for category in categories}
+
+    # Create category selection section
+    category_frame = ttk.Frame(talisman_window)
+    category_frame.pack(fill="x", padx=10, pady=10)
+    tk.Label(category_frame, text="Select Categories to Add:").pack(anchor="w")
+    for category, var in selected_categories.items():
+        ttk.Checkbutton(
+            category_frame,
+            text=category,
+            variable=var
+        ).pack(anchor="w")
+
+    # Action frame
+    action_frame = ttk.Frame(talisman_window)
+    action_frame.pack(fill="x", padx=10, pady=10)
+
+    def add_selected_items():
+        success_items = []
+        error_items = []
+
+        # Loop through selected categories and process items
+        for category, items in categories.items():
+            if selected_categories[category].get():  # Check if category is selected
+                for item_name, item_id in items:
+                    try:
+                        find_and_replace_pattern_with_talisman_and_update_counters(item_name)
+                        success_items.append(item_name)
+                    except Exception as e:
+                        error_items.append(f"{item_name}: {str(e)}")
+
+        # Consolidate success and error messages
+        if success_items:
+            messagebox.showinfo(
+                "Success",
+                f"Successfully added/updated the following items:\n{', '.join(success_items)}"
+            )
+        if error_items:
+            messagebox.showerror(
+                "Error",
+                f"Failed to add/update the following items:\n{', '.join(error_items)}"
+            )
 
 
+    # Add button
+    ttk.Button(
+        action_frame,
+        text="Add Selected Items",
+        command=add_selected_items
+    ).pack(fill="x", padx=5, pady=5)
+
+    # Close button
+    ttk.Button(
+        action_frame,
+        text="Close",
+        command=talisman_window.destroy
+    ).pack(fill="x", padx=5, pady=5)
+
+def add_item_from_talisman(item_name, item_id, parent_window):
+    
+    find_and_replace_pattern_with_talisman_and_update_counters(item_name)
+
+def show_talisman_list():
+    
+    talisman_window = tk.Toplevel(window)
+    talisman_window.title("Add Items")
+    talisman_window.geometry("600x400")
+    talisman_window.attributes("-topmost", True)  # Keeps the window on top
+    talisman_window.focus_force()  # Brings the window into focus
+
+    # Search bar for filtering items
+    search_frame = ttk.Frame(talisman_window)
+    search_frame.pack(fill="x", padx=10, pady=5)
+    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
+    search_var = tk.StringVar()
+    search_entry = ttk.Entry(search_frame, textvariable=search_var)
+    search_entry.pack(side="left", fill="x", expand=True, padx=5)
+
+    # Create a scrollable frame for the item list
+    canvas = tk.Canvas(talisman_window)
+    scrollbar = ttk.Scrollbar(talisman_window, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    def filter_items():
+        
+        for widget in scrollable_frame.winfo_children():
+            widget.destroy()
+
+        search_term = search_var.get().lower()
+        filtered_items = {k: v for k, v in inventory_talisman_hex_patterns.items() if search_term in k.lower()}
+
+        for item_name, item_id in filtered_items.items():
+            item_frame = ttk.Frame(scrollable_frame)
+            item_frame.pack(fill="x", padx=5, pady=2)
+
+            # Display item name
+            tk.Label(item_frame, text=item_name, anchor="w").pack(side="left", fill="x", expand=True)
+
+            # "Add/Update" button for each item
+            add_button = ttk.Button(
+                item_frame,
+                text="Add",
+                command=lambda name=item_name, hex_id=item_id: add_item_from_talisman(name, hex_id, talisman_window)
+            )
+            add_button.pack(side="right", padx=5)
+
+    # Filter items on search input
+    search_entry.bind("<KeyRelease>", lambda event: filter_items())
+
+    # Initially populate the list with all items
+    filter_items()
+    ##
 
 def show_goods_magic_list_bulk():
     goods_magic_window = tk.Toplevel(window)
@@ -713,7 +940,6 @@ def delete_fixed_pattern_3_bytes(file, section_start, section_end, fixed_pattern
     # Truncate to the correct length
     file.truncate(file.tell() - len(trailing_pattern))
 
-    print(f"Trailing pattern successfully deleted ({len(trailing_pattern)} bytes removed).")
 
 
 
@@ -895,10 +1121,6 @@ def add_weapon(item_name, upgrade_level, parent_window):
             # Ensure counter updates are written to disk
             file.flush()
             os.fsync(file.fileno())
-            print(f"Counters updated successfully:")
-            print(f"Counter 1: {counter1_value} -> {counter1_new_value} at offset {counter1_offset}")
-            print(f"Counter 2: {counter2_value} -> {counter2_new_value} at offset {counter2_offset}")
-            print(f"Counter 3: {counter3_value} -> {counter3_new_value} at offset {counter3_offset}")
             # Now proceed with weapon addition
             file.seek(0)
             entire_file = bytearray(file.read())
@@ -988,7 +1210,6 @@ def add_weapon(item_name, upgrade_level, parent_window):
                 
                 # Update the section in the entire file
                 entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-                print(f"Trailing pattern removed at section offset {section_trailing_offset}")
             else:
                 print("No trailing pattern found above Fixed Pattern 3 within section boundaries")
 
@@ -1014,8 +1235,285 @@ def add_weapon(item_name, upgrade_level, parent_window):
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
 
+## armor
+def add_armor(item_name, parent_window):
+    try:
+        global loaded_file_data
+        # Validate weapon name and fetch its ID
+        armor_id = inventory_armor_hex_patterns.get(item_name)
+        if not armor_id:
+            messagebox.showerror("Error", f"Weapon '{item_name}' not found in weapons.json.")
+            return
+        armor_id_bytes = bytearray.fromhex(armor_id)
+        if len(armor_id_bytes) != 4:
+            messagebox.showerror("Error", f"Invalid ID for '{item_name}'. ID must be exactly 4 bytes.")
+            return
 
-    
+        # Get the file path
+        file_path = file_path_var.get()
+        section_number = current_section_var.get()
+        if not file_path or section_number == 0:
+            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+            return
+
+        section_info = SECTIONS[section_number]
+        section_start = section_info['start']
+        section_end = section_info['end']
+
+        with open(file_path, 'r+b') as file:
+            # Read the entire file content
+            file.seek(0)
+            entire_file = bytearray(file.read())
+            original_size = len(entire_file)
+            
+            # Read section data
+            section_data = entire_file[section_start:section_end + 1]
+            
+            
+
+            # Define Fixed Pattern 3
+            fixed_pattern_3 = bytearray.fromhex(
+                "00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF"
+            )
+
+            # Locate Fixed Pattern 3
+            fixed_pattern_3_offset = find_hex_offset(section_data, fixed_pattern_3.hex())
+            if fixed_pattern_3_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 3 not found in the file.")
+                return
+            # Update counters FIRST and write them immediately
+            counter1_offset = section_info['start'] + fixed_pattern_3_offset + 501
+            counter2_offset = section_info['start'] + fixed_pattern_3_offset + 37373
+            counter3_offset = section_info['start'] + fixed_pattern_3_offset + 37377
+            # Read current counter values
+            file.seek(counter1_offset)
+            counter1_value = int.from_bytes(file.read(2), 'little')
+            file.seek(counter2_offset)
+            counter2_value = int.from_bytes(file.read(2), 'little')
+            file.seek(counter3_offset)
+            counter3_value = int.from_bytes(file.read(2), 'little')
+            # Calculate new values
+            counter1_new_value = (counter1_value + 1) & 0xFFFF
+            counter2_new_value = (counter2_value + 1) & 0xFFFF
+            counter3_new_value = (counter3_value + 1) & 0xFFFF
+            # Write new counter values immediately
+            file.seek(counter1_offset)
+            file.write(counter1_new_value.to_bytes(2, 'little'))
+            file.seek(counter2_offset)
+            file.write(counter2_new_value.to_bytes(2, 'little'))
+            file.seek(counter3_offset)
+            file.write(counter3_new_value.to_bytes(2, 'little'))
+            
+            # Ensure counter updates are written to disk
+            file.flush()
+            os.fsync(file.fileno())
+            # Now proceed with weapon addition
+            file.seek(0)
+            entire_file = bytearray(file.read())
+            section_data = entire_file[section_info['start']:section_info['end']+1]
+            
+            # Search for Fixed Pattern 1
+            pattern_1_hex = "00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF"
+            fixed_pattern_1 = bytearray.fromhex(pattern_1_hex)
+
+            fixed_pattern_1_offset = search_fixed_pattern(
+                section_data,
+                fixed_pattern_1,
+                fixed_pattern_3_offset
+            )
+
+            if fixed_pattern_1_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 1 not found in the file.")
+                return
+
+            
+            default_pattern_1= bytearray.fromhex("CD 12 80 90 3C 28 00 10 00 00 00 00 00 00 00 00")
+        
+            armor_id_offset = 4
+            byte_60th_offset = fixed_pattern_1_offset + 8 - 16
+            byte_59th_offset = fixed_pattern_1_offset + 8 - 15
+
+            # Update default pattern with weapon ID and counter values
+            default_pattern_1[armor_id_offset:armor_id_offset + 4] = armor_id_bytes
+
+            # Read and update counter values
+            byte_60th = section_data[byte_60th_offset]
+            byte_59th = section_data[byte_59th_offset]
+            new_byte_60th = (byte_60th + 1) & 0xFF
+            default_pattern_1[0] = new_byte_60th
+            if new_byte_60th == 0:
+                new_byte_59th = (byte_59th + 1) & 0xFF
+                default_pattern_1[1] = new_byte_59th
+            else:
+                default_pattern_1[1] = byte_59th
+                    
+            # Inject first pattern
+            inject_offset = fixed_pattern_1_offset + 8
+            section_data[inject_offset:inject_offset] = default_pattern_1
+
+
+            # Search for empty pattern
+            empty_pattern = bytes.fromhex("00" * 1024)  # 1024 zeros
+            empty_offset = section_data.find(empty_pattern)
+            if empty_offset == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset = empty_offset + 2
+
+            # Create and update default pattern 2
+            default_pattern_2 = bytearray.fromhex("35 02 80 90 01 00 00 00 6B 01")
+            default_pattern_2[0] = new_byte_60th
+            default_pattern_2[1] = byte_59th
+
+            # Update counters for pattern 2
+            reference_value = section_data[actual_offset - 4]
+            new_third_counter_value = (reference_value + 2) & 0xFF
+            default_pattern_2[8] = new_third_counter_value
+
+            third_byte_value = section_data[actual_offset - 3]
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+            if new_third_counter_value == 0:
+                decimal_value = (decimal_value + 1) % 10
+            default_pattern_2[9] = (default_pattern_2[9] & 0xF0) | decimal_value
+
+            # Inject second pattern
+            section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
+
+            trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
+            section_trailing_offset = search_fixed_pattern(
+                section_data,
+                trailing_pattern,
+                fixed_pattern_3_offset
+            )
+            
+            if section_trailing_offset != -1 and section_trailing_offset is not None:
+                # Remove the trailing pattern from section_data
+                section_data = section_data[:section_trailing_offset] + section_data[section_trailing_offset + 8:]
+                
+                # Update the section in the entire file
+                entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
+                
+            else:
+                print("No trailing pattern found above Fixed Pattern 3 within section boundaries")
+
+            # Remove bytes from section end
+            bytes_to_remove = 8
+
+            # Find the new position of the section's end based on bytes_to_remove
+            # Remove bytes from above the end of the section (above section_end)
+            section_data = section_data[:-bytes_to_remove]
+            if len(section_data) > section_end - section_start + 1:
+                section_data = section_data[:section_end - section_start + 1]
+            entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
+            
+
+            # Write the entire updated file content
+            file.seek(0)
+            file.write(entire_file)
+            file.flush()
+            os.fsync(file.fileno())
+            file.truncate()
+            file.seek(0)
+            loaded_file_data = bytearray(file.read())
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
+def show_armor_list():
+   
+    armor_window = tk.Toplevel(window)
+    armor_window.title("Add Armors")
+    armor_window.geometry("600x400")
+    armor_window.attributes("-topmost", True)  # Keep the window on top
+    armor_window.focus_force()  # Bring the window to the front
+
+    # Search bar for filtering weapons
+    search_frame = ttk.Frame(armor_window)
+    search_frame.pack(fill="x", padx=10, pady=5)
+    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
+    armor_search_var = tk.StringVar()
+    search_entry = ttk.Entry(search_frame, textvariable=armor_search_var)
+    search_entry.pack(side="left", fill="x", expand=True, padx=5)
+
+    # Create a scrollable frame for the weapon list
+    canvas = tk.Canvas(armor_window)
+    scrollbar = ttk.Scrollbar(armor_window, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    def filter_armor():
+        
+        for widget in scrollable_frame.winfo_children():
+            widget.destroy()
+
+        search_term = armor_search_var.get().lower()
+        filtered_armor = {
+            k: v for k, v in inventory_armor_hex_patterns.items() if search_term in k.lower()
+        }
+
+        for armor_name, armor_id in filtered_armor.items():
+            armor_frame = ttk.Frame(scrollable_frame)
+            armor_frame.pack(fill="x", padx=5, pady=2)
+
+            # Display weapon name
+            tk.Label(armor_frame, text=armor_name, anchor="w").pack(side="left", fill="x", expand=True)
+
+            # "Add" button for each weapon
+            add_button = ttk.Button(
+                armor_frame,
+                text="Add",
+                command=lambda name=armor_name: add_armor(name, armor_window)
+            )
+            add_button.pack(side="right", padx=5)
+
+    # Filter weapons on search input
+    search_entry.bind("<KeyRelease>", lambda event: filter_armor())
+
+    # Initially populate the list with all weapons
+    filter_armor()
+
+def show_armor_window_bulk():
+    armor_window = tk.Toplevel(window)
+    armor_window.title("Add All Armors")
+    armor_window.geometry("300x150")
+    armor_window.attributes("-topmost", True)  # Keep the window on top
+    armor_window.focus_force()  # Bring the window to the front
+
+    # Add a label for instructions
+    tk.Label(
+        armor_window, 
+        text="Click the button below to add all armors.", 
+        wraplength=280, 
+        justify="center"
+    ).pack(pady=20)
+
+    # Bulk Add All Weapons Button
+    bulk_add_button = ttk.Button(
+        armor_window,
+        text="Add All Armor",
+        command=lambda: bulk_add_armor(armor_window)
+    )
+    bulk_add_button.pack(fill="x", padx=20, pady=10)
+
+def bulk_add_armor(parent_window):
+    try:
+        for armor_name in inventory_armor_hex_patterns.keys():
+            add_armor(armor_name, parent_window)
+        messagebox.showinfo("Success", "All weapons added successfully at upgrade level 0.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to add all weapons: {e}")    
 
 def increment_counters(file, fixed_pattern_offset, counter1_distance=501, counter2_distance=37373, counter3_distance=37377, should_increment=True):
     try:
@@ -1053,10 +1551,6 @@ def increment_counters(file, fixed_pattern_offset, counter1_distance=501, counte
         os.fsync(file.fileno())
             # Restore original file position
         file.seek(original_position)
-        print(f"Counters updated successfully:")
-        print(f"Counter 1: {counter1_value} -> {counter1_new_value} at offset {counter1_offset}")
-        print(f"Counter 2: {counter2_value} -> {counter2_new_value} at offset {counter2_offset}")
-        print(f"Counter 3: {counter3_value} -> {counter3_new_value} at offset {counter3_offset}")
     except Exception as e:
         print(f"Error incrementing counters: {e}")
         raise
@@ -1289,7 +1783,7 @@ ttk.Button(
 
 # Add instruction for "Add Items" tab
 add_items_instructions = """
-DO NOT ADD TITANITE SLAB OVER 15. DO NOT ADD ANY KEYS
+Don't add too much
 """
 tk.Label(
     add_items_tab,
@@ -1298,6 +1792,36 @@ tk.Label(
     justify="left",
     anchor="nw"
 ).pack(padx=10, pady=10, fill="x")
+
+add_armor_tab = ttk.Frame(notebook)
+add_sub_notebook.add(add_armor_tab, text="Add Armors")
+
+ttk.Button(
+    add_armor_tab,
+    text="Add Armors",
+    command=show_armor_list  # Opens the item list window
+).pack(pady=20, padx=20)
+
+ttk.Button(
+    add_armor_tab,
+    text="Add All Armors",
+    command=show_armor_window_bulk  # Opens the item list window
+).pack(pady=20, padx=20)
+
+add_talisman_tab = ttk.Frame(add_sub_notebook)
+add_sub_notebook.add(add_talisman_tab, text="Add Talisman")
+
+ttk.Button(
+    add_talisman_tab,
+    text="Add",
+    command=show_talisman_list  # Opens the item list window
+).pack(pady=20, padx=20)
+
+ttk.Button(
+    add_talisman_tab,
+    text="Add Bulk Talisman",
+    command=show_talisman_list_bulk  # Opens the item list window
+).pack(pady=20, padx=20)
 
 
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
