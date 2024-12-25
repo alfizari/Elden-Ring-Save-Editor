@@ -1624,14 +1624,7 @@ def show_weapons_list():
 
 
 def select_weapon_upgrade(weapon_name, weapons_window):
-    upgrade_level = simpledialog.askinteger(
-        title="Upgrade Level",
-        prompt="Enter the upgrade level (0-10):",
-        parent=weapons_window,
-        minvalue=0,
-        maxvalue=10
-    )
-
+    upgrade_level= 0
     if upgrade_level is not None:  # Check if the user clicked "OK" and didn't cancel
         add_weapon(weapon_name, upgrade_level, weapons_window)
     else:
