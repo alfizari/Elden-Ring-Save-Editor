@@ -708,7 +708,8 @@ def show_goods_magic_list_bulk():
 
     # Define categories
     categories = {
-        "Consumables": list(inventory_goods_magic_hex_patterns.items())[:227],
+        "Base Game": list(inventory_goods_magic_hex_patterns.items())[:173],
+        "DLC": list(inventory_goods_magic_hex_patterns.items())[:227],
         
     }
 
@@ -734,22 +735,13 @@ def show_goods_magic_list_bulk():
         success_items = []
         error_items = []
 
-        # Define category-specific quantity limits
-        category_quantity_limits = {
-            "Coals": 99,
-            "Ashes/Bone": 99,
-            "Tome/Scroll": 99,
-            "Magic": 99, 
-
-        }
 
         # Loop through selected categories and process items
         for category, items in categories.items():
             if selected_categories[category].get():  # Check if category is selected
-                max_quantity = category_quantity_limits.get(category, 99)  # Default to 99 if not specified
                 for item_name, item_id in items:
                     try:
-                        find_and_replace_pattern_with_item_and_update_counters_bulk(item_name, quantity=max_quantity)
+                        find_and_replace_pattern_with_item_and_update_counters_bulk(item_name, quantity=99)
                         success_items.append(item_name)
                     except Exception as e:
                         error_items.append(f"{item_name}: {str(e)}")
@@ -1652,30 +1644,73 @@ def show_weapons_window_bulk():
     weapons_window.geometry("300x150")
     weapons_window.attributes("-topmost", True)  # Keep the window on top
     weapons_window.focus_force()  # Bring the window to the front
+    # Define categories
+    categories = {
+        "Base Game": list(inventory_weapons_hex_patterns.items())[:250],
+        "DLC": list(inventory_weapons_hex_patterns.items())[250:264],
+    }
 
-    # Add a label for instructions
-    tk.Label(
-        weapons_window, 
-        text="Click the button below to add all weapons at upgrade level 0.", 
-        wraplength=280, 
-        justify="center"
-    ).pack(pady=20)
+    # Store the selected categories
+    selected_categories = {category: tk.BooleanVar() for category in categories}
 
-    # Bulk Add All Weapons Button
-    bulk_add_button = ttk.Button(
-        weapons_window,
-        text="Add All Weapons",
-        command=lambda: bulk_add_weapons(weapons_window)
-    )
-    bulk_add_button.pack(fill="x", padx=20, pady=10)
+    # Create category selection section
+    category_frame = ttk.Frame(weapons_window)
+    category_frame.pack(fill="x", padx=10, pady=10)
+    tk.Label(category_frame, text="Select Categories to Add:").pack(anchor="w")
+    for category, var in selected_categories.items():
+        ttk.Checkbutton(
+            category_frame,
+            text=category,
+            variable=var
+        ).pack(anchor="w")
 
-def bulk_add_weapons(parent_window):
-    try:
-        for weapon_name in inventory_weapons_hex_patterns.keys():
-            add_weapon(weapon_name, 0, parent_window)
-        messagebox.showinfo("Success", "All weapons added successfully at upgrade level 0.")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to add all weapons: {e}")
+    # Action frame
+    action_frame = ttk.Frame(weapons_window)
+    action_frame.pack(fill="x", padx=10, pady=10)
+
+    def add_selected_items():
+        success_items = []
+        error_items = []
+
+        # Loop through selected categories and process items
+        for category, items in categories.items():
+            if selected_categories[category].get():  # Check if category is selected
+                for weapon_name, item_id in items:
+                    try:
+                        add_weapon(weapon_name, 0, weapons_window)
+                        success_items.append(weapon_name)
+                    except Exception as e:
+                        error_items.append(f"{weapon_name}: {str(e)}")
+
+        # Consolidate success and error messages
+        if success_items:
+            messagebox.showinfo(
+                "Success",
+                f"Successfully added/updated the following items:\n{', '.join(success_items)}"
+            )
+        if error_items:
+            messagebox.showerror(
+                "Error",
+                f"Failed to add/update the following items:\n{', '.join(error_items)}"
+            )
+
+
+    # Add button
+    ttk.Button(
+        action_frame,
+        text="Add Selected Items",
+        command=add_selected_items
+    ).pack(fill="x", padx=5, pady=5)
+
+    # Close button
+    ttk.Button(
+        action_frame,
+        text="Close",
+        command=weapons_window.destroy
+    ).pack(fill="x", padx=5, pady=5)
+
+
+
 
 
 # UI Layout
