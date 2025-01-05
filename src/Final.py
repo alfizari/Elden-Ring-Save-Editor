@@ -10,7 +10,7 @@ from time import time
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF'
 possible_name_distances_for_name_tap = [-283]
-souls_distance = -219
+souls_distance = -331
 stamina_distance= -275
 ng_distance=-5 ##new game from pattern2
 goods_magic_offset = 0
@@ -52,6 +52,9 @@ armor_item_patterns = inventory_armor_hex_patterns
 
 inventory_talisman_hex_patterns = load_and_copy_json("talisman.json")
 talisman_item_patterns = inventory_talisman_hex_patterns
+
+inventory_aow_hex_patterns = load_and_copy_json("aow.json")
+aow_item_patterns = inventory_aow_hex_patterns
 
 # Main window
 window = tk.Tk()
@@ -442,9 +445,151 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
             file.seek(actual_offset)
             file.write(default_pattern)
 
+
             # Update the in-memory section data
             for i, byte in enumerate(default_pattern):
                 loaded_file_data[actual_offset + i] = byte
+
+            # Increment counters because a new item was added
+            increment_counters(file, section_info['start'] + fixed_pattern_offset)
+
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to add or update item: {e}")
+
+## AOW add
+def find_and_replace_pattern_with_aow_and_update_counters(item_name):
+    global loaded_file_data  # Add this to ensure we can modify the global variable
+    try:
+        # Validate item name and fetch its ID
+        item_id = inventory_aow_hex_patterns.get(item_name)
+        if not item_id:
+            messagebox.showerror("Error", f"Item '{item_name}' not found in aow.json.")
+            return
+
+        item_id_bytes = bytes.fromhex(item_id)
+        if len(item_id_bytes) != 4:
+            messagebox.showerror("Error", f"Invalid ID for '{item_name}'. ID must be exactly 4 bytes.")
+            return
+
+        # Get file path
+        file_path = file_path_var.get()
+        section_number = current_section_var.get()
+        if not file_path or section_number == 0:
+            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+            return
+
+        # Get section information
+        section_info = SECTIONS[section_number]
+        
+        # Convert loaded_file_data to bytearray if it's not already
+        if isinstance(loaded_file_data, bytes):
+            loaded_file_data = bytearray(loaded_file_data)
+        
+        # Get current section data from loaded_file_data
+        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+
+        # Locate Fixed Pattern 1
+        fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        if fixed_pattern_offset is None:
+            messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
+            return
+
+        with open(file_path, 'r+b') as file:
+            loaded_file_data = bytearray(file.read())
+            # Add new item if it doesn't exist
+            empty_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
+            empty_offset = section_data.find(empty_pattern)
+            if empty_offset == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset = section_info['start'] + empty_offset 
+
+            # Create the default pattern
+            default_pattern = bytearray.fromhex("D0 04 80 C0 30 75 00 80")
+            default_pattern[4:8] = item_id_bytes  # Replace all 4 bytes of the item ID
+            
+            
+            # Counters logic
+            reference_offset = actual_offset - 8
+            file.seek(reference_offset)
+            reference_value = int.from_bytes(file.read(1), 'little')
+            new_third_counter_value = (reference_value + 1) & 0xFF
+            default_pattern[0] = new_third_counter_value
+
+            # Fourth counter logic
+
+            # Fourth counter logic
+            reference_offset_4th = actual_offset - 7
+            file.seek(reference_offset_4th)
+            third_byte_value = int.from_bytes(file.read(1), 'little')  # Get the whole byte
+            default_pattern[1] = third_byte_value  # Use the whole byte value first
+
+            # Then continue with the decimal logic for the lower 4 bits
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+            if new_third_counter_value == 0:  # Rollover happened
+                decimal_value = (decimal_value + 1) % 10
+
+            # Preserve the upper 4 bits of the original value while updating the lower 4 bits
+            default_pattern[1] = (third_byte_value & 0xF0) | decimal_value
+
+            # Write the new item pattern
+            file.seek(actual_offset)
+            file.write(default_pattern)
+
+            #in the inevmentory######################
+
+
+            empty_pattern_inven = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            empty_offset_inven = section_data.find(empty_pattern_inven)
+            if empty_offset_inven == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset_inven = section_info['start'] + empty_offset_inven + 2
+
+            # Create the default pattern
+            default_pattern_inven = bytearray.fromhex("D0 12 80 C0 01 00 00 00 AE 00")
+            default_pattern_inven[0] = default_pattern[0]
+            default_pattern_inven[1] = default_pattern[1]
+    
+            
+            
+            # Counters logic
+            reference_offset_inven = actual_offset_inven - 4
+            file.seek(reference_offset_inven)
+            reference_value_inven = int.from_bytes(file.read(1), 'little')
+            new_third_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern_inven[8] = new_third_counter_value_inven
+
+            # Fourth counter logic
+            reference_offset_4th_inven = actual_offset_inven - 3
+            file.seek(reference_offset_4th_inven)
+            third_byte_value_inven = int.from_bytes(file.read(1), 'little')
+            decimal_value_inven = third_byte_value_inven & 0xF
+            if decimal_value_inven > 9:
+                decimal_value_inven = decimal_value_inven % 10
+            if new_third_counter_value_inven == 0:  # Rollover happened
+                decimal_value_inven = (decimal_value_inven + 1) % 10
+            default_pattern_inven[9] = (default_pattern_inven[9] & 0xF0) | decimal_value_inven
+
+            
+
+            # Write the new item pattern
+            file.seek(actual_offset_inven)
+            file.write(default_pattern_inven)
+
+            # Update the in-memory section data
+            for i, byte in enumerate(default_pattern):
+                loaded_file_data[actual_offset + i] = byte
+
+            for i, byte in enumerate(default_pattern_inven):
+                loaded_file_data[actual_offset_inven + i] = byte
 
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
@@ -689,6 +834,147 @@ def show_talisman_list():
                 item_frame,
                 text="Add",
                 command=lambda name=item_name, hex_id=item_id: add_item_from_talisman(name, hex_id, talisman_window)
+            )
+            add_button.pack(side="right", padx=5)
+
+    # Filter items on search input
+    search_entry.bind("<KeyRelease>", lambda event: filter_items())
+
+    # Initially populate the list with all items
+    filter_items()
+    ##
+
+
+
+##AOW
+def show_aow_list_bulk():
+    aow_window = tk.Toplevel(window)
+    aow_window.title("Add or Update Items by Category")
+    aow_window.geometry("600x600")
+    aow_window.attributes("-topmost", True)
+    aow_window.focus_force()
+
+    # Define categories
+    categories = {
+        "Base Game": list(inventory_aow_hex_patterns.items())[:115],
+        "DLC": list(inventory_aow_hex_patterns.items())[115:155],
+    }
+
+    # Store the selected categories
+    selected_categories = {category: tk.BooleanVar() for category in categories}
+
+    # Create category selection section
+    category_frame = ttk.Frame(aow_window)
+    category_frame.pack(fill="x", padx=10, pady=10)
+    tk.Label(category_frame, text="Select Categories to Add:").pack(anchor="w")
+    for category, var in selected_categories.items():
+        ttk.Checkbutton(
+            category_frame,
+            text=category,
+            variable=var
+        ).pack(anchor="w")
+
+    # Action frame
+    action_frame = ttk.Frame(aow_window)
+    action_frame.pack(fill="x", padx=10, pady=10)
+
+    def add_selected_items():
+        success_items = []
+        error_items = []
+
+        # Loop through selected categories and process items
+        for category, items in categories.items():
+            if selected_categories[category].get():  # Check if category is selected
+                for item_name, item_id in items:
+                    try:
+                        find_and_replace_pattern_with_aow_and_update_counters(item_name)
+                        success_items.append(item_name)
+                    except Exception as e:
+                        error_items.append(f"{item_name}: {str(e)}")
+
+        # Consolidate success and error messages
+        if success_items:
+            messagebox.showinfo(
+                "Success",
+                f"Successfully added/updated the following items:\n{', '.join(success_items)}"
+            )
+        if error_items:
+            messagebox.showerror(
+                "Error",
+                f"Failed to add/update the following items:\n{', '.join(error_items)}"
+            )
+
+
+    # Add button
+    ttk.Button(
+        action_frame,
+        text="Add Selected Items",
+        command=add_selected_items
+    ).pack(fill="x", padx=5, pady=5)
+
+    # Close button
+    ttk.Button(
+        action_frame,
+        text="Close",
+        command=aow_window.destroy
+    ).pack(fill="x", padx=5, pady=5)
+
+def add_item_from_aow(item_name, item_id, parent_window):
+    
+    find_and_replace_pattern_with_aow_and_update_counters(item_name)
+
+def show_aow_list():
+    
+    aow_window = tk.Toplevel(window)
+    aow_window.title("Add Items")
+    aow_window.geometry("600x400")
+    aow_window.attributes("-topmost", True)  # Keeps the window on top
+    aow_window.focus_force()  # Brings the window into focus
+
+    # Search bar for filtering items
+    search_frame = ttk.Frame(aow_window)
+    search_frame.pack(fill="x", padx=10, pady=5)
+    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
+    search_var = tk.StringVar()
+    search_entry = ttk.Entry(search_frame, textvariable=search_var)
+    search_entry.pack(side="left", fill="x", expand=True, padx=5)
+
+    # Create a scrollable frame for the item list
+    canvas = tk.Canvas(aow_window)
+    scrollbar = ttk.Scrollbar(aow_window, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    def filter_items():
+        
+        for widget in scrollable_frame.winfo_children():
+            widget.destroy()
+
+        search_term = search_var.get().lower()
+        filtered_items = {k: v for k, v in inventory_aow_hex_patterns.items() if search_term in k.lower()}
+
+        for item_name, item_id in filtered_items.items():
+            item_frame = ttk.Frame(scrollable_frame)
+            item_frame.pack(fill="x", padx=5, pady=2)
+
+            # Display item name
+            tk.Label(item_frame, text=item_name, anchor="w").pack(side="left", fill="x", expand=True)
+
+            # "Add/Update" button for each item
+            add_button = ttk.Button(
+                item_frame,
+                text="Add",
+                command=lambda name=item_name, hex_id=item_id: add_item_from_aow(name, hex_id, aow_window)
             )
             add_button.pack(side="right", padx=5)
 
@@ -1849,6 +2135,22 @@ ttk.Button(
     add_talisman_tab,
     text="Add Bulk Talisman",
     command=show_talisman_list_bulk  # Opens the item list window
+).pack(pady=20, padx=20)
+
+##AOW
+add_aow_tab = ttk.Frame(add_sub_notebook)
+add_sub_notebook.add(add_aow_tab, text="Add AOW")
+
+ttk.Button(
+    add_aow_tab,
+    text="Add",
+    command=show_aow_list  # Opens the item list window
+).pack(pady=20, padx=20)
+
+ttk.Button(
+    add_aow_tab,
+    text="Add Bulk AOW",
+    command=show_aow_list_bulk  # Opens the item list window
 ).pack(pady=20, padx=20)
 
 
