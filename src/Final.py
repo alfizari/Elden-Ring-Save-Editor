@@ -12,18 +12,28 @@ hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF F
 possible_name_distances_for_name_tap = [-283]
 souls_distance = -331
 stamina_distance= -275
-ng_distance=-5 ##new game from pattern2
+ng_distance=-280 ##new game from patternng
 goods_magic_offset = 0
 goods_magic_range = 30000
+hex_pattern_ng= 'FF FF FF FF 00 00 00 00 00 00 00 00 00 01'
 hex_pattern2_Fixed= 'FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF'
 hex_pattern5_Fixed='00 00 00 00 00 00 00 FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF'
+cookbook_hex= '80 00 00 02 00 80 20 08 02 00 80 20 00 02 00 80'
+cookbook_id = bytes.fromhex("80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 80 20 00 00 00 00 00 00 00 00 80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 02 00 80 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 00 00 00 00 00 00 00 00 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02")
+cookbook_distance= -250
+
 
 # Section Definitions
 SECTIONS = {
     1: {'start': 0, 'end': 0x28006F},
     2: {'start': 0x280070, 'end': 0x50006F},
     3: {'start': 0x500070, 'end': 0x78006F},
-    4: {'start': 0x780070, 'end': 0xA0006F}
+    4: {'start': 0x780070, 'end': 0xA0006F},
+    5: {'start': 0xA00070, 'end': 0xC8006F},
+    6: {'start': 0xC80070, 'end': 0xF0006F},
+    7: {'start': 0xF00070, 'end': 0x118006F},
+    8: {'start': 0x1180070, 'end': 0x140006F},
+    9: {'start': 0x1400070, 'end': 0x168006F}
 }
 
 
@@ -171,6 +181,12 @@ def load_section(section_number):
 
     # Try to find hex pattern in the section
     offset1 = find_hex_offset(section_data, hex_pattern1_Fixed)
+    offsetng = find_hex_offset(section_data, hex_pattern_ng)
+    if offsetng is not None:
+        #new game
+        ng_offset = offsetng+ ng_distance
+        current_ng = section_data[ng_offset] if ng_offset < len(section_data) else None
+        current_ng_var.set(current_ng if current_ng is not None else "N/A")
     
     if offset1 is not None:
         # Display Souls value
@@ -190,6 +206,7 @@ def load_section(section_number):
     else:
         current_souls_var.set("N/A")
         current_name_var.set("N/A")
+        current_ng_var.set("N/A")
 
 def write_value_at_offset(file_path, offset, value, byte_size=4):
     value_bytes = value.to_bytes(byte_size, 'little')
@@ -232,6 +249,59 @@ def update_souls_value():
         messagebox.showinfo("Success", f"Souls value updated to {new_souls_value}. Reload section to verify.")
     else:
         messagebox.showerror("Pattern Not Found", "Pattern not found in the selected section.")
+
+def update_ng_value():
+    file_path = file_path_var.get()
+    section_number = current_section_var.get()
+    
+    if not file_path or not new_ng_var.get() or section_number == 0:
+        messagebox.showerror("Input Error", "Please open a file and select a section!")
+        return
+    
+    try:
+        new_ng_value = int(new_ng_var.get())
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter a valid decimal number for ng+.")
+        return
+
+    section_info = SECTIONS[section_number]
+    section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+    offset1 = find_hex_offset(section_data, hex_pattern_ng)
+    
+    if offset1 is not None:
+        ng_offset = offset1 + ng_distance
+        write_value_at_offset(file_path, section_info['start'] + ng_offset, new_ng_value)
+        messagebox.showinfo("Success", f"New game + value updated to {new_ng_value}.")
+    else:
+        messagebox.showerror("Pattern Not Found", "Pattern not found in the selected section.")
+
+def cookbooks_unlock(section_number):
+    file_path = file_path_var.get()
+    current_section_var.set(section_number)
+    section_info = SECTIONS[section_number]
+    
+    with open(file_path, 'r+b') as file:
+        loaded_file_data = bytearray(file.read())
+        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+        
+        # Add new item if it doesn't exist
+        empty_pattern = bytes.fromhex("80 00 00 02 00 80 20 08 02 00 80 20 00 02 00 80")
+        empty_offset = section_data.find(empty_pattern)
+        
+        if empty_offset == -1:
+            messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+            return
+            
+        # Calculate actual offset for empty slot
+        actual_offset = section_info['start'] + empty_offset - 250
+
+        # Create the default pattern
+        cookbook_id = bytes.fromhex("80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 80 20 00 00 00 00 00 00 00 00 80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 02 00 80 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 00 00 00 00 00 00 00 00 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02")
+        
+        # Write the new item pattern
+        file.seek(actual_offset)
+        file.write(cookbook_id)
+        messagebox.showinfo("Success", "All Cookbooks unlocked")
 
 def update_character_name():
     file_path = file_path_var.get()
@@ -994,8 +1064,7 @@ def show_goods_magic_list_bulk():
 
     # Define categories
     categories = {
-        "Base Game": list(inventory_goods_magic_hex_patterns.items())[:173],
-        "DLC": list(inventory_goods_magic_hex_patterns.items())[:227],
+        "Base Game/ DLC": list(inventory_goods_magic_hex_patterns.items())[:227],
         
     }
 
@@ -2005,7 +2074,7 @@ section_frame = tk.Frame(window)
 section_frame.pack(fill="x", padx=10, pady=5)
 section_buttons = []
 
-for i in range(1, 5):
+for i in range(1, 10):
     btn = tk.Button(section_frame, text=f"Slot {i}", command=lambda x=i: load_section(x), state=tk.DISABLED)
     btn.pack(side="left", padx=5)
     section_buttons.append(btn)
@@ -2020,6 +2089,13 @@ tk.Label(name_tab, textvariable=current_name_var).grid(row=0, column=1, padx=10,
 tk.Label(name_tab, text="New Character Name:").grid(row=1, column=0, padx=10, pady=10, sticky="e")
 tk.Entry(name_tab, textvariable=new_name_var, width=20).grid(row=1, column=1, padx=10, pady=10)
 tk.Button(name_tab, text="Update Name", command=update_character_name).grid(row=2, column=0, columnspan=2, pady=20)
+
+#ng tap
+tk.Label(name_tab, text="Current NG+ (BETA):").grid(row=5, column=5, padx=10, pady=10, sticky="e")
+tk.Label(name_tab, textvariable=current_ng_var).grid(row=5, column=4, padx=10, pady=10)
+tk.Label(name_tab, text="New NG+:").grid(row=7, column=5, padx=10, pady=10, sticky="e")
+ttk.Entry(name_tab, textvariable=new_ng_var, width=20).grid(row=7, column=4, padx=10, pady=10)
+ttk.Button(name_tab, text="Update NG+", command=update_ng_value).grid(row=8, column=5, columnspan=2, pady=20)
 
 # Souls Tab
 souls_tab = ttk.Frame(notebook)
@@ -2050,7 +2126,12 @@ add_sub_notebook.pack(expand=1, fill="both")
 # Now add "add_tab" to the main notebook correctly
 notebook.add(add_tab, text="ADD")
 
+cookbook_tab = ttk.Frame(add_sub_notebook)
+add_sub_notebook.add(cookbook_tab, text="CookBooks")
 
+# Unlock All Gestures Button
+button = tk.Button(cookbook_tab, text="Unlock All Cookbooks", command=lambda: cookbooks_unlock(current_section_var.get()))
+button.grid(row=2, column=0, columnspan=2, pady=20)
 # Adding "Add Weapons" tab
 add_weapons_tab = ttk.Frame(add_sub_notebook)
 add_sub_notebook.add(add_weapons_tab, text="Add Weapons")
