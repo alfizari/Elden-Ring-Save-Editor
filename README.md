@@ -6,4 +6,4 @@ Basic editor to add items and weapons for the latest update
 -ADD AOW
 -ADD COOKBOOKS
 -CHANGE NEW GAME+ 
--EDIT RUNES
+-EDIT RUNES.
