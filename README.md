@@ -7,3 +7,5 @@ Basic editor to add items and weapons for the latest update PS4/PC
 -ADD COOKBOOKS
 -CHANGE NEW GAME+ 
 -EDIT RUNES.
+
+Using checksum from https://github.com/Ariescyn/EldenRing-Save-Manager
