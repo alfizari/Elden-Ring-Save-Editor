@@ -6,6 +6,8 @@ from tkinter import ttk, filedialog, messagebox, simpledialog, Scrollbar
 import gc
 from functools import wraps
 from time import time
+import hashlib
+import binascii
 
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF'
@@ -22,19 +24,6 @@ cookbook_hex= '80 00 00 02 00 80 20 08 02 00 80 20 00 02 00 80'
 cookbook_id = bytes.fromhex("80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 80 20 00 00 00 00 00 00 00 00 80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 02 00 80 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 00 00 00 00 00 00 00 00 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02")
 cookbook_distance= -250
 
-
-# Section Definitions
-SECTIONS = {
-    1: {'start': 0, 'end': 0x28006F},
-    2: {'start': 0x280070, 'end': 0x50006F},
-    3: {'start': 0x500070, 'end': 0x78006F},
-    4: {'start': 0x780070, 'end': 0xA0006F},
-    5: {'start': 0xA00070, 'end': 0xC8006F},
-    6: {'start': 0xC80070, 'end': 0xF0006F},
-    7: {'start': 0xF00070, 'end': 0x118006F},
-    8: {'start': 0x1180070, 'end': 0x140006F},
-    9: {'start': 0x1400070, 'end': 0x168006F}
-}
 
 
 # Set the working directory
@@ -156,19 +145,59 @@ def find_character_name(section_data, offset, byte_size=32):
         return "N/A"
 
 def open_file():
-    global loaded_file_data
+    global loaded_file_data, SECTIONS
     file_path = filedialog.askopenfilename(filetypes=[("Save Files", "*")])
+    
     if file_path:
+        file_name = os.path.basename(file_path)
         file_path_var.set(file_path)
-        file_name_label.config(text=f"File: {os.path.basename(file_path)}")
+        file_name_label.config(text=f"File: {file_name}")
         
-        # Read the entire file content
-        with open(file_path, 'rb') as file:
-            loaded_file_data = file.read()
-        
-        # Enable section buttons
-        for btn in section_buttons:
-            btn.config(state=tk.NORMAL)
+        # Define sections based on file name
+        if file_name.lower() == "memory.dat":
+            SECTIONS = {
+                1: {'start': 0, 'end': 0x28006F},
+                2: {'start': 0x280070, 'end': 0x50006F},
+                3: {'start': 0x500070, 'end': 0x78006F},
+                4: {'start': 0x780070, 'end': 0xA0006F},
+                5: {'start': 0xA00070, 'end': 0xC8006F},
+                6: {'start': 0xC80070, 'end': 0xF0006F},
+                7: {'start': 0xF00070, 'end': 0x118006F},
+                8: {'start': 0x1180070, 'end': 0x140006F},
+                9: {'start': 0x1400070, 'end': 0x168006F}
+            }
+        elif file_name.lower() == "er0000.sl2":
+            SECTIONS = {
+                1: {'start': 0, 'end': 0x28031F},
+                2: {'start': 0x280320, 'end': 0x50032F},
+                3: {'start': 0x500330, 'end': 0x78033F},
+                4: {'start': 0x780340, 'end': 0xA0034F},
+                5: {'start': 0xA00350, 'end': 0xC8035F},
+                6: {'start': 0xC80360, 'end': 0xF0036F},
+                7: {'start': 0xF00370, 'end': 0x118037F},
+                8: {'start': 0x1180380, 'end': 0x140038F},
+                9: {'start': 0x1400390, 'end': 0x168039F}
+            }
+        try:
+            with open(file_path, 'rb') as file:
+                loaded_file_data = file.read()
+            
+            # Create a backup
+            backup_path = f"{file_path}.bak1"
+            with open(backup_path, 'wb') as backup_file:
+                backup_file.write(loaded_file_data)
+            
+            messagebox.showinfo("Backup Created", f"Backup saved as {backup_path}")
+            
+            # Enable section buttons
+            for btn in section_buttons:
+                btn.config(state=tk.NORMAL)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to read file or create backup: {str(e)}")
+            return
+
+
 
 def load_section(section_number):
     if not loaded_file_data:
@@ -207,6 +236,71 @@ def load_section(section_number):
         current_souls_var.set("N/A")
         current_name_var.set("N/A")
         current_ng_var.set("N/A")
+
+def recalc_checksum(file):
+    """
+    Recalculates and updates checksum values in a binary file. Copied from Ariescyn/EldenRing-Save-Manager
+    """
+    with open(file, "rb") as fh:
+        dat = fh.read()
+        slot_ls = []
+        slot_len = 2621439
+        cs_len = 15
+        s_ind = 0x00000310
+        c_ind = 0x00000300
+
+        # Build nested list containing data and checksum related to each slot
+        for i in range(10):
+            d = dat[s_ind : s_ind + slot_len + 1]  # Extract data for the slot
+            c = dat[c_ind : c_ind + cs_len + 1]  # Extract checksum for the slot
+            slot_ls.append([d, c])  # Append the data and checksum to the slot list
+            s_ind += 2621456  # Increment the slot data index
+            c_ind += 2621456  # Increment the checksum index
+
+        # Do comparisons and recalculate checksums
+        for ind, i in enumerate(slot_ls):
+            new_cs = hashlib.md5(i[0]).hexdigest()  # Recalculate the checksum for the data
+            cur_cs = binascii.hexlify(i[1]).decode("utf-8")  # Convert the current checksum to a string
+
+            if new_cs != cur_cs:  # Compare the recalculated and current checksums
+                slot_ls[ind][1] = binascii.unhexlify(new_cs)  # Update the checksum in the slot list
+
+        slot_len = 2621439
+        cs_len = 15
+        s_ind = 0x00000310
+        c_ind = 0x00000300
+        # Insert all checksums into data
+        for i in slot_ls:
+            dat = dat[:s_ind] + i[0] + dat[s_ind + slot_len + 1 :]  # Update the data in the original data
+            dat = dat[:c_ind] + i[1] + dat[c_ind + cs_len + 1 :]  # Update the checksum in the original data
+            s_ind += 2621456  # Increment the slot data index
+            c_ind += 2621456  # Increment the checksum index
+
+        # Manually doing General checksum
+        general = dat[0x019003B0 : 0x019603AF + 1]  # Extract the data for the general checksum
+        new_cs = hashlib.md5(general).hexdigest()  # Recalculate the general checksum
+        cur_cs = binascii.hexlify(dat[0x019003A0 : 0x019003AF + 1]).decode("utf-8")  # Convert the current general checksum to a string
+
+        writeval = binascii.unhexlify(new_cs)  # Convert the recalculated general checksum to bytes
+        dat = dat[:0x019003A0] + writeval + dat[0x019003AF + 1 :]  # Update the general checksum in the original data
+
+        with open(file, "wb") as fh1:
+            fh1.write(dat)  # Write the updated data to the file
+
+# Function to handle button click
+def activate_checksum():
+    file_path = filedialog.askopenfilename(
+        title="Select Save File",
+        filetypes=(("ER0000", "*.sl2"), ("All Files", "*.*"))
+    )
+    if file_path:
+        try:
+            recalc_checksum(file_path)
+            messagebox.showinfo("Success", "Checksum recalculated and updated successfully.")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+    else:
+        messagebox.showwarning("No File Selected", "Please select a file to recalculate checksum.")
 
 def write_value_at_offset(file_path, offset, value, byte_size=4):
     value_bytes = value.to_bytes(byte_size, 'little')
@@ -785,8 +879,8 @@ def show_talisman_list_bulk():
 
     # Define categories
     categories = {
-        "Base Game": list(inventory_talisman_hex_patterns.items())[:115],
-        "DLC": list(inventory_talisman_hex_patterns.items())[115:155],
+        "Base Game": list(inventory_talisman_hex_patterns.items())[:114],
+        "DLC": list(inventory_talisman_hex_patterns.items())[114:155],
     }
 
     # Store the selected categories
@@ -2068,6 +2162,8 @@ file_open_frame.pack(fill="x", padx=10, pady=5)
 tk.Button(file_open_frame, text="Open Save File", command=open_file).pack(side="left", padx=5)
 file_name_label = tk.Label(file_open_frame, text="No file selected", anchor="w")
 file_name_label.pack(side="left", padx=10, fill="x")
+activate_button = tk.Button(window, text="Activate PC SAVE (AFTER EDITING)", command=activate_checksum)
+activate_button.pack(pady=20)
 
 # Section Selection Frame
 section_frame = tk.Frame(window)
