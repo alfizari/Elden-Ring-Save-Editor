@@ -1,4 +1,4 @@
-Basic editor to add items and weapons for the latest update
+Basic editor to add items and weapons for the latest update PS4/PC
 -ADD WEAPONS
 -ADD GOODS
 -ADD TALISMAN
