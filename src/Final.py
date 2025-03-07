@@ -8,7 +8,8 @@ from functools import wraps
 from time import time
 import hashlib
 import binascii
-
+import re
+import shutil
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF'
 possible_name_distances_for_name_tap = [-283]
@@ -54,6 +55,9 @@ talisman_item_patterns = inventory_talisman_hex_patterns
 
 inventory_aow_hex_patterns = load_and_copy_json("aow.json")
 aow_item_patterns = inventory_aow_hex_patterns
+
+inventory_all_hex_patterns = load_and_copy_json("output.json")
+all_item_patterns = inventory_all_hex_patterns
 
 # Main window
 window = tk.Tk()
@@ -421,9 +425,253 @@ def update_character_name():
     messagebox.showerror("Error", "Could not find name offset in the selected section.")
 
 
+def save_file_as():
+    global loaded_file_data
+    
+    if loaded_file_data is None or len(loaded_file_data) == 0:
+        messagebox.showerror("Error", "No data loaded to save.")
+        return
+    
+    # Open file dialog to let user choose where to save
+    file_path = filedialog.asksaveasfilename(
+        defaultextension="memory.dat",
+        filetypes=[("All files", "*.*")],
+        title="Save File As"
+    )
+    
+    if not file_path:  # User canceled the dialog
+        return
+    
+    try:
+        # Write the entire loaded_file_data to the selected file
+        with open(file_path, 'wb') as file:
+            file.write(loaded_file_data)
+        
+        messagebox.showinfo("Success", f"File saved successfully to:\n{file_path}")
+        
+        # Optionally update the current file path if you want to continue working with this file
+        file_path_var.set(file_path)
+        
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save file: {e}")
+
+def save_file():
+    global loaded_file_data
+    
+    current_file_path = file_path_var.get()
+    if not current_file_path:
+        # If no file is currently loaded, call save_file_as instead
+        return save_file_as()
+    
+    try:
+        # Create a backup of the current file
+        backup_path = current_file_path + ".bak"
+        if os.path.exists(current_file_path):
+            shutil.copy2(current_file_path, backup_path)
+        
+        # Write the entire loaded_file_data to the file
+        with open(current_file_path, 'wb') as file:
+            file.write(loaded_file_data)
+        
+        messagebox.showinfo("Success", f"File saved successfully to:\n{current_file_path}")
+        
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save file: {e}")
+##Counter logic
+
+cached_counter_results = {}
+cached_counter_results_in = {}
+
+def find_highest_counter(section_data, section_info, hex_pattern1_Fixed, use_cache=True):
+    global cached_counter_results
+    
+    # Check if we have cached results for this section and pattern
+    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
+    if use_cache and cache_key in cached_counter_results:
+        print("Using cached counter values")
+        return cached_counter_results[cache_key]
+    
+    print("Performing counter search - this may take a moment...")
+    
+    # Convert hex pattern to bytes
+    fixed_bytes = bytearray.fromhex(hex_pattern1_Fixed)
+
+    # Find `hex_pattern1_Fixed` in the section
+    fixed_match = re.search(re.escape(fixed_bytes), section_data)
+
+    if not fixed_match:
+        print("Error: hex_pattern1_Fixed not found in the section.")
+        return 0, 1, None  # Default values if not found
+
+    fixed_offset = fixed_match.start()  # Get the starting offset of hex_pattern1_Fixed
+    start_offset = section_info['start'] + 10   # Start searching 10 bytes after section start
+
+    highest_counter_4th = 0
+    highest_counter_3rd = 0
+    highest_offset = None
+
+    # Search for the specific 2-byte patterns
+    for match in re.finditer(b'\x80\xC0|\x80\x80|\x80\x90', section_data):
+        offset = match.start()
+
+        # Ensure we're not out of bounds before checking marker condition
+        if offset < 2:
+            continue
+
+        # Convert to absolute offset
+        absolute_offset = section_info['start'] + offset
+
+        # Stop the search if we reach the fixed pattern
+        if offset >= fixed_offset:
+            break  # Stop processing once we reach the fixed_offset
+
+        # Only process offsets within the defined range
+        if absolute_offset < start_offset:
+            continue 
+
+        # Get counters
+        counter_4th = section_data[offset - 2]
+        counter_3rd = section_data[offset - 1]
+
+        if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
+            highest_counter_3rd = counter_3rd
+            highest_counter_4th = counter_4th
+            highest_offset = absolute_offset
+
+    # If no valid markers were found, default counters to zero
+    if highest_offset is None:
+        highest_counter_3rd = 0
+        highest_counter_4th = 1
+        highest_offset = "N/A"
+    
+    # Save results to cache
+    result = (highest_counter_3rd, highest_counter_4th, highest_offset)
+    cached_counter_results[cache_key] = result
+    
+    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}")
+    
+    return result
+
+# Function to update cached counters after an item is added
+def update_cached_counters(section_info, hex_pattern1_Fixed, new_3rd, new_4th, new_offset):
+    global cached_counter_results
+    
+    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
+    cached_counter_results[cache_key] = (new_3rd, new_4th, new_offset)
+    print(f"Updated cached counters: 3rd={new_3rd}, 4th={new_4th}")
+
+### for the invenoty 
+
+import re
+
+def find_highest_inventory_counter_inventory(section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns, use_cache=True):
+    global cached_counter_results_in
+    # Check if we have cached results for this section and pattern
+    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
+    if use_cache and cache_key in cached_counter_results_in:
+        print("Using cached counter values")
+        return cached_counter_results_in[cache_key]
+    
+    fixed_bytes = bytearray.fromhex(hex_pattern1_Fixed)
+
+    # Find `hex_pattern1_Fixed` in the section
+    fixed_match = re.search(re.escape(fixed_bytes), section_data)
+
+    if not fixed_match:
+        print("Error: hex_pattern1_Fixed not found in the section.")
+        return 0, 1, None, None  # Default values if not found
+
+    fixed_offset = fixed_match.start()  # Get the starting offset of hex_pattern1_Fixed
+    
+    # Calculate relative search window in section_data coordinates
+    start_search = fixed_offset + 0x2C1  # Start searching 0x2C1 bytes after fixed pattern
+    end_search = fixed_offset + 0x91FB  # Limit to a reasonable range like 4KB
+    
+    # Ensure we don't go out of bounds
+    if end_search >= len(section_data):
+        end_search = len(section_data) - 1
+
+    highest_counter_4th = 0
+    highest_counter_3rd = 0
+    highest_offset = None
+    found_id = None
+
+    # Search for all IDs within the proper range
+    for weapon_id, item_hex in inventory_all_hex_patterns.items():
+        item_bytes = bytearray.fromhex(item_hex)
+        for match in re.finditer(re.escape(item_bytes), section_data[start_search:end_search]):
+            # The offset is relative to our sliced search area, adjust it
+            offset = start_search + match.start()
+
+            # Ensure there are enough preceding bytes to check
+            if offset < 6:
+                continue
+
+            # Skip IDs where "00 00 00" appears before them
+            if section_data[offset - 6:offset - 3] == b'\x00\x00\x00':
+                continue
+
+            # Convert to absolute offset
+            absolute_offset = section_info['start'] + offset
+
+            # Get counter values
+            counter_4th = section_data[offset + 6]
+            counter_3rd = section_data[offset + 7]
+
+            # Update highest counter if this occurrence has a higher value
+            if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
+                highest_counter_3rd = counter_3rd
+                highest_counter_4th = counter_4th
+                highest_offset = absolute_offset
+                found_id = item_bytes.hex().upper()
+
+    # Search for markers separately within the same range
+    marker_bytes = [b'\x80\xC0', b'\x80\x80', b'\x80\x90']
+    for marker in marker_bytes:
+        for match in re.finditer(re.escape(marker), section_data[start_search:end_search]):
+            # Adjust offset to be relative to the full section_data
+            offset = start_search + match.start()
+
+            # Ensure there are enough bytes before and after to safely check
+            if offset < 6 or offset + 6 >= len(section_data):
+                continue
+
+            # Convert to absolute offset
+            absolute_offset = section_info['start'] + offset
+
+            # Get counter values
+            counter_4th = section_data[offset + 6]
+            counter_3rd = section_data[offset + 7]
+
+            # Update highest counter if this occurrence has a higher value
+            if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
+                highest_counter_3rd = counter_3rd
+                highest_counter_4th = counter_4th
+                highest_offset = absolute_offset
+                found_id = marker.hex().upper()
+
+    # If no valid ID or marker was found, return default values
+    if highest_offset is None:
+        highest_counter_3rd = 0
+        highest_counter_4th = 1  # Start at 1 to avoid using 0
+        highest_offset = "N/A"
+        found_id = "None"
+
+    result = (highest_counter_3rd, highest_counter_4th, highest_offset, found_id)
+    cached_counter_results_in[cache_key] = result
+    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}")
+    return highest_counter_3rd, highest_counter_4th, highest_offset, found_id
+
+def update_cached_counters_inven(section_info, hex_pattern1_Fixed, new_3rd_in, new_4th_in, new_offset, found_id="None"):
+    global cached_counter_results_in
+    
+    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
+    cached_counter_results_in[cache_key] = (new_3rd_in, new_4th_in, new_offset, found_id)
+    print(f"Updated cached counters: 3rd={new_3rd_in}, 4th={new_4th_in}")   
+
 ## ADD items
 def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
-    global loaded_file_data  # Add this to ensure we can modify the global variable
+    global loaded_file_data, cached_counter_results_in  # Add this to ensure we can modify the global variable
     try:
         # Validate item name and fetch its ID
         item_id = inventory_goods_magic_hex_patterns.get(item_name)
@@ -497,32 +745,54 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
             default_pattern = bytearray.fromhex("A4 06 00 B0 03 00 00 00 1F 01")
             default_pattern[:4] = item_id_bytes[:4]  # First 3 bytes from the item ID
             default_pattern[4] = quantity  # Quantity at 9th byte
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
+
             
-            # Counters logic
-            reference_offset = actual_offset - 4
-            file.seek(reference_offset)
-            reference_value = int.from_bytes(file.read(1), 'little')
-            new_third_counter_value = (reference_value + 2) & 0xFF
-            default_pattern[8] = new_third_counter_value
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern[8] = new_4th_counter_value_inven
 
-            # Fourth counter logic
-            reference_offset_4th = actual_offset - 3
-            file.seek(reference_offset_4th)
-            third_byte_value = int.from_bytes(file.read(1), 'little')
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-            if new_third_counter_value == 0:  # Rollover happened
-                decimal_value = (decimal_value + 1) % 10
-            default_pattern[9] = (default_pattern[9] & 0xF0) | decimal_value
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
 
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern[9] = high_nibble_in | low_nibble_in
+
+            # Write the new item pattern
             # Write the new item pattern
             file.seek(actual_offset)
             file.write(default_pattern)
 
-            # Update the in-memory section data
-            for i, byte in enumerate(default_pattern):
-                loaded_file_data[actual_offset + i] = byte
+            # Update cached counters
+            update_cached_counters_inven(
+                section_info, 
+                hex_pattern1_Fixed, 
+                third_byte_value_inven,  # Using the original value
+                new_4th_counter_value_inven, 
+                actual_offset,
+                found_id  # Add the found_id parameter
+            )
+
+            
+
+            section_data[actual_offset - section_info['start']:actual_offset - section_info['start'] + len(default_pattern)] = default_pattern
+
+# Update the larger data structure too, if applicable
+            loaded_file_data[actual_offset:actual_offset + len(default_pattern)] = default_pattern
 
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
@@ -534,7 +804,7 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
 ##Talisman
 def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
-    global loaded_file_data  # Add this to ensure we can modify the global variable
+    global loaded_file_data, cached_counter_results_in  # Add this to ensure we can modify the global variable
     try:
         # Validate item name and fetch its ID
         item_id = inventory_talisman_hex_patterns.get(item_name)
@@ -556,6 +826,8 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
 
         # Get section information
         section_info = SECTIONS[section_number]
+        with open(file_path, 'rb') as file:
+            loaded_file_data = bytearray(file.read())
         
         # Convert loaded_file_data to bytearray if it's not already
         if isinstance(loaded_file_data, bytes):
@@ -587,35 +859,62 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
             default_pattern[:2] = item_id_bytes[:2]  # First 3 bytes from the item ID
             
             
-            # Counters logic
-            reference_offset = actual_offset - 4
-            file.seek(reference_offset)
-            reference_value = int.from_bytes(file.read(1), 'little')
-            new_third_counter_value = (reference_value + 2) & 0xFF
-            default_pattern[8] = new_third_counter_value
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
 
-            # Fourth counter logic
-            reference_offset_4th = actual_offset - 3
-            file.seek(reference_offset_4th)
-            third_byte_value = int.from_bytes(file.read(1), 'little')
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-            if new_third_counter_value == 0:  # Rollover happened
-                decimal_value = (decimal_value + 1) % 10
-            default_pattern[9] = (default_pattern[9] & 0xF0) | decimal_value
+            
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern[8] = new_4th_counter_value_inven
 
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
+
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern[9] = high_nibble_in | low_nibble_in
+
+            # Write the new item pattern
             # Write the new item pattern
             file.seek(actual_offset)
             file.write(default_pattern)
-
-
             # Update the in-memory section data
+            # Increment counters because a new item was added
+            increment_counters(file, section_info['start'] + fixed_pattern_offset)
             for i, byte in enumerate(default_pattern):
                 loaded_file_data[actual_offset + i] = byte
 
-            # Increment counters because a new item was added
-            increment_counters(file, section_info['start'] + fixed_pattern_offset)
+            
+
+            # Update cached counters
+        update_cached_counters_inven(
+            section_info, 
+            hex_pattern1_Fixed, 
+            third_byte_value_inven,  # Using the original value
+            new_4th_counter_value_inven, 
+            actual_offset,
+            found_id  # Add the found_id parameter
+        )
+        with open(file_path, 'rb') as file:
+            loaded_file_data = bytearray(file.read())
+        
+        return True  # Indicate success
+
+            
+
+            
 
 
     except Exception as e:
@@ -623,7 +922,7 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
 
 ## AOW add
 def find_and_replace_pattern_with_aow_and_update_counters(item_name):
-    global loaded_file_data  # Add this to ensure we can modify the global variable
+    global loaded_file_data, cached_counter_results_in# Add this to ensure we can modify the global variable
     try:
         # Validate item name and fetch its ID
         item_id = inventory_aow_hex_patterns.get(item_name)
@@ -674,36 +973,47 @@ def find_and_replace_pattern_with_aow_and_update_counters(item_name):
             # Create the default pattern
             default_pattern = bytearray.fromhex("D0 04 80 C0 30 75 00 80")
             default_pattern[4:8] = item_id_bytes  # Replace all 4 bytes of the item ID
-            
+            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
+            section_data, section_info, hex_pattern1_Fixed
+            )
             
             # Counters logic
-            reference_offset = actual_offset - 8
-            file.seek(reference_offset)
-            reference_value = int.from_bytes(file.read(1), 'little')
-            new_third_counter_value = (reference_value + 1) & 0xFF
-            default_pattern[0] = new_third_counter_value
+            reference_value = highest_counter_4th
+            new_4th_counter_value = (reference_value + 1) & 0xFF
+            default_pattern[0] = new_4th_counter_value
 
-            # Fourth counter logic
 
-            # Fourth counter logic
-            reference_offset_4th = actual_offset - 7
-            file.seek(reference_offset_4th)
-            third_byte_value = int.from_bytes(file.read(1), 'little')  # Get the whole byte
-            default_pattern[1] = third_byte_value  # Use the whole byte value first
+            # For the 3rd counter
+            third_byte_value = highest_counter_3rd  # Get the whole byte
 
-            # Then continue with the decimal logic for the lower 4 bits
+            # Store the upper 4 bits (high nibble)
+            high_nibble = third_byte_value & 0xF0
+
+            # Extract decimal value from lower 4 bits
             decimal_value = third_byte_value & 0xF
             if decimal_value > 9:
                 decimal_value = decimal_value % 10
-            if new_third_counter_value == 0:  # Rollover happened
+                
+            if new_4th_counter_value == 0:  # Rollover happened
                 decimal_value = (decimal_value + 1) % 10
 
-            # Preserve the upper 4 bits of the original value while updating the lower 4 bits
-            default_pattern[1] = (third_byte_value & 0xF0) | decimal_value
+            # Combine the preserved high nibble with the modified low nibble
+            default_pattern[1] = high_nibble | decimal_value
+
+            print(f"Original third_byte_value: 0x{third_byte_value:02X}")
+            print(f"High nibble: 0x{high_nibble:02X}")
+            print(f"Modified value: 0x{default_pattern[1]:02X}")
 
             # Write the new item pattern
             file.seek(actual_offset)
             file.write(default_pattern)
+            update_cached_counters(
+            section_info, 
+            hex_pattern1_Fixed, 
+            third_byte_value, 
+            new_4th_counter_value, 
+            actual_offset  # Store the new offset where we placed the item
+        )
 
             #in the inevmentory######################
 
@@ -722,31 +1032,46 @@ def find_and_replace_pattern_with_aow_and_update_counters(item_name):
             default_pattern_inven[0] = default_pattern[0]
             default_pattern_inven[1] = default_pattern[1]
     
-            
-            
-            # Counters logic
-            reference_offset_inven = actual_offset_inven - 4
-            file.seek(reference_offset_inven)
-            reference_value_inven = int.from_bytes(file.read(1), 'little')
-            new_third_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern_inven[8] = new_third_counter_value_inven
-
-            # Fourth counter logic
-            reference_offset_4th_inven = actual_offset_inven - 3
-            file.seek(reference_offset_4th_inven)
-            third_byte_value_inven = int.from_bytes(file.read(1), 'little')
-            decimal_value_inven = third_byte_value_inven & 0xF
-            if decimal_value_inven > 9:
-                decimal_value_inven = decimal_value_inven % 10
-            if new_third_counter_value_inven == 0:  # Rollover happened
-                decimal_value_inven = (decimal_value_inven + 1) % 10
-            default_pattern_inven[9] = (default_pattern_inven[9] & 0xF0) | decimal_value_inven
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
 
             
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern_inven[8] = new_4th_counter_value_inven
+
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
+
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern_inven[9] = high_nibble_in | low_nibble_in
 
             # Write the new item pattern
             file.seek(actual_offset_inven)
             file.write(default_pattern_inven)
+
+            # Update cached counters
+            update_cached_counters_inven(
+                section_info, 
+                hex_pattern1_Fixed, 
+                third_byte_value_inven,  # Using the original value
+                new_4th_counter_value_inven, 
+                actual_offset_inven,
+                found_id  # Add the found_id parameter
+            )
 
             # Update the in-memory section data
             for i, byte in enumerate(default_pattern):
@@ -1585,26 +1910,48 @@ def add_weapon(item_name, upgrade_level, parent_window):
             default_pattern_1= bytearray.fromhex("0B 11 80 80 F0 3B 2E 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
         
             weapon_id_offset = 4
-            byte_60th_offset = fixed_pattern_1_offset + 8 - 21
-            byte_59th_offset = fixed_pattern_1_offset + 8 - 20
+            
 
             # Update default pattern with weapon ID and counter values
             default_pattern_1[weapon_id_offset:weapon_id_offset + 4] = weapon_id_bytes
+            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
+            section_data, section_info, hex_pattern1_Fixed
+            )
+            
+            # Counters logic
+            reference_value = highest_counter_4th
+            new_4th_counter_value = (reference_value + 1) & 0xFF
+            default_pattern_1[0] = new_4th_counter_value
 
-            # Read and update counter values
-            byte_60th = section_data[byte_60th_offset]
-            byte_59th = section_data[byte_59th_offset]
-            new_byte_60th = (byte_60th + 1) & 0xFF
-            default_pattern_1[0] = new_byte_60th
-            if new_byte_60th == 0:
-                new_byte_59th = (byte_59th + 1) & 0xFF
-                default_pattern_1[1] = new_byte_59th
-            else:
-                default_pattern_1[1] = byte_59th
-                    
+
+            # For the 3rd counter
+            third_byte_value = highest_counter_3rd  # Get the whole byte
+
+            # Store the upper 4 bits (high nibble)
+            high_nibble = third_byte_value & 0xF0
+
+            # Extract decimal value from lower 4 bits
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+                
+            if new_4th_counter_value == 0:  # Rollover happened
+                decimal_value = (decimal_value + 1) % 10
+
+            # Combine the preserved high nibble with the modified low nibble
+            default_pattern_1[1] = high_nibble | decimal_value
+
             # Inject first pattern
             inject_offset = fixed_pattern_1_offset + 8
             section_data[inject_offset:inject_offset] = default_pattern_1
+            update_cached_counters(
+            section_info, 
+            hex_pattern1_Fixed, 
+            third_byte_value, 
+            new_4th_counter_value, 
+            inject_offset  # Store the new offset where we placed the item
+        )
+            
 
 
             # Search for empty pattern
@@ -1619,21 +1966,35 @@ def add_weapon(item_name, upgrade_level, parent_window):
 
             # Create and update default pattern 2
             default_pattern_2 = bytearray.fromhex("35 02 80 80 01 00 00 00 6B 01")
-            default_pattern_2[0] = new_byte_60th
-            default_pattern_2[1] = byte_59th
+            default_pattern_2[0] = default_pattern_1[0]
+            default_pattern_2[1] = default_pattern_1[1]
 
-            # Update counters for pattern 2
-            reference_value = section_data[actual_offset - 4]
-            new_third_counter_value = (reference_value + 2) & 0xFF
-            default_pattern_2[8] = new_third_counter_value
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
 
-            third_byte_value = section_data[actual_offset - 3]
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-            if new_third_counter_value == 0:
-                decimal_value = (decimal_value + 1) % 10
-            default_pattern_2[9] = (default_pattern_2[9] & 0xF0) | decimal_value
+            
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern_2[8] = new_4th_counter_value_inven
+
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
+
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern_2[9] = high_nibble_in | low_nibble_in
 
             # Inject second pattern
             section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
@@ -1651,8 +2012,6 @@ def add_weapon(item_name, upgrade_level, parent_window):
                 
                 # Update the section in the entire file
                 entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-            else:
-                print("No trailing pattern found above Fixed Pattern 3 within section boundaries")
 
             # Remove bytes from section end
             bytes_to_remove = 13
@@ -1673,6 +2032,15 @@ def add_weapon(item_name, upgrade_level, parent_window):
             file.truncate()
             file.seek(0)
             loaded_file_data = bytearray(file.read())
+            # Update cached counters
+            update_cached_counters_inven(
+                section_info, 
+                hex_pattern1_Fixed, 
+                third_byte_value_inven,  # Using the original value
+                new_4th_counter_value_inven, 
+                actual_offset,
+                found_id  # Add the found_id parameter
+            )
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
 
@@ -1771,26 +2139,46 @@ def add_armor(item_name, parent_window):
             default_pattern_1= bytearray.fromhex("CD 12 80 90 3C 28 00 10 00 00 00 00 00 00 00 00")
         
             armor_id_offset = 4
-            byte_60th_offset = fixed_pattern_1_offset + 8 - 16
-            byte_59th_offset = fixed_pattern_1_offset + 8 - 15
-
             # Update default pattern with weapon ID and counter values
             default_pattern_1[armor_id_offset:armor_id_offset + 4] = armor_id_bytes
 
-            # Read and update counter values
-            byte_60th = section_data[byte_60th_offset]
-            byte_59th = section_data[byte_59th_offset]
-            new_byte_60th = (byte_60th + 1) & 0xFF
-            default_pattern_1[0] = new_byte_60th
-            if new_byte_60th == 0:
-                new_byte_59th = (byte_59th + 1) & 0xFF
-                default_pattern_1[1] = new_byte_59th
-            else:
-                default_pattern_1[1] = byte_59th
+            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
+            section_data, section_info, hex_pattern1_Fixed
+            )
+            
+            # Counters logic
+            reference_value = highest_counter_4th
+            new_4th_counter_value = (reference_value + 1) & 0xFF
+            default_pattern_1[0] = new_4th_counter_value
+
+
+            # For the 3rd counter
+            third_byte_value = highest_counter_3rd  # Get the whole byte
+
+            # Store the upper 4 bits (high nibble)
+            high_nibble = third_byte_value & 0xF0
+
+            # Extract decimal value from lower 4 bits
+            decimal_value = third_byte_value & 0xF
+            if decimal_value > 9:
+                decimal_value = decimal_value % 10
+                
+            if new_4th_counter_value == 0:  # Rollover happened
+                decimal_value = (decimal_value + 1) % 10
+
+            # Combine the preserved high nibble with the modified low nibble
+            default_pattern_1[1] = high_nibble | decimal_value
                     
             # Inject first pattern
             inject_offset = fixed_pattern_1_offset + 8
             section_data[inject_offset:inject_offset] = default_pattern_1
+            update_cached_counters(
+            section_info, 
+            hex_pattern1_Fixed, 
+            third_byte_value, 
+            new_4th_counter_value, 
+            inject_offset  # Store the new offset where we placed the item
+        )
 
 
             # Search for empty pattern
@@ -1805,21 +2193,40 @@ def add_armor(item_name, parent_window):
 
             # Create and update default pattern 2
             default_pattern_2 = bytearray.fromhex("35 02 80 90 01 00 00 00 6B 01")
-            default_pattern_2[0] = new_byte_60th
-            default_pattern_2[1] = byte_59th
+            default_pattern_2[0] = default_pattern_1[0]
+            default_pattern_2[1] = default_pattern_1[1]
 
             # Update counters for pattern 2
             reference_value = section_data[actual_offset - 4]
             new_third_counter_value = (reference_value + 2) & 0xFF
             default_pattern_2[8] = new_third_counter_value
 
-            third_byte_value = section_data[actual_offset - 3]
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-            if new_third_counter_value == 0:
-                decimal_value = (decimal_value + 1) % 10
-            default_pattern_2[9] = (default_pattern_2[9] & 0xF0) | decimal_value
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
+
+            
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern_2[8] = new_4th_counter_value_inven
+
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
+
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern_2[9] = high_nibble_in | low_nibble_in
 
             # Inject second pattern
             section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
@@ -1837,9 +2244,7 @@ def add_armor(item_name, parent_window):
                 
                 # Update the section in the entire file
                 entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-                
-            else:
-                print("No trailing pattern found above Fixed Pattern 3 within section boundaries")
+            
 
             # Remove bytes from section end
             bytes_to_remove = 8
@@ -1860,6 +2265,14 @@ def add_armor(item_name, parent_window):
             file.truncate()
             file.seek(0)
             loaded_file_data = bytearray(file.read())
+            update_cached_counters_inven(
+                section_info, 
+                hex_pattern1_Fixed, 
+                third_byte_value_inven,  # Using the original value
+                new_4th_counter_value_inven, 
+                actual_offset,
+                found_id  # Add the found_id parameter
+            )
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
 def show_armor_list():
@@ -2330,7 +2743,12 @@ ttk.Button(
     command=show_aow_list_bulk  # Opens the item list window
 ).pack(pady=20, padx=20)
 
+frame_save = ttk.Frame(window)
+frame_save.pack(pady=10)
 
+
+save_as_button = ttk.Button(frame_save, text="Save As...", command=save_file_as)
+save_as_button.pack(side=tk.LEFT, padx=5)
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
 my_label.pack(side="top", anchor="ne", padx=10, pady=5)
 
