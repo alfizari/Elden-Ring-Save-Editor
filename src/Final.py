@@ -2718,11 +2718,6 @@ ttk.Button(
     command=show_talisman_list  # Opens the item list window
 ).pack(pady=20, padx=20)
 
-ttk.Button(
-    add_talisman_tab,
-    text="Add Bulk Talisman",
-    command=show_talisman_list_bulk  # Opens the item list window
-).pack(pady=20, padx=20)
 
 ##AOW
 add_aow_tab = ttk.Frame(add_sub_notebook)
@@ -2734,11 +2729,7 @@ ttk.Button(
     command=show_aow_list  # Opens the item list window
 ).pack(pady=20, padx=20)
 
-ttk.Button(
-    add_aow_tab,
-    text="Add Bulk AOW",
-    command=show_aow_list_bulk  # Opens the item list window
-).pack(pady=20, padx=20)
+
 
 
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
