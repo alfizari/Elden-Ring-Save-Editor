@@ -791,7 +791,6 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
 
             section_data[actual_offset - section_info['start']:actual_offset - section_info['start'] + len(default_pattern)] = default_pattern
 
-# Update the larger data structure too, if applicable
             loaded_file_data[actual_offset:actual_offset + len(default_pattern)] = default_pattern
 
             # Increment counters because a new item was added
@@ -886,7 +885,7 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
             # Combine high and modified low nibbles
             default_pattern[9] = high_nibble_in | low_nibble_in
 
-            # Write the new item pattern
+    
             # Write the new item pattern
             file.seek(actual_offset)
             file.write(default_pattern)
@@ -1767,46 +1766,57 @@ def delete_bytes_dynamically_from_section_end(distance_from_end, bytes_to_delete
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 
-def search_fixed_pattern(file_path, pattern_hex, start_offset):
-   try:
-       # Convert pattern_hex to bytes if it's a string
-       if isinstance(pattern_hex, str):
-           pattern = bytes.fromhex(pattern_hex.replace(" ", ""))
-       else:
-           pattern = pattern_hex
-          
-       pattern_length = len(pattern)
-      
-       # If file_path is actually bytes/bytearray data
-       if isinstance(file_path, (bytes, bytearray)):
-           data = file_path
-           current_offset = start_offset
-           
-           # Search upwards from start_offset
-           while current_offset >= 0:
-               if data[current_offset:current_offset + pattern_length] == pattern:
-                   return current_offset
-               current_offset -= 1
-           return None
-          
-       # If file_path is an actual file path
-       with open(file_path, 'rb') as file:
-           current_offset = start_offset
-           
-           # Search upwards from start_offset
-           while current_offset >= 0:
-               file.seek(current_offset)
-               chunk = file.read(pattern_length)
-               
-               if chunk == pattern:
-                   return current_offset
-               
-               current_offset -= 1
-               
-       return None
-   except Exception as e:
-       print(f"Error in search_fixed_pattern: {e}")
-       return None
+def search_fixed_pattern(file_path, pattern_hex, start_offset, end_offset=None):
+    try:
+        # Convert pattern_hex to bytes if it's a string
+        if isinstance(pattern_hex, str):
+            pattern = bytes.fromhex(pattern_hex.replace(" ", ""))
+        else:
+            pattern = pattern_hex
+
+        pattern_length = len(pattern)
+
+        # If file_path is actually bytes/bytearray data
+        if isinstance(file_path, (bytes, bytearray)):
+            data = file_path
+            current_offset = start_offset
+
+            # Search upwards or downwards based on fixed_pattern_3_offset > end_offset
+            while current_offset >= 0:
+                # Stop if current_offset is less than end_offset when searching backward
+                if end_offset is not None and current_offset < end_offset:
+                    return None  # Stop if we've reached the end offset
+
+                if data[current_offset:current_offset + pattern_length] == pattern:
+                    return current_offset
+
+                current_offset -= 1  # Move backward
+
+            return None
+
+        # If file_path is an actual file path
+        with open(file_path, 'rb') as file:
+            current_offset = start_offset
+
+            # Search upwards or downwards based on fixed_pattern_3_offset > end_offset
+            while current_offset >= 0:
+                # Stop if current_offset is less than end_offset when searching backward
+                if end_offset is not None and current_offset < end_offset:
+                    return None  # Stop if we've reached the end offset
+
+                file.seek(current_offset)
+                chunk = file.read(pattern_length)
+
+                if chunk == pattern:
+                    return current_offset
+
+                current_offset -= 1  # Move backward
+
+            return None
+    except Exception as e:
+        print(f"Error in search_fixed_pattern: {e}")
+        return None
+
 
 def add_weapon(item_name, upgrade_level, parent_window):
     try:
@@ -2001,9 +2011,10 @@ def add_weapon(item_name, upgrade_level, parent_window):
 
             trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
             section_trailing_offset = search_fixed_pattern(
-                section_data,
-                trailing_pattern,
-                fixed_pattern_3_offset
+            section_data,  # Your byte data
+            trailing_pattern, 
+            fixed_pattern_3_offset,  # Start searching from this higher offset
+            end_offset=10480  # Stop searching if the offset goes below 1400
             )
             
             if section_trailing_offset != -1 and section_trailing_offset is not None:
@@ -2233,10 +2244,12 @@ def add_armor(item_name, parent_window):
 
             trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
             section_trailing_offset = search_fixed_pattern(
-                section_data,
-                trailing_pattern,
-                fixed_pattern_3_offset
+            section_data,  # Your byte data
+            trailing_pattern, 
+            fixed_pattern_3_offset,  # Start searching from this higher offset
+            end_offset=10480  # Stop searching if the offset goes below 1400
             )
+            
             
             if section_trailing_offset != -1 and section_trailing_offset is not None:
                 # Remove the trailing pattern from section_data
@@ -2577,7 +2590,12 @@ file_name_label = tk.Label(file_open_frame, text="No file selected", anchor="w")
 file_name_label.pack(side="left", padx=10, fill="x")
 activate_button = tk.Button(window, text="Activate PC SAVE (AFTER EDITING)", command=activate_checksum)
 activate_button.pack(pady=20)
+frame_save = tk.Frame(window)
+frame_save.pack(pady=10)
 
+
+save_as_button = tk.Button(frame_save, text="Save As...", command=save_file_as)
+save_as_button.pack(side=tk.LEFT, padx=5)
 # Section Selection Frame
 section_frame = tk.Frame(window)
 section_frame.pack(fill="x", padx=10, pady=5)
@@ -2635,12 +2653,6 @@ add_sub_notebook.pack(expand=1, fill="both")
 # Now add "add_tab" to the main notebook correctly
 notebook.add(add_tab, text="ADD")
 
-cookbook_tab = ttk.Frame(add_sub_notebook)
-add_sub_notebook.add(cookbook_tab, text="CookBooks")
-
-# Unlock All Gestures Button
-button = tk.Button(cookbook_tab, text="Unlock All Cookbooks", command=lambda: cookbooks_unlock(current_section_var.get()))
-button.grid(row=2, column=0, columnspan=2, pady=20)
 # Adding "Add Weapons" tab
 add_weapons_tab = ttk.Frame(add_sub_notebook)
 add_sub_notebook.add(add_weapons_tab, text="Add Weapons")
@@ -2651,11 +2663,6 @@ ttk.Button(
     command=show_weapons_list  # Opens the weapon list window
 ).pack(pady=20, padx=20)
 
-ttk.Button(
-    add_weapons_tab,
-    text="Add All Weapons",
-    command=show_weapons_window_bulk  # Opens the weapon list window
-).pack(pady=20, padx=20)
 
 # Add instruction for "Add Weapons" tab
 add_weapons_instructions = """
@@ -2679,11 +2686,6 @@ ttk.Button(
     command=show_goods_magic_list  # Opens the item list window
 ).pack(pady=20, padx=20)
 
-ttk.Button(
-    add_items_tab,
-    text="Add Bulk Items",
-    command=show_goods_magic_list_bulk  # Opens the item list window
-).pack(pady=20, padx=20)
 
 # Add instruction for "Add Items" tab
 add_items_instructions = """
@@ -2706,11 +2708,6 @@ ttk.Button(
     command=show_armor_list  # Opens the item list window
 ).pack(pady=20, padx=20)
 
-ttk.Button(
-    add_armor_tab,
-    text="Add All Armors",
-    command=show_armor_window_bulk  # Opens the item list window
-).pack(pady=20, padx=20)
 
 add_talisman_tab = ttk.Frame(add_sub_notebook)
 add_sub_notebook.add(add_talisman_tab, text="Add Talisman")
@@ -2743,12 +2740,7 @@ ttk.Button(
     command=show_aow_list_bulk  # Opens the item list window
 ).pack(pady=20, padx=20)
 
-frame_save = ttk.Frame(window)
-frame_save.pack(pady=10)
 
-
-save_as_button = ttk.Button(frame_save, text="Save As...", command=save_file_as)
-save_as_button.pack(side=tk.LEFT, padx=5)
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
 my_label.pack(side="top", anchor="ne", padx=10, pady=5)
 
