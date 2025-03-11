@@ -801,6 +801,124 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
+
+##STACK items
+def find_and_replace_pattern_with_item_and_update_counters_stack(item_name, quantity):
+    global loaded_file_data, cached_counter_results_in  # Add this to ensure we can modify the global variable
+    try:
+        # Validate item name and fetch its ID
+        item_id = inventory_goods_magic_hex_patterns.get(item_name)
+        if not item_id:
+            messagebox.showerror("Error", f"Item '{item_name}' not found in goods_magic.json.")
+            return
+
+        item_id_bytes = bytes.fromhex(item_id)
+        if len(item_id_bytes) != 4:
+            messagebox.showerror("Error", f"Invalid ID for '{item_name}'. ID must be exactly 4 bytes.")
+            return
+
+        max_quantity = 16777215
+        quantity = min(quantity, max_quantity)  # Ensure quantity does not exceed max
+
+        # Get file path
+        file_path = file_path_var.get()
+        section_number = current_section_var.get()
+        if not file_path or section_number == 0:
+            messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+            return
+
+        # Get section information
+        section_info = SECTIONS[section_number]
+        
+        # Convert loaded_file_data to bytearray if it's not already
+        if isinstance(loaded_file_data, bytes):
+            loaded_file_data = bytearray(loaded_file_data)
+        
+        # Get current section data from loaded_file_data
+        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+
+        # Locate Fixed Pattern 1
+        fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        if fixed_pattern_offset is None:
+            messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
+            return
+
+        with open(file_path, 'r+b') as file:
+            loaded_file_data = bytearray(file.read())
+            # Check if item exists in current section
+
+            # Add new item if it doesn't exist
+            empty_pattern = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            empty_offset = section_data.find(empty_pattern)
+            if empty_offset == -1:
+                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+                return
+
+            # Calculate actual offset for empty slot
+            actual_offset = section_info['start'] + empty_offset + 2
+
+            # Create the default pattern
+            default_pattern = bytearray.fromhex("A4 06 00 B0 03 00 00 00 1F 01")
+            default_pattern[:4] = item_id_bytes[:4]  # First 3 bytes from the item ID
+            default_pattern[4:8] = quantity.to_bytes(4, 'little') 
+            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
+                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
+            )
+
+            
+            # 4th Counters logic
+            reference_value_inven = highest_4th
+            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
+            default_pattern[8] = new_4th_counter_value_inven
+
+            # For the 3rd counter
+            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
+
+            # Extract high and low nibbles
+            high_nibble_in = highest_3rd & 0xF0
+            low_nibble_in = highest_3rd & 0x0F
+
+            # Apply decimal logic to the low nibble
+            if low_nibble_in > 9:
+                low_nibble_in = low_nibble_in % 10
+                
+            if new_4th_counter_value_inven == 0:  # Rollover happened
+                low_nibble_in = (low_nibble_in + 1) % 10
+
+            # Combine high and modified low nibbles
+            default_pattern[9] = high_nibble_in | low_nibble_in
+
+            # Write the new item pattern
+            # Write the new item pattern
+            file.seek(actual_offset)
+            file.write(default_pattern)
+
+            # Update cached counters
+            update_cached_counters_inven(
+                section_info, 
+                hex_pattern1_Fixed, 
+                third_byte_value_inven,  # Using the original value
+                new_4th_counter_value_inven, 
+                actual_offset,
+                found_id  # Add the found_id parameter
+            )
+
+            
+
+            section_data[actual_offset - section_info['start']:actual_offset - section_info['start'] + len(default_pattern)] = default_pattern
+
+            loaded_file_data[actual_offset:actual_offset + len(default_pattern)] = default_pattern
+
+            # Increment counters because a new item was added
+            increment_counters(file, section_info['start'] + fixed_pattern_offset)
+
+            messagebox.showinfo("Success", 
+                f"Added '{item_name}' with quantity {quantity} to section {section_number}")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to add or update item: {e}")
+
+
 ##Talisman
 def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
     global loaded_file_data, cached_counter_results_in  # Add this to ensure we can modify the global variable
@@ -1561,13 +1679,30 @@ def add_item_from_goods_magic(item_name, item_id, parent_window):
     if quantity is not None:
         find_and_replace_pattern_with_item_and_update_counters(item_name, quantity)
 
-def show_goods_magic_list():
+
+def add_item_from_goods_magic_stack(item_name, item_id, parent_window):
     
-    goods_magic_window = tk.Toplevel(window)
+    # Use the parent window to keep the input dialog on top
+    quantity = simpledialog.askinteger(
+        "Input Quantity",
+        f"Enter the quantity for {item_name} (1-16777215):",
+        minvalue=1,
+        maxvalue=16777215,
+        parent=parent_window  # Attach the dialog to the "Add Items" list window
+    )
+
+    # Proceed to add the item if quantity is specified
+    if quantity is not None:
+        find_and_replace_pattern_with_item_and_update_counters_stack(item_name, quantity)
+
+ITEMS_PER_BATCH = 50
+
+def show_goods_magic_list():
+    goods_magic_window = tk.Toplevel()
     goods_magic_window.title("Add or Update Items")
     goods_magic_window.geometry("600x400")
-    goods_magic_window.attributes("-topmost", True)  # Keeps the window on top
-    goods_magic_window.focus_force()  # Brings the window into focus
+    goods_magic_window.attributes("-topmost", True)
+    goods_magic_window.focus_force()
 
     # Search bar for filtering items
     search_frame = ttk.Frame(goods_magic_window)
@@ -1577,50 +1712,163 @@ def show_goods_magic_list():
     search_entry = ttk.Entry(search_frame, textvariable=search_var)
     search_entry.pack(side="left", fill="x", expand=True, padx=5)
 
-    # Create a scrollable frame for the item list
+    # Scrollable frame for item list
     canvas = tk.Canvas(goods_magic_window)
     scrollbar = ttk.Scrollbar(goods_magic_window, orient="vertical", command=canvas.yview)
     scrollable_frame = ttk.Frame(canvas)
 
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-
+    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
 
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
+    loaded_items = []
+    all_items = list(inventory_goods_magic_hex_patterns.items())  # Convert dict to list
+    start_index = 0
+
+    def load_more_items():
+        """Loads the next batch of items into the list."""
+        nonlocal start_index
+        end_index = start_index + ITEMS_PER_BATCH
+        for item_name, item_id in all_items[start_index:end_index]:
+            if item_name not in loaded_items:  # Prevent duplicate loading
+                item_frame = ttk.Frame(scrollable_frame)
+                item_frame.pack(fill="x", padx=5, pady=2)
+
+                tk.Label(item_frame, text=item_name, anchor="w").pack(side="left", fill="x", expand=True)
+
+                add_button = ttk.Button(
+                    item_frame,
+                    text="Add/Update",
+                    command=lambda name=item_name, hex_id=item_id: add_item_from_goods_magic(name, hex_id, goods_magic_window)
+                )
+                add_button.pack(side="right", padx=5)
+                loaded_items.append(item_name)
+
+        start_index = end_index  # Update index for next batch
+
+    def on_scroll(event):
+        """Detects when user scrolls near the bottom and loads more items."""
+        if canvas.yview()[1] >= 0.9:  # If near the bottom, load more
+            load_more_items()
+
     def filter_items():
-        
+        """Filters items based on the search term."""
+        nonlocal all_items, start_index, loaded_items
+        search_term = search_var.get().lower()
+
+        # Reset loaded items
         for widget in scrollable_frame.winfo_children():
             widget.destroy()
 
-        search_term = search_var.get().lower()
-        filtered_items = {k: v for k, v in inventory_goods_magic_hex_patterns.items() if search_term in k.lower()}
+        if search_term:
+            all_items = [(k, v) for k, v in inventory_goods_magic_hex_patterns.items() if search_term in k.lower()]
+        else:
+            all_items = list(inventory_goods_magic_hex_patterns.items())
 
-        for item_name, item_id in filtered_items.items():
-            item_frame = ttk.Frame(scrollable_frame)
-            item_frame.pack(fill="x", padx=5, pady=2)
+        start_index = 0
+        loaded_items.clear()
+        load_more_items()
 
-            # Display item name
-            tk.Label(item_frame, text=item_name, anchor="w").pack(side="left", fill="x", expand=True)
-
-            # "Add/Update" button for each item
-            add_button = ttk.Button(
-                item_frame,
-                text="Add/Update",
-                command=lambda name=item_name, hex_id=item_id: add_item_from_goods_magic(name, hex_id, goods_magic_window)
-            )
-            add_button.pack(side="right", padx=5)
-
-    # Filter items on search input
+    # Bind search input to filtering function
     search_entry.bind("<KeyRelease>", lambda event: filter_items())
 
-    # Initially populate the list with all items
-    filter_items()
+    # Bind scrolling to load more items
+    canvas.bind("<Configure>", lambda e: load_more_items())  # Load initial batch
+    canvas.bind_all("<MouseWheel>", lambda event: on_scroll(event))
+
+    load_more_items()  # Load first batch
+
+
+##stack
+ITEMS_PER_BATCH = 50
+
+def show_goods_magic_list_stack():
+    goods_magic_window = tk.Toplevel()
+    goods_magic_window.title("Add or Update Items")
+    goods_magic_window.geometry("600x400")
+    goods_magic_window.attributes("-topmost", True)
+    goods_magic_window.focus_force()
+
+    # Search bar for filtering items
+    search_frame = ttk.Frame(goods_magic_window)
+    search_frame.pack(fill="x", padx=10, pady=5)
+    tk.Label(search_frame, text="Search:").pack(side="left", padx=5)
+    search_var = tk.StringVar()
+    search_entry = ttk.Entry(search_frame, textvariable=search_var)
+    search_entry.pack(side="left", fill="x", expand=True, padx=5)
+
+    # Scrollable frame for item list
+    canvas = tk.Canvas(goods_magic_window)
+    scrollbar = ttk.Scrollbar(goods_magic_window, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    loaded_items = []
+    all_items = list(inventory_goods_magic_hex_patterns.items())  # Convert dict to list
+    start_index = 0
+
+    def load_more_items():
+        """Loads the next batch of items into the list."""
+        nonlocal start_index
+        end_index = start_index + ITEMS_PER_BATCH
+        for item_name, item_id in all_items[start_index:end_index]:
+            if item_name not in loaded_items:  # Prevent duplicate loading
+                item_frame = ttk.Frame(scrollable_frame)
+                item_frame.pack(fill="x", padx=5, pady=2)
+
+                tk.Label(item_frame, text=item_name, anchor="w").pack(side="left", fill="x", expand=True)
+
+                add_button = ttk.Button(
+                    item_frame,
+                    text="Add/Update",
+                    command=lambda name=item_name, hex_id=item_id: add_item_from_goods_magic_stack(name, hex_id, goods_magic_window)
+                )
+                add_button.pack(side="right", padx=5)
+                loaded_items.append(item_name)
+
+        start_index = end_index  # Update index for next batch
+
+    def on_scroll(event):
+        """Detects when user scrolls near the bottom and loads more items."""
+        if canvas.yview()[1] >= 0.9:  # If near the bottom, load more
+            load_more_items()
+
+    def filter_items():
+        """Filters items based on the search term."""
+        nonlocal all_items, start_index, loaded_items
+        search_term = search_var.get().lower()
+
+        # Reset loaded items
+        for widget in scrollable_frame.winfo_children():
+            widget.destroy()
+
+        if search_term:
+            all_items = [(k, v) for k, v in inventory_goods_magic_hex_patterns.items() if search_term in k.lower()]
+        else:
+            all_items = list(inventory_goods_magic_hex_patterns.items())
+
+        start_index = 0
+        loaded_items.clear()
+        load_more_items()
+
+    # Bind search input to filtering function
+    search_entry.bind("<KeyRelease>", lambda event: filter_items())
+
+    # Bind scrolling to load more items
+    canvas.bind("<Configure>", lambda e: load_more_items())  # Load initial batch
+    canvas.bind_all("<MouseWheel>", lambda event: on_scroll(event))
+
+    load_more_items()  # Load first batch
+
 
 def find_last_fixed_pattern_1_above_character(section_data, fixed_pattern_1, char_name_offset):
     fixed_pattern_1_bytes = bytes.fromhex(fixed_pattern_1)
@@ -2686,6 +2934,14 @@ ttk.Button(
     command=show_goods_magic_list  # Opens the item list window
 ).pack(pady=20, padx=20)
 
+add_items_tab_stack = ttk.Frame(add_sub_notebook)
+add_sub_notebook.add(add_items_tab_stack, text="Stack Items")
+
+ttk.Button(
+    add_items_tab_stack,
+    text="Stack items Items ",
+    command=show_goods_magic_list_stack  # Opens the item list window
+).pack(pady=20, padx=20)
 
 # Add instruction for "Add Items" tab
 add_items_instructions = """
@@ -2728,7 +2984,6 @@ ttk.Button(
     text="Add",
     command=show_aow_list  # Opens the item list window
 ).pack(pady=20, padx=20)
-
 
 
 
