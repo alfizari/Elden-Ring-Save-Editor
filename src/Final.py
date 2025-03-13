@@ -168,7 +168,8 @@ def open_file():
                 6: {'start': 0xC80070, 'end': 0xF0006F},
                 7: {'start': 0xF00070, 'end': 0x118006F},
                 8: {'start': 0x1180070, 'end': 0x140006F},
-                9: {'start': 0x1400070, 'end': 0x168006F}
+                9: {'start': 0x1400070, 'end': 0x168006F},
+                10: {'start': 0x1680070, 'end': 0x190006F}
             }
         elif file_name.lower() == "er0000.sl2":
             SECTIONS = {
@@ -180,7 +181,8 @@ def open_file():
                 6: {'start': 0xC80360, 'end': 0xF0036F},
                 7: {'start': 0xF00370, 'end': 0x118037F},
                 8: {'start': 0x1180380, 'end': 0x140038F},
-                9: {'start': 0x1400390, 'end': 0x168039F}
+                9: {'start': 0x1400390, 'end': 0x168039F},
+                10: {'start': 0x16803A0, 'end': 0x19003AF}
             }
         try:
             with open(file_path, 'rb') as file:
@@ -584,7 +586,7 @@ def find_highest_inventory_counter_inventory(section_data, section_info, hex_pat
     fixed_offset = fixed_match.start()  # Get the starting offset of hex_pattern1_Fixed
     
     # Calculate relative search window in section_data coordinates
-    start_search = fixed_offset + 0x2C1  # Start searching 0x2C1 bytes after fixed pattern
+    start_search = fixed_offset + 0x200  # Start searching 0x2C1 bytes after fixed pattern
     end_search = fixed_offset + 0x91FB  # Limit to a reasonable range like 4KB
     
     # Ensure we don't go out of bounds
@@ -607,16 +609,13 @@ def find_highest_inventory_counter_inventory(section_data, section_info, hex_pat
             if offset < 6:
                 continue
 
-            # Skip IDs where "00 00 00" appears before them
-            if section_data[offset - 6:offset - 3] == b'\x00\x00\x00':
-                continue
 
             # Convert to absolute offset
             absolute_offset = section_info['start'] + offset
 
             # Get counter values
-            counter_4th = section_data[offset + 6]
-            counter_3rd = section_data[offset + 7]
+            counter_4th = section_data[offset + 8]
+            counter_3rd = section_data[offset + 9]
 
             # Update highest counter if this occurrence has a higher value
             if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
@@ -654,12 +653,13 @@ def find_highest_inventory_counter_inventory(section_data, section_info, hex_pat
     if highest_offset is None:
         highest_counter_3rd = 0
         highest_counter_4th = 1  # Start at 1 to avoid using 0
-        highest_offset = "N/A"
-        found_id = "None"
 
     result = (highest_counter_3rd, highest_counter_4th, highest_offset, found_id)
     cached_counter_results_in[cache_key] = result
-    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}")
+    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}, ID={found_id}, highest_offsethighest_offset={highest_offset}")
+    print(f"Processing section {section_info} from {section_info['start']} to {section_info['end']}")
+    
+
     return highest_counter_3rd, highest_counter_4th, highest_offset, found_id
 
 def update_cached_counters_inven(section_info, hex_pattern1_Fixed, new_3rd_in, new_4th_in, new_offset, found_id="None"):
@@ -667,7 +667,7 @@ def update_cached_counters_inven(section_info, hex_pattern1_Fixed, new_3rd_in, n
     
     cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
     cached_counter_results_in[cache_key] = (new_3rd_in, new_4th_in, new_offset, found_id)
-    print(f"Updated cached counters: 3rd={new_3rd_in}, 4th={new_4th_in}")   
+    print(f"Updated cached counters: 3rd={new_3rd_in}, 4th={new_4th_in}, ID={found_id}")   
 
 ## ADD items
 def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
