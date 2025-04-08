@@ -243,6 +243,109 @@ def load_section(section_number):
         current_name_var.set("N/A")
         current_ng_var.set("N/A")
 
+def import_section():
+    global loaded_file_data
+
+    if not loaded_file_data:
+        messagebox.showerror("Error", "Please open a file first")
+        return
+
+    current_section = current_section_var.get()
+    if not current_section:
+        messagebox.showerror("Error", "Please Choose a slot first")
+        return
+
+    import_path = filedialog.askopenfilename(filetypes=[("Save Files", "*")])
+    if not import_path:
+        return
+
+    import_file_name = os.path.basename(import_path)
+
+    # Define import sections
+    if import_file_name.lower() == "memory.dat":
+        import_sections = {
+            1: {'start': 0, 'end': 0x28006F},
+            2: {'start': 0x280070, 'end': 0x50006F},
+            3: {'start': 0x500070, 'end': 0x78006F},
+            4: {'start': 0x780070, 'end': 0xA0006F},
+            5: {'start': 0xA00070, 'end': 0xC8006F},
+            6: {'start': 0xC80070, 'end': 0xF0006F},
+            7: {'start': 0xF00070, 'end': 0x118006F},
+            8: {'start': 0x1180070, 'end': 0x140006F},
+            9: {'start': 0x1400070, 'end': 0x168006F},
+            10: {'start': 0x1680070, 'end': 0x190006F}
+        }
+    elif import_file_name.lower() == "er0000.sl2":
+        import_sections = {
+            1: {'start': 0x310, 'end': 0x28031F},
+            2: {'start': 0x280320, 'end': 0x50032F},
+            3: {'start': 0x500330, 'end': 0x78033F},
+            4: {'start': 0x780340, 'end': 0xA0034F},
+            5: {'start': 0xA00350, 'end': 0xC8035F},
+            6: {'start': 0xC80360, 'end': 0xF0036F},
+            7: {'start': 0xF00370, 'end': 0x118037F},
+            8: {'start': 0x1180380, 'end': 0x140038F},
+            9: {'start': 0x1400390, 'end': 0x168039F},
+            10: {'start': 0x16803A0, 'end': 0x19003AF}
+        }
+    else:
+        messagebox.showerror("Unsupported File", "Unsupported file format for import.")
+        return
+
+    try:
+        with open(import_path, 'rb') as f:
+            import_data = f.read()
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not read import file: {e}")
+        return
+
+    # Extract names for all sections
+    section_names = []
+
+    for sec_num, sec_info in import_sections.items():
+        data = import_data[sec_info['start']:sec_info['end']+1]
+        offset1 = find_hex_offset(data, hex_pattern1_Fixed)
+
+        name_found = "N/A"
+        if offset1 is not None:
+            for distance in possible_name_distances_for_name_tap:
+                name_offset = offset1 + distance
+                name = find_character_name(data, name_offset)
+                if name and name != "N/A":
+                    name_found = name
+                    break
+        section_names.append((sec_num, name_found))
+
+    # UI to choose section to import
+    section_window = tk.Toplevel()
+    section_window.title("Import Section")
+    section_window.geometry("350x400")
+
+    label = tk.Label(section_window, text="Choose a section to import from:")
+    label.pack(pady=10)
+
+    for sec_num, name in section_names:
+        btn_text = f"Section {sec_num} - {name}"
+        def make_callback(s=sec_num):
+            def callback():
+                global loaded_file_data
+                # Replace current section with selected one from import file
+                imported_chunk = import_data[import_sections[s]['start']:import_sections[s]['end']+1]
+                local_start = SECTIONS[current_section]['start']
+                local_end = SECTIONS[current_section]['end']
+                loaded_file_data = (
+                    loaded_file_data[:local_start] +
+                    imported_chunk +
+                    loaded_file_data[local_end+1:]
+                )
+                messagebox.showinfo("Import Successful", f"Replaced current section with Section {s} from import file.")
+                load_section(current_section)
+                section_window.destroy()
+            return callback
+        btn = tk.Button(section_window, text=btn_text, command=make_callback())
+        btn.pack(pady=5)
+
+
 def recalc_checksum(file):
     """
     Recalculates and updates checksum values in a binary file. Copied from Ariescyn/EldenRing-Save-Manager
@@ -2836,6 +2939,8 @@ file_open_frame.pack(fill="x", padx=10, pady=5)
 tk.Button(file_open_frame, text="Open Save File", command=open_file).pack(side="left", padx=5)
 file_name_label = tk.Label(file_open_frame, text="No file selected", anchor="w")
 file_name_label.pack(side="left", padx=10, fill="x")
+import_btn = tk.Button(window, text="Import", command=import_section)
+import_btn.pack(pady=5)
 activate_button = tk.Button(window, text="Activate PC SAVE (AFTER EDITING)", command=activate_checksum)
 activate_button.pack(pady=20)
 frame_save = tk.Frame(window)
@@ -2849,7 +2954,7 @@ section_frame = tk.Frame(window)
 section_frame.pack(fill="x", padx=10, pady=5)
 section_buttons = []
 
-for i in range(1, 10):
+for i in range(1, 11):
     btn = tk.Button(section_frame, text=f"Slot {i}", command=lambda x=i: load_section(x), state=tk.DISABLED)
     btn.pack(side="left", padx=5)
     section_buttons.append(btn)
