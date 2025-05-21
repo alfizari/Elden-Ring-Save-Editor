@@ -1,14 +1,11 @@
 import json
-import glob
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog, Scrollbar
-import gc
 from functools import wraps
 from time import time
 import hashlib
 import binascii
-import re
 import shutil
 # Constants
 hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF'
@@ -24,8 +21,9 @@ hex_pattern5_Fixed='00 00 00 00 00 00 00 FF FF FF FF FF FF FF FF 00 00 00 00 FF 
 cookbook_hex= '80 00 00 02 00 80 20 08 02 00 80 20 00 02 00 80'
 cookbook_id = bytes.fromhex("80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 80 20 00 00 00 00 00 00 00 00 80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 02 00 80 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 00 00 00 00 00 00 00 00 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02")
 cookbook_distance= -250
-
-
+hex_pattern_end= 'FF FF FF FF'
+steamid_pattern_is='01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01'
+steamid_pattern_is_maybe='01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01'
 
 # Set the working directory
 working_directory = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +61,42 @@ all_item_patterns = inventory_all_hex_patterns
 window = tk.Tk()
 window.title("Elden Ring Save Editor")
 
+
+stats_offsets_for_stats_tap = {
+    "Level": -335,#find
+    "Vigor": -379,
+    "Mind": -375,
+    "Endurance": -371,
+    "Strength": -367,
+    "Dexterity": -363,
+    "Intelligence": -359,
+    "Faith": -355,
+    "Arcane": -351,
+    "Gender": -249,
+    "Class": -248,
+}
+
+
+GENDER_MAP = {
+    1: "Male",
+    0: "Female"
+}
+REVERSE_GENDER_MAP = {v: k for k, v in GENDER_MAP.items()}
+
+CLASS_MAP = {
+    0: "Vagabond",
+    1: "Warrior",
+    2: "Hero",
+    3: "Bandit",
+    4: "Astrologer",
+    5: "Prophet",
+    6: "Samurai",
+    7: "Prisoner",
+    8: "Confessor",
+    9: "Wretch"
+}
+REVERSE_CLASS_MAP = {v: k for k, v in CLASS_MAP.items()}
+
 # Global variables
 file_path_var = tk.StringVar()
 current_name_var = tk.StringVar(value="N/A")
@@ -98,7 +132,14 @@ new_ng_var = tk.StringVar()
 found_items = []
 found_armor= []
 found_ring= []
+current_stemaid_var= tk.StringVar()
+current_stats_vars = {}
+new_stats_vars = {}
 
+# Initialize variables for each stat
+for stat in stats_offsets_for_stats_tap:
+    current_stats_vars[stat] = tk.StringVar()
+    new_stats_vars[stat] = tk.StringVar()  # Use StringVar for all stats
 # Utility Functions
 def read_file_section(file_path, start_offset, end_offset):
     try:
@@ -160,7 +201,7 @@ def open_file():
         # Define sections based on file name
         if file_name.lower() == "memory.dat":
             SECTIONS = {
-                1: {'start': 0, 'end': 0x28006F},
+                1: {'start': 0x70, 'end': 0x28006F},
                 2: {'start': 0x280070, 'end': 0x50006F},
                 3: {'start': 0x500070, 'end': 0x78006F},
                 4: {'start': 0x780070, 'end': 0xA0006F},
@@ -173,16 +214,16 @@ def open_file():
             }
         elif file_name.lower() == "er0000.sl2":
             SECTIONS = {
-                1: {'start': 0, 'end': 0x28031F},
-                2: {'start': 0x280320, 'end': 0x50032F},
-                3: {'start': 0x500330, 'end': 0x78033F},
-                4: {'start': 0x780340, 'end': 0xA0034F},
-                5: {'start': 0xA00350, 'end': 0xC8035F},
-                6: {'start': 0xC80360, 'end': 0xF0036F},
-                7: {'start': 0xF00370, 'end': 0x118037F},
-                8: {'start': 0x1180380, 'end': 0x140038F},
-                9: {'start': 0x1400390, 'end': 0x168039F},
-                10: {'start': 0x16803A0, 'end': 0x19003AF}
+                1: {'start': 0x310, 'end': 0x28030F},
+                2: {'start': 0x280320, 'end': 0x50031F},
+                3: {'start': 0x500330, 'end': 0x78032F},
+                4: {'start': 0x780340, 'end': 0xA0033F},
+                5: {'start': 0xA00350, 'end': 0xC8034F},
+                6: {'start': 0xC80360, 'end': 0xF0035F},
+                7: {'start': 0xF00370, 'end': 0x118036F},
+                8: {'start': 0x1180380, 'end': 0x140037F},
+                9: {'start': 0x1400390, 'end': 0x168038F},
+                10: {'start': 0x16803A0, 'end': 0x190039F}
             }
         try:
             with open(file_path, 'rb') as file:
@@ -202,6 +243,8 @@ def open_file():
         except Exception as e:
             messagebox.showerror("Error", f"Failed to read file or create backup: {str(e)}")
             return
+def calculate_offset2(offset1, distance):
+    return offset1 + distance
 
 
 
@@ -217,12 +260,28 @@ def load_section(section_number):
     # Try to find hex pattern in the section
     offset1 = find_hex_offset(section_data, hex_pattern1_Fixed)
     offsetng = find_hex_offset(section_data, hex_pattern_ng)
+    offset_steam = find_hex_offset(section_data, steamid_pattern_is)
     if offsetng is not None:
         #new game
         ng_offset = offsetng+ ng_distance
         current_ng = section_data[ng_offset] if ng_offset < len(section_data) else None
         current_ng_var.set(current_ng if current_ng is not None else "N/A")
-    
+    if offset_steam is not None:
+        #steam id
+        steam_offset = offset_steam - 0x08
+        current_steamid = section_data[steam_offset:steam_offset + 8]
+        set_steam_id(0, current_steamid)  # Save the current Steam ID (before import)
+        current_stemaid_var.set(current_steamid)
+        print("Current SteamID:", current_steamid)
+    else:
+        offset_steam = find_hex_offset(section_data, steamid_pattern_is_maybe)
+        if offset_steam is not None:
+            #steam id
+            steam_offset = offset_steam - 0x08
+            current_steamid = section_data[steam_offset:steam_offset + 8]
+            set_steam_id(0, current_steamid)  # Save the current Steam ID (before import)
+            current_stemaid_var.set(current_steamid)
+            print("Current SteamID:", current_steamid)
     if offset1 is not None:
         # Display Souls value
         souls_offset = offset1 + souls_distance
@@ -238,10 +297,198 @@ def load_section(section_number):
                 break
         else:
             current_name_var.set("N/A")
+        for stat, distance in stats_offsets_for_stats_tap.items():
+            stat_offset = calculate_offset2(offset1, distance)
+            byte_size = 2 if stat == "Level" else 1
+            current_stat_value = find_value_at_offset(section_data, stat_offset, byte_size=byte_size)
+
+            if current_stat_value is None:
+                display_value = "N/A"
+                new_stats_vars[stat].set("")  # Clear the input field
+            elif stat == "Gender":
+                display_value = GENDER_MAP.get(current_stat_value, f"Unknown ({current_stat_value})")
+                # Update both display and input variables
+                current_stats_vars[stat].set(display_value)
+                new_stats_vars[stat].set(display_value)
+                print(f"Setting {stat} to: {display_value}")
+            elif stat == "Class":
+                display_value = CLASS_MAP.get(current_stat_value, f"Unknown ({current_stat_value})")
+                # Update both display and input variables
+                current_stats_vars[stat].set(display_value)
+                new_stats_vars[stat].set(display_value)
+                print(f"Setting {stat} to: {display_value}")
+            else:
+                display_value = str(current_stat_value)
+                # Update both display and input variables
+                current_stats_vars[stat].set(display_value)
+                new_stats_vars[stat].set(display_value)  # Set the StringVar for the Entry
+                print(f"Setting {stat} to: {display_value}")
+
     else:
         current_souls_var.set("N/A")
         current_name_var.set("N/A")
         current_ng_var.set("N/A")
+steam_id_storage = [None, None]  # index 0 = current, index 1 = post-import
+
+def steam_id(index):
+    if 0 <= index < len(steam_id_storage):
+        return steam_id_storage[index]
+    return None
+
+def set_steam_id(index, value):
+    if index >= len(steam_id_storage):
+        steam_id_storage.extend([None] * (index - len(steam_id_storage) + 1))
+    steam_id_storage[index] = value
+
+
+
+
+def import_done():
+    section_number = current_section_var.get()
+
+    # Import the section
+    import_section()
+
+
+    
+
+def import_section():
+    global loaded_file_data
+    global current_stemaid_var
+    if not loaded_file_data:
+        messagebox.showerror("Error", "Please open a file first")
+        return
+
+    current_section = current_section_var.get()
+    if not current_section:
+        messagebox.showerror("Error", "Please Choose a slot first")
+        return
+    
+
+    import_path = filedialog.askopenfilename(filetypes=[("Save Files", "*")])
+    if not import_path:
+        return
+
+    import_file_name = os.path.basename(import_path)
+
+    # Define import sections
+    if import_file_name.lower() == "memory.dat":
+        import_sections = {
+            1: {'start': 0x70, 'end': 0x28006F},
+            2: {'start': 0x280070, 'end': 0x50006F},
+            3: {'start': 0x500070, 'end': 0x78006F},
+            4: {'start': 0x780070, 'end': 0xA0006F},
+            5: {'start': 0xA00070, 'end': 0xC8006F},
+            6: {'start': 0xC80070, 'end': 0xF0006F},
+            7: {'start': 0xF00070, 'end': 0x118006F},
+            8: {'start': 0x1180070, 'end': 0x140006F},
+            9: {'start': 0x1400070, 'end': 0x168006F},
+            10: {'start': 0x1680070, 'end': 0x190006F}
+        }
+    elif import_file_name.lower() == "er0000.sl2":
+        import_sections = {
+            1: {'start': 0x310, 'end': 0x28030F},
+            2: {'start': 0x280320, 'end': 0x50031F},
+            3: {'start': 0x500330, 'end': 0x78032F},
+            4: {'start': 0x780340, 'end': 0xA0033F},
+            5: {'start': 0xA00350, 'end': 0xC8034F},
+            6: {'start': 0xC80360, 'end': 0xF0035F},
+            7: {'start': 0xF00370, 'end': 0x118036F},
+            8: {'start': 0x1180380, 'end': 0x140037F},
+            9: {'start': 0x1400390, 'end': 0x168038F},
+            10: {'start': 0x16803A0, 'end': 0x190039F}
+        }
+    else:
+        messagebox.showerror("Unsupported File", "Unsupported file format for import.")
+        return
+
+    try:
+        with open(import_path, 'rb') as f:
+            import_data = f.read()
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not read import file: {e}")
+        return
+    # Extract names for all sections
+    section_names = []
+
+    for sec_num, sec_info in import_sections.items():
+        data = import_data[sec_info['start']:sec_info['end']+1]
+        offset1 = find_hex_offset(data, hex_pattern1_Fixed)
+        name_found = "N/A"
+        if offset1 is not None:
+            for distance in possible_name_distances_for_name_tap:
+                name_offset = offset1 + distance
+                name = find_character_name(data, name_offset)
+                if name and name != "N/A":
+                    name_found = name
+                    break
+        section_names.append((sec_num, name_found))
+
+
+    # UI to choose section to import
+    section_window = tk.Toplevel()
+    section_window.title("Import Section")
+    section_window.geometry("350x400")
+
+    label = tk.Label(section_window, text="Choose a section to import from:")
+    label.pack(pady=10)
+
+    for sec_num, name in section_names:
+        btn_text = f"Section {sec_num} - {name}"
+        def make_callback(s=sec_num):
+            def callback():
+                global loaded_file_data
+
+                # Get original Steam ID saved from current section
+                original_steam_id = steam_id(0)
+                if original_steam_id is None:
+                    messagebox.showerror("Error", "Original Steam ID not loaded. Please load a section first.")
+                    return
+
+                # Extract the section chunk to import
+                imported_chunk = import_data[import_sections[s]['start']:import_sections[s]['end']+1]
+
+                # Try to locate the Steam ID in the imported chunk
+                offset_steam = find_hex_offset(imported_chunk, steamid_pattern_is) or \
+                            find_hex_offset(imported_chunk, steamid_pattern_is_maybe)
+
+                if offset_steam is not None:
+                    steam_offset = offset_steam - 0x08
+                    if 0 <= steam_offset <= len(imported_chunk) - 8:
+                        # Replace Steam ID in the imported chunk before writing it
+                        imported_chunk = (
+                            imported_chunk[:steam_offset] +
+                            original_steam_id +
+                            imported_chunk[steam_offset + 8:]
+                        )
+                        print(f"Patched Steam ID at offset {hex(steam_offset)} in imported chunk.")
+                    else:
+                        print("Steam offset out of range in imported chunk.")
+                else:
+                    print("No Steam ID pattern found in imported chunk.")
+
+                # Replace the section in the loaded file data
+                local_start = SECTIONS[current_section]['start']
+                local_end = SECTIONS[current_section]['end']
+                loaded_file_data = (
+                    loaded_file_data[:local_start] +
+                    imported_chunk +
+                    loaded_file_data[local_end+1:]
+                )
+
+                # Save to file
+                with open(file_path_var.get(), 'wb') as f:
+                    f.write(loaded_file_data)
+
+                messagebox.showinfo("Import Successful", f"Replaced current section with Section {s} from import file.")
+                load_section(current_section)
+                section_window.destroy()
+            return callback
+
+        btn = tk.Button(section_window, text=btn_text, command=make_callback())
+        btn.pack(pady=5)
+
+
 
 def recalc_checksum(file):
     """
@@ -375,7 +622,73 @@ def update_ng_value():
     else:
         messagebox.showerror("Pattern Not Found", "Pattern not found in the selected section.")
 
-def cookbooks_unlock(section_number):
+def update_stat(stat):
+    file_path = file_path_var.get()
+    section_number = current_section_var.get()
+    print("file_path:", file_path)
+    print("section_number:", section_number)
+    
+    if not file_path or section_number == 0:
+        messagebox.showerror("Input Error", "Please open a file and select a section!")
+        return
+    
+    try:
+        if stat == "Gender":
+            selected = new_stats_vars[stat].get()
+            print(f"Selected {stat}: '{selected}'")
+            if selected == "":  # Check if the user left the field empty
+                raise ValueError("Please select a gender")
+            new_stat_value = REVERSE_GENDER_MAP[selected]
+        elif stat == "Class":
+            selected = new_stats_vars[stat].get()
+            print(f"Selected {stat}: '{selected}'")
+            if selected == "":  # Check if the user left the field empty
+                raise ValueError("Please select a class")
+            new_stat_value = REVERSE_CLASS_MAP[selected]
+        else:
+            # Get the value from the StringVar
+            user_input = new_stats_vars[stat].get().strip()
+            print(f"User input for {stat}: '{user_input}'")
+            if user_input == "":
+                raise ValueError(f"Please enter a valid value for {stat}.")
+            new_stat_value = int(user_input)
+            print(f"Converted {stat} value: {new_stat_value}")
+    except (ValueError, KeyError) as e:
+        messagebox.showerror("Invalid Input", str(e))
+        return
+    
+    section_info = SECTIONS[section_number]
+    section_data = loaded_file_data[section_info['start']:section_info['end'] + 1]
+    
+    offset1 = find_hex_offset(section_data, hex_pattern1_Fixed)
+    if offset1 is not None:
+        # Calculate the correct offset in the section
+        relative_offset = calculate_offset2(offset1, stats_offsets_for_stats_tap[stat])
+        # Calculate the absolute file offset
+        absolute_offset = section_info['start'] + relative_offset
+        
+        # Debug print
+        print(f"Writing {stat} = {new_stat_value} (hex: {hex(new_stat_value)}) at file offset {absolute_offset} (hex: {hex(absolute_offset)})")
+        
+        # For Level stat, use 2 bytes
+        byte_size = 2 if stat == "Level" else 1
+        write_value_at_offset(file_path, absolute_offset, new_stat_value, byte_size=byte_size)
+        
+        # Set displayed value based on type
+        if stat == "Gender":
+            current_stats_vars[stat].set(GENDER_MAP[new_stat_value])
+        elif stat == "Class":
+            current_stats_vars[stat].set(CLASS_MAP[new_stat_value])
+        else:
+            current_stats_vars[stat].set(str(new_stat_value))
+        
+        messagebox.showinfo("Success", f"{stat} updated to {new_stat_value}.")
+    else:
+        messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
+
+
+
+def cookbooks_unlock(section_number): ##not working
     file_path = file_path_var.get()
     current_section_var.set(section_number)
     section_info = SECTIONS[section_number]
@@ -479,195 +792,142 @@ def save_file():
         
     except Exception as e:
         messagebox.showerror("Error", f"Failed to save file: {e}")
-##Counter logic
 
-cached_counter_results = {}
-cached_counter_results_in = {}
 
-def find_highest_counter(section_data, section_info, hex_pattern1_Fixed, use_cache=True):
-    global cached_counter_results
-    
-    # Check if we have cached results for this section and pattern
-    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
-    if use_cache and cache_key in cached_counter_results:
-        print("Using cached counter values")
-        return cached_counter_results[cache_key]
-    
-    print("Performing counter search - this may take a moment...")
-    
-    # Convert hex pattern to bytes
-    fixed_bytes = bytearray.fromhex(hex_pattern1_Fixed)
 
-    # Find `hex_pattern1_Fixed` in the section
-    fixed_match = re.search(re.escape(fixed_bytes), section_data)
+def increment_counterss(counter_bytes: bytes, step=2) -> bytes:
+    counter = list(counter_bytes)
+    carry = step
+    for i in range(4):
+        total = counter[i] + carry
+        counter[i] = total & 0xFF
+        carry = total >> 8
+        if carry == 0:
+            break
+    return bytes(counter)
+###########
+def increment_countersss(counter_bytes: bytes, step=1) -> bytes: # for top section
+    counter = list(counter_bytes)
+    carry = step
+    for i in range(4):
+        total = counter[i] + carry
+        counter[i] = total & 0xFF
+        carry = total >> 8
+        if carry == 0:
+            break
+    return bytes(counter)
+# for the top section
+def get_slot_size(b4):
 
-    if not fixed_match:
-        print("Error: hex_pattern1_Fixed not found in the section.")
-        return 0, 1, None  # Default values if not found
+    if b4 == 0xC0:
+        return 12
+    elif b4 == 0x90:
+        return 16
+    elif b4 == 0x80:
+        return 21
+    else:
+        return None
 
-    fixed_offset = fixed_match.start()  # Get the starting offset of hex_pattern1_Fixed
-    start_offset = section_info['start'] + 10   # Start searching 10 bytes after section start
 
-    highest_counter_4th = 0
-    highest_counter_3rd = 0
-    highest_offset = None
+# in the inventory       
+def empty_slot_finder(default_pattern, file_path, pattern_offset_start, pattern_offset_end, quantity):
+    with open(file_path, 'r+b') as file:
+        slot_size = 12
+        item_count = quantity
+        valid_b4_values = {0x80, 0x90, 0xC0}
+        pattern_offset_start = pattern_offset_start + 520
+        pattern_offset_end = pattern_offset_end - 100
 
-    # Search for the specific 2-byte patterns
-    for match in re.finditer(b'\x80\xC0|\x80\x80|\x80\x90', section_data):
-        offset = match.start()
+        # Load section
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+        print(f"[DEBUG] Loaded section of {len(section_data)} bytes.")
 
-        # Ensure we're not out of bounds before checking marker condition
-        if offset < 2:
-            continue
+        # STEP 1: Find alignment point by scanning for two consecutive valid slots
+        start_offset = None
+        for i in range(0, len(section_data) - 2 * slot_size):
+            slot1 = section_data[i:i + slot_size]
+            slot2 = section_data[i + slot_size:i + 2 * slot_size]
 
-        # Convert to absolute offset
-        absolute_offset = section_info['start'] + offset
+            def is_valid(slot):
+                if len(slot) != slot_size:
+                    return False
+                b3, b4 = slot[2], slot[3]
+                return b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0 #talisman
 
-        # Stop the search if we reach the fixed pattern
-        if offset >= fixed_offset:
-            break  # Stop processing once we reach the fixed_offset
+            if is_valid(slot1) and is_valid(slot2):
+                start_offset = i
+                print(f"[DEBUG] Found alignment at offset {i}")
+                break
 
-        # Only process offsets within the defined range
-        if absolute_offset < start_offset:
-            continue 
+        if start_offset is None:
+            print("[ERROR] No valid slot alignment found.")
+            return
 
-        # Get counters
-        counter_4th = section_data[offset - 2]
-        counter_3rd = section_data[offset - 1]
+        # STEP 2: Process all slots from alignment
+        valid_slot_count = 0
+        empty_slot_count = 0
+        highest_counter = b'\x00\x00\x00\x00'
 
-        if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
-            highest_counter_3rd = counter_3rd
-            highest_counter_4th = counter_4th
-            highest_offset = absolute_offset
+        for i in range(start_offset, len(section_data), slot_size):
+            slot = section_data[i:i + slot_size]
+            if len(slot) < slot_size:
+                print(f"[DEBUG] Skipping incomplete slot at offset {i}")
+                break
 
-    # If no valid markers were found, default counters to zero
-    if highest_offset is None:
-        highest_counter_3rd = 0
-        highest_counter_4th = 1
-        highest_offset = "N/A"
-    
-    # Save results to cache
-    result = (highest_counter_3rd, highest_counter_4th, highest_offset)
-    cached_counter_results[cache_key] = result
-    
-    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}")
-    
-    return result
-
-# Function to update cached counters after an item is added
-def update_cached_counters(section_info, hex_pattern1_Fixed, new_3rd, new_4th, new_offset):
-    global cached_counter_results
-    
-    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
-    cached_counter_results[cache_key] = (new_3rd, new_4th, new_offset)
-    print(f"Updated cached counters: 3rd={new_3rd}, 4th={new_4th}")
-
-### for the invenoty 
-
-import re
-
-def find_highest_inventory_counter_inventory(section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns, use_cache=True):
-    global cached_counter_results_in
-    # Check if we have cached results for this section and pattern
-    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
-    if use_cache and cache_key in cached_counter_results_in:
-        print("Using cached counter values")
-        return cached_counter_results_in[cache_key]
-    
-    fixed_bytes = bytearray.fromhex(hex_pattern1_Fixed)
-
-    # Find `hex_pattern1_Fixed` in the section
-    fixed_match = re.search(re.escape(fixed_bytes), section_data)
-
-    if not fixed_match:
-        print("Error: hex_pattern1_Fixed not found in the section.")
-        return 0, 1, None, None  # Default values if not found
-
-    fixed_offset = fixed_match.start()  # Get the starting offset of hex_pattern1_Fixed
-    
-    # Calculate relative search window in section_data coordinates
-    start_search = fixed_offset + 0x200  # Start searching 0x2C1 bytes after fixed pattern
-    end_search = fixed_offset + 0x91FB  # Limit to a reasonable range like 4KB
-    
-    # Ensure we don't go out of bounds
-    if end_search >= len(section_data):
-        end_search = len(section_data) - 1
-
-    highest_counter_4th = 0
-    highest_counter_3rd = 0
-    highest_offset = None
-    found_id = None
-
-    # Search for all IDs within the proper range
-    for weapon_id, item_hex in inventory_all_hex_patterns.items():
-        item_bytes = bytearray.fromhex(item_hex)
-        for match in re.finditer(re.escape(item_bytes), section_data[start_search:end_search]):
-            # The offset is relative to our sliced search area, adjust it
-            offset = start_search + match.start()
-
-            # Ensure there are enough preceding bytes to check
-            if offset < 6:
+            b3, b4 = slot[2], slot[3]
+            if slot == b'\x00' * slot_size:
+                empty_slot_count += 1
+                continue
+            elif b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0: #talisman
+                valid_slot_count += 1
+                counter = slot[8:12]
+                
+                # Fixed comparison: proper bytes comparison
+                if int.from_bytes(counter, byteorder='little') > int.from_bytes(highest_counter, byteorder='little'):
+                    highest_counter = counter
+                    print(f"[DEBUG] New highest counter found: {highest_counter.hex()}")
+            else:
+                # This is not a valid slot, skip it
                 continue
 
+        # Now create a modified section with zeroed-out invalid slots
+        updated_section = bytearray(section_data)
+        for i in range(start_offset, len(section_data), slot_size):
+            slot = section_data[i:i + slot_size]
+            if len(slot) < slot_size:
+                break
+            
+            b3, b4 = slot[2], slot[3]
+            if not (b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0) and slot != b'\x00' * slot_size:
+                # Invalidate the slot by zeroing it out
+                updated_section[i:i + slot_size] = b'\x00' * slot_size
 
-            # Convert to absolute offset
-            absolute_offset = section_info['start'] + offset
+        # STEP 3: Apply zeroed-out version to file
+        file.seek(pattern_offset_start)
+        file.write(updated_section)
 
-            # Get counter values
-            counter_4th = section_data[offset + 8]
-            counter_3rd = section_data[offset + 9]
+        # STEP 4: Write new entry in the first empty slot found after alignment
+        # Make sure the increment_counterss function exists or define it here
+        new_counter = increment_counterss(highest_counter)
+        print(f"[DEBUG] Highest counter: {highest_counter.hex()}, New counter: {new_counter.hex()}")
+        
+        new_entry = default_pattern + item_count.to_bytes(4, 'little') + new_counter
 
-            # Update highest counter if this occurrence has a higher value
-            if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
-                highest_counter_3rd = counter_3rd
-                highest_counter_4th = counter_4th
-                highest_offset = absolute_offset
-                found_id = item_bytes.hex().upper()
+        for i in range(start_offset, len(updated_section), slot_size):
+            if updated_section[i:i + slot_size] == b'\x00' * slot_size:
+                absolute_position = pattern_offset_start + i
+                file.seek(absolute_position)
+                file.write(new_entry)
+                print(f"[INFO] Wrote new entry at offset {hex(absolute_position)}")
+                break
 
-    # Search for markers separately within the same range
-    marker_bytes = [b'\x80\xC0', b'\x80\x80', b'\x80\x90']
-    for marker in marker_bytes:
-        for match in re.finditer(re.escape(marker), section_data[start_search:end_search]):
-            # Adjust offset to be relative to the full section_data
-            offset = start_search + match.start()
+        print(f"[SUMMARY] Valid slots found: {valid_slot_count}, Empty slots found: {empty_slot_count}")
+        print(f"[SUMMARY] Highest counter: {highest_counter.hex()}, New counter used: {new_counter.hex()}")
+        return new_entry , absolute_position
 
-            # Ensure there are enough bytes before and after to safely check
-            if offset < 6 or offset + 6 >= len(section_data):
-                continue
 
-            # Convert to absolute offset
-            absolute_offset = section_info['start'] + offset
 
-            # Get counter values
-            counter_4th = section_data[offset + 6]
-            counter_3rd = section_data[offset + 7]
-
-            # Update highest counter if this occurrence has a higher value
-            if (counter_3rd, counter_4th) > (highest_counter_3rd, highest_counter_4th):
-                highest_counter_3rd = counter_3rd
-                highest_counter_4th = counter_4th
-                highest_offset = absolute_offset
-                found_id = marker.hex().upper()
-
-    # If no valid ID or marker was found, return default values
-    if highest_offset is None:
-        highest_counter_3rd = 0
-        highest_counter_4th = 1  # Start at 1 to avoid using 0
-
-    result = (highest_counter_3rd, highest_counter_4th, highest_offset, found_id)
-    cached_counter_results_in[cache_key] = result
-    print(f"Found highest counters: 3rd={highest_counter_3rd}, 4th={highest_counter_4th}, ID={found_id}, highest_offsethighest_offset={highest_offset}")
-    print(f"Processing section {section_info} from {section_info['start']} to {section_info['end']}")
-    
-
-    return highest_counter_3rd, highest_counter_4th, highest_offset, found_id
-
-def update_cached_counters_inven(section_info, hex_pattern1_Fixed, new_3rd_in, new_4th_in, new_offset, found_id="None"):
-    global cached_counter_results_in
-    
-    cache_key = (section_info['start'], section_info['end'], hex_pattern1_Fixed)
-    cached_counter_results_in[cache_key] = (new_3rd_in, new_4th_in, new_offset, found_id)
-    print(f"Updated cached counters: 3rd={new_3rd_in}, 4th={new_4th_in}, ID={found_id}")   
 
 ## ADD items
 def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
@@ -706,6 +966,19 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
 
         # Locate Fixed Pattern 1
         fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        
+        fixed_pattern_offset_start= fixed_pattern_offset
+        search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+        fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+        if fixed_pattern_offset_end is not None:
+            fixed_pattern_offset_end += search_start_position
+        else:
+            # Handle case where end pattern isn't found
+            print("End pattern not found")
+            return
+        if search_start_position >= len(section_data):
+            print("Search start position beyond section data.")
+            return
         if fixed_pattern_offset is None:
             messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
             return
@@ -731,67 +1004,11 @@ def find_and_replace_pattern_with_item_and_update_counters(item_name, quantity):
                     increment_counters(file, section_info['start'] + fixed_pattern_offset)
                     return
 
-            # Add new item if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
-                return
+            ## NEW FUNCTION
+            default_pattern = bytearray.fromhex("A4 06 00 B0")
+            default_pattern[:len(item_id_bytes[:4])] = item_id_bytes[:4]  # Safely copy bytes
+            empty_slot_finder(default_pattern, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start + 37310, quantity)
 
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + empty_offset + 2
-
-            # Create the default pattern
-            default_pattern = bytearray.fromhex("A4 06 00 B0 03 00 00 00 1F 01")
-            default_pattern[:4] = item_id_bytes[:4]  # First 3 bytes from the item ID
-            default_pattern[4] = quantity  # Quantity at 9th byte
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
-            
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern[9] = high_nibble_in | low_nibble_in
-
-            # Write the new item pattern
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-
-            # Update cached counters
-            update_cached_counters_inven(
-                section_info, 
-                hex_pattern1_Fixed, 
-                third_byte_value_inven,  # Using the original value
-                new_4th_counter_value_inven, 
-                actual_offset,
-                found_id  # Add the found_id parameter
-            )
-
-            
-
-            section_data[actual_offset - section_info['start']:actual_offset - section_info['start'] + len(default_pattern)] = default_pattern
-
-            loaded_file_data[actual_offset:actual_offset + len(default_pattern)] = default_pattern
 
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
@@ -838,76 +1055,30 @@ def find_and_replace_pattern_with_item_and_update_counters_stack(item_name, quan
         section_data = loaded_file_data[section_info['start']:section_info['end']+1]
 
         # Locate Fixed Pattern 1
+        # Locate Fixed Pattern 1
         fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        
+        fixed_pattern_offset_start= fixed_pattern_offset
+        search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+        fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+        if fixed_pattern_offset_end is not None:
+            fixed_pattern_offset_end += search_start_position
+        else:
+            # Handle case where end pattern isn't found
+            print("End pattern not found")
+            return
+        if search_start_position >= len(section_data):
+            print("Search start position beyond section data.")
+            return
         if fixed_pattern_offset is None:
             messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
             return
 
         with open(file_path, 'r+b') as file:
             loaded_file_data = bytearray(file.read())
-            # Check if item exists in current section
-
-            # Add new item if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
-                return
-
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + empty_offset + 2
-
-            # Create the default pattern
-            default_pattern = bytearray.fromhex("A4 06 00 B0 03 00 00 00 1F 01")
-            default_pattern[:4] = item_id_bytes[:4]  # First 3 bytes from the item ID
-            default_pattern[4:8] = quantity.to_bytes(4, 'little') 
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
-            
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern[9] = high_nibble_in | low_nibble_in
-
-            # Write the new item pattern
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-
-            # Update cached counters
-            update_cached_counters_inven(
-                section_info, 
-                hex_pattern1_Fixed, 
-                third_byte_value_inven,  # Using the original value
-                new_4th_counter_value_inven, 
-                actual_offset,
-                found_id  # Add the found_id parameter
-            )
-
-            
-
-            section_data[actual_offset - section_info['start']:actual_offset - section_info['start'] + len(default_pattern)] = default_pattern
-
-            loaded_file_data[actual_offset:actual_offset + len(default_pattern)] = default_pattern
+            default_pattern = bytearray.fromhex("A4 06 00 B0")
+            default_pattern[:len(item_id_bytes[:4])] = item_id_bytes[:4]  # Safely copy bytes
+            empty_slot_finder(default_pattern, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start+ 37310, quantity)
 
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
@@ -953,90 +1124,204 @@ def find_and_replace_pattern_with_talisman_and_update_counters(item_name):
         # Get current section data from loaded_file_data
         section_data = loaded_file_data[section_info['start']:section_info['end']+1]
 
-        # Locate Fixed Pattern 1
         fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        
+        fixed_pattern_offset_start= fixed_pattern_offset
+        search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+        fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+        if fixed_pattern_offset_end is not None:
+            fixed_pattern_offset_end += search_start_position
+        else:
+            # Handle case where end pattern isn't found
+            print("End pattern not found")
+            return
+        if search_start_position >= len(section_data):
+            print("Search start position beyond section data.")
+            return
         if fixed_pattern_offset is None:
             messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
             return
 
         with open(file_path, 'r+b') as file:
             loaded_file_data = bytearray(file.read())
-            # Add new item if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
-                return
-
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + empty_offset + 2
-
             # Create the default pattern
-            default_pattern = bytearray.fromhex("B2 1B 00 A0 01 00 00 00 AE 00")
-            default_pattern[:2] = item_id_bytes[:2]  # First 3 bytes from the item ID
-            
-            
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
-            
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern[9] = high_nibble_in | low_nibble_in
-
-    
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-            # Update the in-memory section data
+            default_pattern = bytearray.fromhex("B2 1B 00 A0")
+            default_pattern[:2] = item_id_bytes[:2]  # First 2 bytes from the item ID
+            empty_slot_finder(default_pattern, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start+ 37310, 1)
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
-            for i, byte in enumerate(default_pattern):
-                loaded_file_data[actual_offset + i] = byte
 
-            
-
-            # Update cached counters
-        update_cached_counters_inven(
-            section_info, 
-            hex_pattern1_Fixed, 
-            third_byte_value_inven,  # Using the original value
-            new_4th_counter_value_inven, 
-            actual_offset,
-            found_id  # Add the found_id parameter
-        )
         with open(file_path, 'rb') as file:
             loaded_file_data = bytearray(file.read())
-        
-        return True  # Indicate success
-
-            
-
-            
-
+        return True
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
 
+
+def empty_slot_finder_aow(default_pattern, file_path, pattern_offset_start, pattern_offset_end):
+    def get_slot_size(b4):
+        if b4 == 0xC0:
+            return 8
+        elif b4 == 0x90:
+            return 16
+        elif b4 == 0x80:
+            return 21
+        else:
+            return None
+    with open(file_path, 'r+b') as file:
+        valid_b4_values = {0x80, 0x90, 0xC0}
+
+        # Load section
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+        print(f"[DEBUG] Loaded section of {len(section_data)} bytes.")
+
+        # STEP 1: Find alignment point by scanning for valid slots
+        # We need a more flexible approach since slots can have different sizes
+        def is_valid_slot_start(pos):
+            """Check if position could be the start of a valid slot"""
+            if pos + 4 > len(section_data):  # Need at least 4 bytes
+                return False, None
+            
+            b3, b4 = section_data[pos+2], section_data[pos+3]
+            if b3 == 0x80 and b4 in valid_b4_values:
+                slot_size = get_slot_size(b4)
+                if slot_size and pos + slot_size <= len(section_data):
+                    return True, slot_size
+            return False, None
+        
+        # Find the first valid slot
+        start_offset = None
+        for i in range(0, len(section_data) - 8):  # At least 8 bytes for empty slot check
+            valid, first_slot_size = is_valid_slot_start(i)
+            if valid:
+                # Check if the next position after this slot also starts a valid slot
+                next_pos = i + first_slot_size
+                valid_next, _ = is_valid_slot_start(next_pos)
+                
+                # Or check if it's an empty slot (which is also valid)
+                is_empty_next = (next_pos + 8 <= len(section_data) and 
+                                 section_data[next_pos:next_pos+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF')
+                
+                if valid_next or is_empty_next:
+                    start_offset = i
+                    print(f"[DEBUG] Found valid slot alignment at offset {i}")
+                    break
+        
+        if start_offset is None:
+            print("[ERROR] No valid slot alignment found.")
+            return
+
+        # STEP 2: Process all slots from alignment with variable slot sizes
+        valid_slot_count = 0
+        empty_slot_count = 0
+        highest_counter = b'\x00\x00'
+        
+        # Process slots with variable sizes
+        i = start_offset
+        while i < len(section_data):
+            # First check if this is an empty slot (8 bytes pattern)
+            if i + 8 <= len(section_data) and section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_count += 1
+                # Empty slots are always considered to be 8 bytes
+                i += 8
+                continue
+            
+            # Check if this is a valid slot
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    
+                    if slot_size and i + slot_size <= len(section_data):
+                        valid_slot_count += 1
+                        counter = section_data[i:i+2]  # First 2 bytes are the counter
+                        
+                        # Compare counters as integers
+                        if int.from_bytes(counter, byteorder='little') > int.from_bytes(highest_counter, byteorder='little'):
+                            highest_counter = counter
+                            print(f"[DEBUG] New highest counter found: {highest_counter.hex()}")
+                        
+                        i += slot_size  # Move to next slot
+                        continue
+            
+            # If we reach here, this position doesn't match any known pattern
+            # Try the next byte position
+            i += 1
+
+        # STEP 3: Write new entry in the first empty slot found after alignment
+        new_counter = increment_countersss(highest_counter)
+        print(f"[DEBUG] Highest counter: {highest_counter.hex()}, New counter: {new_counter.hex()}")
+        
+        print(f"[DEBUG] Default pattern: {default_pattern.hex()}")
+        print(f"[DEBUG] New counter: {new_counter.hex()}")
+
+        # Modify entry creation to be more explicit
+        if len(default_pattern) >= 2:
+            # Create new entry by explicitly slicing and combining
+            new_entry = new_counter + default_pattern[2:]
+            print(f"[DEBUG] New entry: {new_entry.hex()}")
+        else:
+            print("[ERROR] Default pattern is too short.")
+            return
+
+        # Extract b4 value from default pattern to determine its size
+        if len(default_pattern) >= 4:
+            new_entry_b4 = default_pattern[3]
+            new_entry_size = get_slot_size(new_entry_b4)
+            if not new_entry_size:
+                print(f"[ERROR] Invalid b4 value in default pattern: {hex(new_entry_b4)}")
+                return
+            
+            if len(new_entry) < new_entry_size:
+                print(f"[ERROR] Default pattern is too short ({len(new_entry)} bytes) for slot size {new_entry_size}")
+                return
+        else:
+            print("[ERROR] Default pattern too short to determine slot type.")
+            return
+            
+        print(f"[DEBUG] New entry has b4={hex(new_entry_b4)}, requiring {new_entry_size} bytes slot")
+
+        # Find the first empty slot and insert the new entry
+        file.seek(pattern_offset_start)
+        mod_section_data = file.read((pattern_offset_end-40163) - pattern_offset_start)
+        found_empty = False
+        empty_slot_position = None
+        i = start_offset
+        while i < len(mod_section_data):
+            # Check for empty slot pattern
+            if i + 8 <= len(mod_section_data) and mod_section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_position = i
+                print(f"[DEBUG] Found empty slot at relative offset {i}")
+                found_empty = True
+                break
+            
+            # Move to next slot by determining its size
+            if i + 4 <= len(mod_section_data):
+                b3, b4 = mod_section_data[i+2], mod_section_data[i+3]
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    if slot_size:
+                        i += slot_size
+                        continue
+            
+            # Move one byte at a time if not at a valid slot
+            i += 1
+                
+        if not found_empty:
+            print("[ERROR] No empty slots found to write new entry.")
+            return
+            
+
+        
+        # Step 1: Insert the new entry
+        insertion_position =  empty_slot_position+ pattern_offset_start
+        
+        file.seek(insertion_position)
+        file.write(new_entry)
+        return new_counter
 ## AOW add
 def find_and_replace_pattern_with_aow_and_update_counters(item_name):
     global loaded_file_data, cached_counter_results_in# Add this to ensure we can modify the global variable
@@ -1071,131 +1356,45 @@ def find_and_replace_pattern_with_aow_and_update_counters(item_name):
 
         # Locate Fixed Pattern 1
         fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+        
+        fixed_pattern_offset_start= fixed_pattern_offset
+        search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+        fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+        if fixed_pattern_offset_end is not None:
+            fixed_pattern_offset_end += search_start_position
+        else:
+            # Handle case where end pattern isn't found
+            print("End pattern not found")
+            return
+        if search_start_position >= len(section_data):
+            print("Search start position beyond section data.")
+            return
         if fixed_pattern_offset is None:
             messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
             return
 
         with open(file_path, 'r+b') as file:
             loaded_file_data = bytearray(file.read())
-            # Add new item if it doesn't exist
-            empty_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
-                return
-
-            # Calculate actual offset for empty slot
-            actual_offset = section_info['start'] + empty_offset 
+            
 
             # Create the default pattern
             default_pattern = bytearray.fromhex("D0 04 80 C0 30 75 00 80")
             default_pattern[4:8] = item_id_bytes  # Replace all 4 bytes of the item ID
-            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
-            section_data, section_info, hex_pattern1_Fixed
-            )
             
-            # Counters logic
-            reference_value = highest_counter_4th
-            new_4th_counter_value = (reference_value + 1) & 0xFF
-            default_pattern[0] = new_4th_counter_value
 
-
-            # For the 3rd counter
-            third_byte_value = highest_counter_3rd  # Get the whole byte
-
-            # Store the upper 4 bits (high nibble)
-            high_nibble = third_byte_value & 0xF0
-
-            # Extract decimal value from lower 4 bits
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-                
-            if new_4th_counter_value == 0:  # Rollover happened
-                decimal_value = (decimal_value + 1) % 10
-
-            # Combine the preserved high nibble with the modified low nibble
-            default_pattern[1] = high_nibble | decimal_value
-
-            print(f"Original third_byte_value: 0x{third_byte_value:02X}")
-            print(f"High nibble: 0x{high_nibble:02X}")
-            print(f"Modified value: 0x{default_pattern[1]:02X}")
-
-            # Write the new item pattern
-            file.seek(actual_offset)
-            file.write(default_pattern)
-            update_cached_counters(
-            section_info, 
-            hex_pattern1_Fixed, 
-            third_byte_value, 
-            new_4th_counter_value, 
-            actual_offset  # Store the new offset where we placed the item
-        )
+            file.seek(0)  
+            entire_file = bytearray(file.read())  # Get updated file content
+            section_data = entire_file[section_info['start']:section_info['end'] + 1]
+            fixed_pattern_offset_top = find_hex_offset(section_data, hex_pattern1_Fixed)
+            new_counter = empty_slot_finder_aow(default_pattern, file_path, section_info['start'] + 32, section_info['start'] + fixed_pattern_offset_top - 431)
+            
 
             #in the inevmentory######################
 
-
-            empty_pattern_inven = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
-            empty_offset_inven = section_data.find(empty_pattern_inven)
-            if empty_offset_inven == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
-                return
-
-            # Calculate actual offset for empty slot
-            actual_offset_inven = section_info['start'] + empty_offset_inven + 2
-
             # Create the default pattern
-            default_pattern_inven = bytearray.fromhex("D0 12 80 C0 01 00 00 00 AE 00")
-            default_pattern_inven[0] = default_pattern[0]
-            default_pattern_inven[1] = default_pattern[1]
-    
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
-            
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern_inven[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern_inven[9] = high_nibble_in | low_nibble_in
-
-            # Write the new item pattern
-            file.seek(actual_offset_inven)
-            file.write(default_pattern_inven)
-
-            # Update cached counters
-            update_cached_counters_inven(
-                section_info, 
-                hex_pattern1_Fixed, 
-                third_byte_value_inven,  # Using the original value
-                new_4th_counter_value_inven, 
-                actual_offset_inven,
-                found_id  # Add the found_id parameter
-            )
-
-            # Update the in-memory section data
-            for i, byte in enumerate(default_pattern):
-                loaded_file_data[actual_offset + i] = byte
-
-            for i, byte in enumerate(default_pattern_inven):
-                loaded_file_data[actual_offset_inven + i] = byte
+            default_pattern_inven = bytearray.fromhex("D0 12 80 C0")
+            default_pattern_inven = new_counter + default_pattern_inven[2:]
+            empty_slot_finder(default_pattern_inven, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start+ 37310, 1)
 
             # Increment counters because a new item was added
             increment_counters(file, section_info['start'] + fixed_pattern_offset)
@@ -1952,12 +2151,567 @@ def delete_fixed_pattern_3_bytes(file, section_start, section_end, fixed_pattern
     
     # Truncate to the correct length
     file.truncate(file.tell() - len(trailing_pattern))
+#######testing
+
+def get_slot_size(b4):
+    """Determine slot size based on b4 value"""
+    if b4 == 0xC0:
+        return 12
+    elif b4 == 0x90:
+        return 16
+    elif b4 == 0x80:
+        return 21
+    else:
+        return None
+
+def empty_slot_finder_weapons(default_pattern, file_path, pattern_offset_start, pattern_offset_end):
+    """Find an empty weapon slot and write the new entry with an incremented counter."""
+    with open(file_path, 'r+b') as file:
+        valid_b4_values = {0x80, 0x90, 0xC0}
+
+        # Load section
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+        print(f"[DEBUG] Loaded section of {len(section_data)} bytes.")
+
+        # STEP 1: Find alignment point by scanning for valid slots
+        # We need a more flexible approach since slots can have different sizes
+        def is_valid_slot_start(pos):
+            """Check if position could be the start of a valid slot"""
+            if pos + 4 > len(section_data):  # Need at least 4 bytes
+                return False, None
+            
+            b3, b4 = section_data[pos+2], section_data[pos+3]
+            if b3 == 0x80 and b4 in valid_b4_values:
+                slot_size = get_slot_size(b4)
+                if slot_size and pos + slot_size <= len(section_data):
+                    return True, slot_size
+            return False, None
+        
+        # Find the first valid slot
+        start_offset = None
+        for i in range(0, len(section_data) - 8):  # At least 8 bytes for empty slot check
+            valid, first_slot_size = is_valid_slot_start(i)
+            if valid:
+                # Check if the next position after this slot also starts a valid slot
+                next_pos = i + first_slot_size
+                valid_next, _ = is_valid_slot_start(next_pos)
+                
+                # Or check if it's an empty slot (which is also valid)
+                is_empty_next = (next_pos + 8 <= len(section_data) and 
+                                 section_data[next_pos:next_pos+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF')
+                
+                if valid_next or is_empty_next:
+                    start_offset = i
+                    print(f"[DEBUG] Found valid slot alignment at offset {i}")
+                    break
+        
+        if start_offset is None:
+            print("[ERROR] No valid slot alignment found.")
+            return
+
+        # STEP 2: Process all slots from alignment with variable slot sizes
+        valid_slot_count = 0
+        empty_slot_count = 0
+        highest_counter = b'\x00\x00'
+        
+        # Process slots with variable sizes
+        i = start_offset
+        while i < len(section_data):
+            # First check if this is an empty slot (8 bytes pattern)
+            if i + 8 <= len(section_data) and section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_count += 1
+                # Empty slots are always considered to be 8 bytes
+                i += 8
+                continue
+            
+            # Check if this is a valid slot
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    
+                    if slot_size and i + slot_size <= len(section_data):
+                        valid_slot_count += 1
+                        counter = section_data[i:i+2]  # First 2 bytes are the counter
+                        
+                        # Compare counters as integers
+                        if int.from_bytes(counter, byteorder='little') > int.from_bytes(highest_counter, byteorder='little'):
+                            highest_counter = counter
+                            print(f"[DEBUG] New highest counter found: {highest_counter.hex()}")
+                        
+                        i += slot_size  # Move to next slot
+                        continue
+            
+            # If we reach here, this position doesn't match any known pattern
+            # Try the next byte position
+            i += 1
+
+        # STEP 3: Write new entry in the first empty slot found after alignment
+        new_counter = increment_countersss(highest_counter)
+        print(f"[DEBUG] Highest counter: {highest_counter.hex()}, New counter: {new_counter.hex()}")
+        
+        print(f"[DEBUG] Default pattern: {default_pattern.hex()}")
+        print(f"[DEBUG] New counter: {new_counter.hex()}")
+
+        # Modify entry creation to be more explicit
+        if len(default_pattern) >= 2:
+            # Create new entry by explicitly slicing and combining
+            new_entry = new_counter + default_pattern[2:]
+            print(f"[DEBUG] New entry: {new_entry.hex()}")
+        else:
+            print("[ERROR] Default pattern is too short.")
+            return
+
+        # Extract b4 value from default pattern to determine its size
+        if len(default_pattern) >= 4:
+            new_entry_b4 = default_pattern[3]
+            new_entry_size = get_slot_size(new_entry_b4)
+            if not new_entry_size:
+                print(f"[ERROR] Invalid b4 value in default pattern: {hex(new_entry_b4)}")
+                return
+            
+            if len(new_entry) < new_entry_size:
+                print(f"[ERROR] Default pattern is too short ({len(new_entry)} bytes) for slot size {new_entry_size}")
+                return
+        else:
+            print("[ERROR] Default pattern too short to determine slot type.")
+            return
+            
+        print(f"[DEBUG] New entry has b4={hex(new_entry_b4)}, requiring {new_entry_size} bytes slot")
+
+        # Find the first empty slot and insert the new entry
+        file.seek(pattern_offset_start)
+        mod_section_data = file.read(pattern_offset_end - (pattern_offset_start+1599))
+        found_empty = False
+        empty_slot_position = None
+        i = start_offset
+        while i < len(mod_section_data):
+            # Check for empty slot pattern
+            if i + 8 <= len(mod_section_data) and mod_section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_position = i
+                print(f"[DEBUG] Found empty slot at relative offset {i}")
+                found_empty = True
+                break
+            
+            # Move to next slot by determining its size
+            if i + 4 <= len(mod_section_data):
+                b3, b4 = mod_section_data[i+2], mod_section_data[i+3]
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    if slot_size:
+                        i += slot_size
+                        continue
+            
+            # Move one byte at a time if not at a valid slot
+            i += 1
+                
+        if not found_empty:
+            print("[ERROR] No empty slots found to write new entry.")
+            return
+            
+        # Calculate how many bytes to remove to maintain file size
+        # First, we're adding the new entry (new_entry_size)
+        # Then removing an empty slot (8 bytes)
+        # Then we need to remove additional bytes from end based on b4 value
+        additional_bytes_to_remove = 0
+        if new_entry_b4 == 0x80:  # 21 bytes total
+            additional_bytes_to_remove = 21 - 8  # 13 bytes
+        elif new_entry_b4 == 0x90:  # 16 bytes total
+            additional_bytes_to_remove = 16 - 8  # 8 bytes
+        elif new_entry_b4 == 0xC0:  # 12 bytes total
+            additional_bytes_to_remove = 12 - 8  # 4 bytes
+            
+        print(f"[DEBUG] Need to remove {additional_bytes_to_remove} additional bytes to maintain file size")
+        
+        # Step 1: Insert the new entry
+        insertion_position =  empty_slot_position+ pattern_offset_start
+        
+        # Get the file size
+        file.seek(0, 2)  # Seek to end of file
+        file_size = file.tell()
+        
+        # Read all data after the insertion point
+        file.seek(insertion_position)
+        remainder_data = file.read(file_size - insertion_position)
+        
+        # Go back to insertion point and write new entry
+        file.seek(insertion_position) 
+        file.write(new_entry)
+        
+        # Write the remainder of the file
+        file.write(remainder_data)
+        
+        print(f"[INFO] Inserted new entry at offset {hex(insertion_position)}")
+        
+        # Step 2: Remove the empty slot (8 bytes)
+        # Find another empty slot to remove
+        def is_empty_slot(slot_bytes):
+            empty_patterns = [
+                b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF',
+            ]
+            return slot_bytes in empty_patterns
+        # Step 2: Remove the empty slot (8 bytes)
+        # Find another empty slot to remove
+        all_empty_slots = []
+        i = start_offset
+        while i < len(section_data):
+            # Check for empty slot pattern
+            if i + 8 <= len(section_data) and is_empty_slot(section_data[i:i+8]):
+                all_empty_slots.append(i)
+            
+            # Move to next slot by determining its size
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    if slot_size:
+                        i += slot_size
+                        continue
+            
+            # Move one byte at a time if not at a valid slot
+            i += 1
+        
+        if not all_empty_slots:
+            print("[WARNING] Could not find any empty slots.")
+            return
+        last_empty_slot_position = all_empty_slots[-1]    
+        # Remove this second empty slot (8 bytes)
+        removal_position = pattern_offset_start + last_empty_slot_position
+            
+        
+        # Get updated file size
+        file.seek(0, 2)
+        updated_file_size = file.tell()
+        
+        # Read all data after the removal point
+        file.seek(removal_position + 8)  # +8 to skip the empty slot
+        remainder_data = file.read(updated_file_size - (removal_position + 8))
+        
+        # Go back to removal point and write remainder (skipping the empty slot)
+        file.seek(removal_position)
+        file.write(remainder_data)
+        
+        # Truncate the file to remove the trailing 8 bytes
+        file.truncate(updated_file_size - 8)
+        
+        print(f"[INFO] Removed empty slot at offset {hex(removal_position)}")
+        
+        # Step 3: Remove additional bytes from the end of the section if needed
+        if additional_bytes_to_remove > 0:
+            file_path = file_path_var.get()  # Variable holding the file path in the app
+            section_number = current_section_var.get()  # Variable holding the selected section number
+
+            if not file_path:
+                messagebox.showerror("Error", "No file selected. Please select a file.")
+                return
+            
+            if section_number not in SECTIONS:
+                messagebox.showerror("Error", "Invalid section selected. Please choose a valid section.")
+                return
+
+            # Retrieve the section info
+            section_info = SECTIONS[section_number]
+            section_start = section_info['start']
+            section_end = section_info['end']
+
+            # Calculate the start position for deletion
+            deletion_start = section_end - 100
+            if deletion_start < section_start:
+                messagebox.showerror(
+                    "Error",
+                    "Distance from the end exceeds the section boundary. Cannot delete bytes."
+                )
+                return
+
+            # Ensure we do not delete beyond the section start
+            deletion_start = max(deletion_start, section_start)
+            deletion_end = deletion_start + additional_bytes_to_remove
+
+            # Open the file and delete the bytes
+            with open(file_path, 'r+b') as file:
+                # Read all data after the deletion end
+                file.seek(deletion_end)
+                remaining_data = file.read()
+
+                # Move to the deletion start and write remaining data
+                file.seek(deletion_start)
+                file.write(remaining_data)
+
+                # Truncate the file to remove extra bytes at the end
+                file.truncate()
+
+            messagebox.showinfo(
+                "Success",
+                f"Item Added to slot {section_number}."
+            )
+            
+        print(f"[SUMMARY] Inserted new entry with b4={hex(new_entry_b4)} ({new_entry_size} bytes), "
+              f"removed empty slot (8 bytes) and {additional_bytes_to_remove} additional bytes to maintain file size")
+        
+        print(f"[SUMMARY] Valid slots found: {valid_slot_count}, Empty slots found: {empty_slot_count}")
+        print(f"[SUMMARY] Highest counter: {highest_counter.hex()}, New counter used: {new_counter.hex()}")
+        return new_counter
+##########
 
 
 
 
 
 
+
+def get_slot_size(b4):
+    """Determine slot size based on b4 value"""
+    if b4 == 0xC0:
+        return 12
+    elif b4 == 0x90:
+        return 16
+    elif b4 == 0x80:
+        return 21
+    else:
+        return None
+
+def empty_slot_finder_weapon_test(default_pattern, file_path, pattern_offset_start, pattern_offset_end):
+    """Find an empty weapon slot and write the new entry with an incremented counter."""
+    with open(file_path, 'r+b') as file:
+        valid_b4_values = {0x80, 0x90, 0xC0}
+        pattern_offset_start = pattern_offset_start + 520
+        pattern_offset_end = pattern_offset_end - 100
+
+        # Load section
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+        print(f"[DEBUG] Loaded section of {len(section_data)} bytes.")
+
+        # STEP 1: Find alignment point by scanning for valid slots
+        # We need a more flexible approach since slots can have different sizes
+        def is_valid_slot_start(pos):
+            """Check if position could be the start of a valid slot"""
+            if pos + 4 > len(section_data):  # Need at least 4 bytes
+                return False, None
+            
+            b3, b4 = section_data[pos+2], section_data[pos+3]
+            if b3 == 0x80 and b4 in valid_b4_values:
+                slot_size = get_slot_size(b4)
+                if slot_size and pos + slot_size <= len(section_data):
+                    return True, slot_size
+            return False, None
+        
+        # Find the first valid slot
+        start_offset = None
+        for i in range(0, len(section_data) - 8):  # At least 8 bytes for empty slot check
+            valid, first_slot_size = is_valid_slot_start(i)
+            if valid:
+                # Check if the next position after this slot also starts a valid slot
+                next_pos = i + first_slot_size
+                valid_next, _ = is_valid_slot_start(next_pos)
+                
+                # Or check if it's an empty slot (which is also valid)
+                is_empty_next = (next_pos + 8 <= len(section_data) and 
+                                 section_data[next_pos:next_pos+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF')
+                
+                if valid_next or is_empty_next:
+                    start_offset = i
+                    print(f"[DEBUG] Found valid slot alignment at offset {i}")
+                    break
+        
+        if start_offset is None:
+            print("[ERROR] No valid slot alignment found.")
+            return
+
+        # STEP 2: Process all slots from alignment with variable slot sizes
+        valid_slot_count = 0
+        empty_slot_count = 0
+        highest_counter = b'\x00\x00'
+        
+        # Process slots with variable sizes
+        i = start_offset
+        while i < len(section_data):
+            # First check if this is an empty slot (8 bytes pattern)
+            if i + 8 <= len(section_data) and section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_count += 1
+                # Empty slots are always considered to be 8 bytes
+                i += 8
+                continue
+            
+            # Check if this is a valid slot
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    
+                    if slot_size and i + slot_size <= len(section_data):
+                        valid_slot_count += 1
+                        counter = section_data[i:i+2]  # First 2 bytes are the counter
+                        
+                        # Compare counters as integers
+                        if int.from_bytes(counter, byteorder='little') > int.from_bytes(highest_counter, byteorder='little'):
+                            highest_counter = counter
+                            print(f"[DEBUG] New highest counter found: {highest_counter.hex()}")
+                        
+                        i += slot_size  # Move to next slot
+                        continue
+            
+            # If we reach here, this position doesn't match any known pattern
+            # Try the next byte position
+            i += 1
+
+        # STEP 3: Write new entry in the first empty slot found after alignment
+        new_counter = increment_countersss(highest_counter)
+        print(f"[DEBUG] Highest counter: {highest_counter.hex()}, New counter: {new_counter.hex()}")
+        
+        # Use the provided default pattern, just replace the counter at the beginning
+        if len(default_pattern) >= 2:
+            new_entry = new_counter + default_pattern[2:]
+        else:
+            print("[ERROR] Default pattern is too short.")
+            return
+
+        # Extract b4 value from default pattern to determine its size
+        if len(default_pattern) >= 4:
+            new_entry_b4 = default_pattern[3]
+            new_entry_size = get_slot_size(new_entry_b4)
+            if not new_entry_size:
+                print(f"[ERROR] Invalid b4 value in default pattern: {hex(new_entry_b4)}")
+                return
+            
+            if len(new_entry) < new_entry_size:
+                print(f"[ERROR] Default pattern is too short ({len(new_entry)} bytes) for slot size {new_entry_size}")
+                return
+        else:
+            print("[ERROR] Default pattern too short to determine slot type.")
+            return
+            
+        print(f"[DEBUG] New entry has b4={hex(new_entry_b4)}, requiring {new_entry_size} bytes slot")
+
+        # Find the first empty slot and insert the new entry
+        found_empty = False
+        empty_slot_position = None
+        i = start_offset
+        while i < len(section_data):
+            # Check for empty slot pattern
+            if i + 8 <= len(section_data) and section_data[i:i+8] == b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF':
+                empty_slot_position = i
+                print(f"[DEBUG] Found empty slot at relative offset {i}")
+                found_empty = True
+                break
+            
+            # Move to next slot by determining its size
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    if slot_size:
+                        i += slot_size
+                        continue
+            
+            # Move one byte at a time if not at a valid slot
+            i += 1
+                
+        if not found_empty:
+            print("[ERROR] No empty slots found to write new entry.")
+            return
+            
+        # Calculate how many bytes to remove to maintain file size
+        # First, we're adding the new entry (new_entry_size)
+        # Then removing an empty slot (8 bytes)
+        # Then we need to remove additional bytes from end based on b4 value
+        additional_bytes_to_remove = 0
+        if new_entry_b4 == 0x80:  # 21 bytes total
+            additional_bytes_to_remove = 21 - 8  # 13 bytes
+        elif new_entry_b4 == 0x90:  # 16 bytes total
+            additional_bytes_to_remove = 16 - 8  # 8 bytes
+
+            
+        print(f"[DEBUG] Need to remove {additional_bytes_to_remove} additional bytes to maintain file size")
+        
+        # Step 1: Insert the new entry
+        insertion_position = pattern_offset_start + empty_slot_position
+        
+        # Get the file size
+        file.seek(0, 2)  # Seek to end of file
+        file_size = file.tell()
+        
+        # Read all data after the insertion point
+        file.seek(insertion_position)
+        remainder_data = file.read(file_size - insertion_position)
+        
+        # Go back to insertion point and write new entry
+        file.seek(insertion_position)
+        file.write(new_entry)
+        
+        # Write the remainder of the file
+        file.write(remainder_data)
+        
+        print(f"[INFO] Inserted new entry at offset {hex(insertion_position)}")
+        def is_empty_slot(slot_bytes):
+            empty_patterns = [
+                b'\x00\x00\x00\x00\xFF\xFF\xFF\xFF',
+            ]
+            return slot_bytes in empty_patterns
+        # Step 2: Remove the empty slot (8 bytes)
+        # Find another empty slot to remove
+        all_empty_slots = []
+        i = start_offset
+        while i < len(section_data):
+            # Check for empty slot pattern
+            if i + 8 <= len(section_data) and is_empty_slot(section_data[i:i+8]):
+                all_empty_slots.append(i)
+            
+            # Move to next slot by determining its size
+            if i + 4 <= len(section_data):
+                b3, b4 = section_data[i+2], section_data[i+3]
+                if b3 == 0x80 and b4 in valid_b4_values:
+                    slot_size = get_slot_size(b4)
+                    if slot_size:
+                        i += slot_size
+                        continue
+            
+            # Move one byte at a time if not at a valid slot
+            i += 1
+        
+        if not all_empty_slots:
+            print("[WARNING] Could not find any empty slots.")
+            return
+        last_empty_slot_position = all_empty_slots[-1]    
+        # Remove this second empty slot (8 bytes)
+        removal_position = pattern_offset_start + last_empty_slot_position
+        
+        # Get updated file size
+        file.seek(0, 2)
+        updated_file_size = file.tell()
+        
+        # Read all data after the removal point
+        file.seek(removal_position + 8)  # +8 to skip the empty slot
+        remainder_data = file.read(updated_file_size - (removal_position + 8))
+        
+        # Go back to removal point and write remainder (skipping the empty slot)
+        file.seek(removal_position)
+        file.write(remainder_data)
+        
+        # Truncate the file to remove the trailing 8 bytes
+        file.truncate(updated_file_size - 8)
+        
+        print(f"[INFO] Removed empty slot at offset {hex(removal_position)}")
+        
+        # Step 3: Remove additional bytes from the end of the section if needed
+        if additional_bytes_to_remove > 0:
+            # Get updated file size again
+            file.seek(0, 2)
+            updated_file_size = file.tell()
+            
+            # Truncate the file to remove the additional bytes from the end
+            file.truncate(updated_file_size - additional_bytes_to_remove)
+            
+            print(f"[INFO] Removed {additional_bytes_to_remove} additional bytes from end of file")
+            
+        print(f"[SUMMARY] Inserted new entry with b4={hex(new_entry_b4)} ({new_entry_size} bytes), "
+              f"removed empty slot (8 bytes) and {additional_bytes_to_remove} additional bytes to maintain file size")
+        
+        print(f"[SUMMARY] Valid slots found: {valid_slot_count}, Empty slots found: {empty_slot_count}")
+        print(f"[SUMMARY] Highest counter: {highest_counter.hex()}, New counter used: {new_counter.hex()}")
 
 
 def delete_bytes_dynamically_from_section_end(distance_from_end, bytes_to_delete):
@@ -2151,18 +2905,7 @@ def add_weapon(item_name, upgrade_level, parent_window):
             section_data = entire_file[section_info['start']:section_info['end']+1]
             
             # Search for Fixed Pattern 1
-            pattern_1_hex = "00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF"
-            fixed_pattern_1 = bytearray.fromhex(pattern_1_hex)
-
-            fixed_pattern_1_offset = search_fixed_pattern(
-                section_data,
-                fixed_pattern_1,
-                fixed_pattern_3_offset
-            )
-
-            if fixed_pattern_1_offset is None:
-                messagebox.showerror("Error", "Fixed Pattern 1 not found in the file.")
-                return
+            
 
             
             default_pattern_1= bytearray.fromhex("0B 11 80 80 F0 3B 2E 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
@@ -2172,116 +2915,47 @@ def add_weapon(item_name, upgrade_level, parent_window):
 
             # Update default pattern with weapon ID and counter values
             default_pattern_1[weapon_id_offset:weapon_id_offset + 4] = weapon_id_bytes
-            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
-            section_data, section_info, hex_pattern1_Fixed
-            )
+
+            file.seek(0)  
+            entire_file = bytearray(file.read())  # Get updated file content
+            section_data = entire_file[section_info['start']:section_info['end'] + 1]
+            fixed_pattern_offset_top = find_hex_offset(section_data, hex_pattern1_Fixed)
+            new_counter = empty_slot_finder_weapons(default_pattern_1, file_path, section_info['start'] + 32, section_info['start'] + fixed_pattern_offset_top - 431)
+
             
-            # Counters logic
-            reference_value = highest_counter_4th
-            new_4th_counter_value = (reference_value + 1) & 0xFF
-            default_pattern_1[0] = new_4th_counter_value
-
-
-            # For the 3rd counter
-            third_byte_value = highest_counter_3rd  # Get the whole byte
-
-            # Store the upper 4 bits (high nibble)
-            high_nibble = third_byte_value & 0xF0
-
-            # Extract decimal value from lower 4 bits
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-                
-            if new_4th_counter_value == 0:  # Rollover happened
-                decimal_value = (decimal_value + 1) % 10
-
-            # Combine the preserved high nibble with the modified low nibble
-            default_pattern_1[1] = high_nibble | decimal_value
-
-            # Inject first pattern
-            inject_offset = fixed_pattern_1_offset + 8
-            section_data[inject_offset:inject_offset] = default_pattern_1
-            update_cached_counters(
-            section_info, 
-            hex_pattern1_Fixed, 
-            third_byte_value, 
-            new_4th_counter_value, 
-            inject_offset  # Store the new offset where we placed the item
-        )
             
 
+            
 
-            # Search for empty pattern
-            empty_pattern = bytes.fromhex("00" * 1024)  # 1024 zeros
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+            fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+            
+            fixed_pattern_offset_start= fixed_pattern_offset
+            search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+            fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+            if fixed_pattern_offset_end is not None:
+                fixed_pattern_offset_end += search_start_position
+            else:
+                # Handle case where end pattern isn't found
+                print("End pattern not found")
+                return
+            if search_start_position >= len(section_data):
+                print("Search start position beyond section data.")
+                return
+            if fixed_pattern_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
                 return
 
-            # Calculate actual offset for empty slot
-            actual_offset = empty_offset + 2
-
             # Create and update default pattern 2
-            default_pattern_2 = bytearray.fromhex("35 02 80 80 01 00 00 00 6B 01")
-            default_pattern_2[0] = default_pattern_1[0]
-            default_pattern_2[1] = default_pattern_1[1]
-
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
+            default_pattern_2 = bytearray.fromhex("35 02 80 80")
+            default_pattern_2 = new_counter + default_pattern_2[2:]
             
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern_2[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern_2[9] = high_nibble_in | low_nibble_in
-
-            # Inject second pattern
-            section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
-
-            trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
-            section_trailing_offset = search_fixed_pattern(
-            section_data,  # Your byte data
-            trailing_pattern, 
-            fixed_pattern_3_offset,  # Start searching from this higher offset
-            end_offset=10480  # Stop searching if the offset goes below 1400
-            )
+            empty_slot_finder(default_pattern_2, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start + 37310, 1)
             
-            if section_trailing_offset != -1 and section_trailing_offset is not None:
-                # Remove the trailing pattern from section_data
-                section_data = section_data[:section_trailing_offset] + section_data[section_trailing_offset + 8:]
-                
-                # Update the section in the entire file
-                entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
+            file.seek(0)  
+            entire_file = bytearray(file.read())  # Get updated file content
+            section_data = entire_file[section_info['start']:section_info['end'] + 1]
+    
 
-            # Remove bytes from section end
-            bytes_to_remove = 13
-
-            # Find the new position of the section's end based on bytes_to_remove
-            # Remove bytes from above the end of the section (above section_end)
-            section_data = section_data[:-bytes_to_remove]
-            if len(section_data) > section_end - section_start + 1:
-                section_data = section_data[:section_end - section_start + 1]
-            entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-            
 
             # Write the entire updated file content
             file.seek(0)
@@ -2291,15 +2965,8 @@ def add_weapon(item_name, upgrade_level, parent_window):
             file.truncate()
             file.seek(0)
             loaded_file_data = bytearray(file.read())
-            # Update cached counters
-            update_cached_counters_inven(
-                section_info, 
-                hex_pattern1_Fixed, 
-                third_byte_value_inven,  # Using the original value
-                new_4th_counter_value_inven, 
-                actual_offset,
-                found_id  # Add the found_id parameter
-            )
+            
+
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
 
@@ -2380,143 +3047,54 @@ def add_armor(item_name, parent_window):
             entire_file = bytearray(file.read())
             section_data = entire_file[section_info['start']:section_info['end']+1]
             
-            # Search for Fixed Pattern 1
-            pattern_1_hex = "00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF"
-            fixed_pattern_1 = bytearray.fromhex(pattern_1_hex)
-
-            fixed_pattern_1_offset = search_fixed_pattern(
-                section_data,
-                fixed_pattern_1,
-                fixed_pattern_3_offset
-            )
-
-            if fixed_pattern_1_offset is None:
-                messagebox.showerror("Error", "Fixed Pattern 1 not found in the file.")
-                return
-
-            
             default_pattern_1= bytearray.fromhex("CD 12 80 90 3C 28 00 10 00 00 00 00 00 00 00 00")
         
-            armor_id_offset = 4
-            # Update default pattern with weapon ID and counter values
-            default_pattern_1[armor_id_offset:armor_id_offset + 4] = armor_id_bytes
-
-            highest_counter_3rd, highest_counter_4th, highest_offset_lol = find_highest_counter(
-            section_data, section_info, hex_pattern1_Fixed
-            )
+            weapon_id_offset = 4
             
-            # Counters logic
-            reference_value = highest_counter_4th
-            new_4th_counter_value = (reference_value + 1) & 0xFF
-            default_pattern_1[0] = new_4th_counter_value
 
+            # Update default pattern with weapon ID and counter values
+            default_pattern_1[weapon_id_offset:weapon_id_offset + 4] = armor_id_bytes
 
-            # For the 3rd counter
-            third_byte_value = highest_counter_3rd  # Get the whole byte
+            file.seek(0)  
+            entire_file = bytearray(file.read())  # Get updated file content
+            section_data = entire_file[section_info['start']:section_info['end'] + 1]
+            fixed_pattern_offset_top = find_hex_offset(section_data, hex_pattern1_Fixed)
+            new_counter = empty_slot_finder_weapons(default_pattern_1, file_path, section_info['start'] + 32, section_info['start'] + fixed_pattern_offset_top - 431)
 
-            # Store the upper 4 bits (high nibble)
-            high_nibble = third_byte_value & 0xF0
+            
+            
 
-            # Extract decimal value from lower 4 bits
-            decimal_value = third_byte_value & 0xF
-            if decimal_value > 9:
-                decimal_value = decimal_value % 10
-                
-            if new_4th_counter_value == 0:  # Rollover happened
-                decimal_value = (decimal_value + 1) % 10
+            
 
-            # Combine the preserved high nibble with the modified low nibble
-            default_pattern_1[1] = high_nibble | decimal_value
-                    
-            # Inject first pattern
-            inject_offset = fixed_pattern_1_offset + 8
-            section_data[inject_offset:inject_offset] = default_pattern_1
-            update_cached_counters(
-            section_info, 
-            hex_pattern1_Fixed, 
-            third_byte_value, 
-            new_4th_counter_value, 
-            inject_offset  # Store the new offset where we placed the item
-        )
-
-
-            # Search for empty pattern
-            empty_pattern = bytes.fromhex("00" * 1024)  # 1024 zeros
-            empty_offset = section_data.find(empty_pattern)
-            if empty_offset == -1:
-                messagebox.showerror("Error", "No empty slot found to add the item in the selected section.")
+            fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+            
+            fixed_pattern_offset_start= fixed_pattern_offset
+            search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+            fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+            if fixed_pattern_offset_end is not None:
+                fixed_pattern_offset_end += search_start_position
+            else:
+                # Handle case where end pattern isn't found
+                print("End pattern not found")
+                return
+            if search_start_position >= len(section_data):
+                print("Search start position beyond section data.")
+                return
+            if fixed_pattern_offset is None:
+                messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
                 return
 
-            # Calculate actual offset for empty slot
-            actual_offset = empty_offset + 2
-
             # Create and update default pattern 2
-            default_pattern_2 = bytearray.fromhex("35 02 80 90 01 00 00 00 6B 01")
-            default_pattern_2[0] = default_pattern_1[0]
-            default_pattern_2[1] = default_pattern_1[1]
-
-            # Update counters for pattern 2
-            reference_value = section_data[actual_offset - 4]
-            new_third_counter_value = (reference_value + 2) & 0xFF
-            default_pattern_2[8] = new_third_counter_value
-
-            highest_3rd, highest_4th, highest_offset, found_id = find_highest_inventory_counter_inventory(
-                section_data, section_info, hex_pattern1_Fixed, inventory_all_hex_patterns
-            )
-
+            default_pattern_2 = bytearray.fromhex("35 02 80 90")
+            default_pattern_2 = new_counter + default_pattern_2[2:]
             
-            # 4th Counters logic
-            reference_value_inven = highest_4th
-            new_4th_counter_value_inven = (reference_value_inven + 2) & 0xFF
-            default_pattern_2[8] = new_4th_counter_value_inven
-
-            # For the 3rd counter
-            third_byte_value_inven = highest_3rd  # Store for use in update_cached_counters_inven
-
-            # Extract high and low nibbles
-            high_nibble_in = highest_3rd & 0xF0
-            low_nibble_in = highest_3rd & 0x0F
-
-            # Apply decimal logic to the low nibble
-            if low_nibble_in > 9:
-                low_nibble_in = low_nibble_in % 10
-                
-            if new_4th_counter_value_inven == 0:  # Rollover happened
-                low_nibble_in = (low_nibble_in + 1) % 10
-
-            # Combine high and modified low nibbles
-            default_pattern_2[9] = high_nibble_in | low_nibble_in
-
-            # Inject second pattern
-            section_data[actual_offset:actual_offset + len(default_pattern_2)] = default_pattern_2
-
-            trailing_pattern = bytes.fromhex("00 00 00 00 FF FF FF FF")
-            section_trailing_offset = search_fixed_pattern(
-            section_data,  # Your byte data
-            trailing_pattern, 
-            fixed_pattern_3_offset,  # Start searching from this higher offset
-            end_offset=10480  # Stop searching if the offset goes below 1400
-            )
+            empty_slot_finder(default_pattern_2, file_path, section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start + 37310, 1)
             
-            
-            if section_trailing_offset != -1 and section_trailing_offset is not None:
-                # Remove the trailing pattern from section_data
-                section_data = section_data[:section_trailing_offset] + section_data[section_trailing_offset + 8:]
-                
-                # Update the section in the entire file
-                entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-            
+            file.seek(0)  
+            entire_file = bytearray(file.read())  # Get updated file content
+            section_data = entire_file[section_info['start']:section_info['end'] + 1]
+    
 
-            # Remove bytes from section end
-            bytes_to_remove = 8
-
-            # Find the new position of the section's end based on bytes_to_remove
-            # Remove bytes from above the end of the section (above section_end)
-            section_data = section_data[:-bytes_to_remove]
-            if len(section_data) > section_end - section_start + 1:
-                section_data = section_data[:section_end - section_start + 1]
-            entire_file[section_info['start']:section_info['start'] + len(section_data)] = section_data
-            
 
             # Write the entire updated file content
             file.seek(0)
@@ -2526,14 +3104,8 @@ def add_armor(item_name, parent_window):
             file.truncate()
             file.seek(0)
             loaded_file_data = bytearray(file.read())
-            update_cached_counters_inven(
-                section_info, 
-                hex_pattern1_Fixed, 
-                third_byte_value_inven,  # Using the original value
-                new_4th_counter_value_inven, 
-                actual_offset,
-                found_id  # Add the found_id parameter
-            )
+            
+
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add weapon: {str(e)}")
 def show_armor_list():
@@ -2836,20 +3408,25 @@ file_open_frame.pack(fill="x", padx=10, pady=5)
 tk.Button(file_open_frame, text="Open Save File", command=open_file).pack(side="left", padx=5)
 file_name_label = tk.Label(file_open_frame, text="No file selected", anchor="w")
 file_name_label.pack(side="left", padx=10, fill="x")
+import_btn = tk.Button(window, text="Import Save(PC/PS4)", command=import_done)
+import_btn.pack(pady=5)
 activate_button = tk.Button(window, text="Activate PC SAVE (AFTER EDITING)", command=activate_checksum)
 activate_button.pack(pady=20)
 frame_save = tk.Frame(window)
 frame_save.pack(pady=10)
 
 
-save_as_button = tk.Button(frame_save, text="Save As...", command=save_file_as)
-save_as_button.pack(side=tk.LEFT, padx=5)
+
 # Section Selection Frame
 section_frame = tk.Frame(window)
 section_frame.pack(fill="x", padx=10, pady=5)
 section_buttons = []
 
-for i in range(1, 10):
+
+#ahmeddd
+
+
+for i in range(1, 11):
     btn = tk.Button(section_frame, text=f"Slot {i}", command=lambda x=i: load_section(x), state=tk.DISABLED)
     btn.pack(side="left", padx=5)
     section_buttons.append(btn)
@@ -2859,29 +3436,52 @@ notebook = ttk.Notebook(window)
 
 # Character Tab
 name_tab = ttk.Frame(notebook)
-tk.Label(name_tab, text="Current Character Name:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
-tk.Label(name_tab, textvariable=current_name_var).grid(row=0, column=1, padx=10, pady=10)
-tk.Label(name_tab, text="New Character Name:").grid(row=1, column=0, padx=10, pady=10, sticky="e")
-tk.Entry(name_tab, textvariable=new_name_var, width=20).grid(row=1, column=1, padx=10, pady=10)
-tk.Button(name_tab, text="Update Name", command=update_character_name).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Label(name_tab, text="Current Character Name:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+ttk.Label(name_tab, textvariable=current_name_var).grid(row=0, column=1, padx=10, pady=10)
+ttk.Label(name_tab, text="New Character Name:").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+ttk.Entry(name_tab, textvariable=new_name_var, width=20).grid(row=1, column=1, padx=10, pady=10)
+ttk.Button(name_tab, text="Update Name", command=update_character_name).grid(row=2, column=0, columnspan=2, pady=20)
 
 #ng tap
-tk.Label(name_tab, text="Current NG+ (BETA):").grid(row=5, column=5, padx=10, pady=10, sticky="e")
-tk.Label(name_tab, textvariable=current_ng_var).grid(row=5, column=4, padx=10, pady=10)
-tk.Label(name_tab, text="New NG+:").grid(row=7, column=5, padx=10, pady=10, sticky="e")
+ttk.Label(name_tab, text="Current NG+:").grid(row=5, column=5, padx=10, pady=10, sticky="e")
+ttk.Label(name_tab, textvariable=current_ng_var).grid(row=5, column=4, padx=10, pady=10)
+ttk.Label(name_tab, text="New NG+:").grid(row=7, column=5, padx=10, pady=10, sticky="e")
 ttk.Entry(name_tab, textvariable=new_ng_var, width=20).grid(row=7, column=4, padx=10, pady=10)
 ttk.Button(name_tab, text="Update NG+", command=update_ng_value).grid(row=8, column=5, columnspan=2, pady=20)
 
 # Souls Tab
 souls_tab = ttk.Frame(notebook)
-tk.Label(souls_tab, text="Current Souls:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
-tk.Label(souls_tab, textvariable=current_souls_var).grid(row=0, column=1, padx=10, pady=10)
-tk.Label(souls_tab, text="New Souls Value (MAX 999999999):").grid(row=1, column=0, padx=10, pady=10, sticky="e")
-tk.Entry(souls_tab, textvariable=new_souls_var, width=20).grid(row=1, column=1, padx=10, pady=10)
-tk.Button(souls_tab, text="Update Souls", command=update_souls_value).grid(row=2, column=0, columnspan=2, pady=20)
+ttk.Label(souls_tab, text="Current Souls:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+ttk.Label(souls_tab, textvariable=current_souls_var).grid(row=0, column=1, padx=10, pady=10)
+ttk.Label(souls_tab, text="New Souls Value (MAX 999999999):").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+ttk.Entry(souls_tab, textvariable=new_souls_var, width=20).grid(row=1, column=1, padx=10, pady=10)
+ttk.Button(souls_tab, text="Update Souls", command=update_souls_value).grid(row=2, column=0, columnspan=2, pady=20)
 
 
-
+# Stats Tab
+stats_tab = ttk.Frame(notebook)
+for idx, (stat, stat_offset) in enumerate(stats_offsets_for_stats_tap.items()):
+    ttk.Label(stats_tab, text=f"Current {stat}:").grid(row=idx, column=0, padx=10, pady=5, sticky="e")
+    ttk.Label(stats_tab, textvariable=current_stats_vars[stat]).grid(row=idx, column=1, padx=10, pady=5)
+    
+    # Use different widgets based on the stat type
+    if stat == "Gender":
+        # Combobox for Gender
+        gender_combo = ttk.Combobox(stats_tab, textvariable=new_stats_vars[stat], 
+                                    values=list(GENDER_MAP.values()), 
+                                    state="readonly", width=10)
+        gender_combo.grid(row=idx, column=2, padx=10, pady=5)
+    elif stat == "Class":
+        # Combobox for Class
+        class_combo = ttk.Combobox(stats_tab, textvariable=new_stats_vars[stat], 
+                                  values=list(CLASS_MAP.values()), 
+                                  state="readonly", width=10)
+        class_combo.grid(row=idx, column=2, padx=10, pady=5)
+    else:
+        # Regular Entry for numeric stats
+        ttk.Entry(stats_tab, textvariable=new_stats_vars[stat], width=10).grid(row=idx, column=2, padx=10, pady=5)
+    
+    ttk.Button(stats_tab, text=f"Update {stat}", command=lambda s=stat: update_stat(s)).grid(row=idx, column=3, padx=10, pady=5)
 
 
 # Main Tab Container
@@ -2890,7 +3490,7 @@ add_tab = ttk.Frame(notebook)
 
 notebook.add(name_tab, text="Character (OFFLINE ONLY)")
 notebook.add(add_tab, text="ADD")
-
+notebook.add(stats_tab, text="Player Attributes")
 notebook.add(souls_tab, text="Souls")
 
 notebook.pack(expand=1, fill="both")
@@ -2916,7 +3516,7 @@ ttk.Button(
 add_weapons_instructions = """
 MAKE SURE WHEN CHOOSING THE UPGRADE LEVEL THAT THE WEAPON COULD BE UPGRADED TO THAT OR YOU WILL GET BANNED.
 """
-tk.Label(
+ttk.Label(
     add_weapons_tab,
     text=add_weapons_instructions,
     wraplength=500,
@@ -2945,9 +3545,9 @@ ttk.Button(
 
 # Add instruction for "Add Items" tab
 add_items_instructions = """
-Don't add too much
+This includes items like runes, consumables, magic, bells, cook books, summmons, and more.
 """
-tk.Label(
+ttk.Label(
     add_items_tab,
     text=add_items_instructions,
     wraplength=500,
@@ -2984,7 +3584,17 @@ ttk.Button(
     text="Add",
     command=show_aow_list  # Opens the item list window
 ).pack(pady=20, padx=20)
-
+# Add instruction for "Add Items" tab
+add_sms_instructions = """
+The slots for AOW are limited to about 50 item for each save load. If you want to add more, reload the game and then edit the save again.
+"""
+tk.Label(
+    add_aow_tab,
+    text=add_sms_instructions,
+    wraplength=500,
+    justify="left",
+    anchor="nw"
+).pack(padx=10, pady=10, fill="x")
 
 
 my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
@@ -2992,6 +3602,6 @@ my_label.pack(side="top", anchor="ne", padx=10, pady=5)
 
 we_label = tk.Label(window, text="USE AT YOUR OWN RISK. EDITING STATS AND HP COULD GET YOU BANNED", anchor="w", padx=10)
 we_label.pack(side="bottom", anchor="nw", padx=10, pady=5)
-
+messagebox.showinfo("Info", "The editor is writing directly to file, no need to save.")
 # Run 
 window.mainloop()
