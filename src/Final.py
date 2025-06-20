@@ -22,8 +22,7 @@ cookbook_hex= '80 00 00 02 00 80 20 08 02 00 80 20 00 02 00 80'
 cookbook_id = bytes.fromhex("80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 80 20 00 00 00 00 00 00 00 00 80 20 08 02 00 00 20 08 02 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 02 00 80 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 08 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 20 00 00 00 00 00 00 00 00 00 00 00 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02 00 80 20 08 02")
 cookbook_distance= -250
 hex_pattern_end= 'FF FF FF FF'
-steamid_pattern_is='01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01'
-steamid_pattern_is_maybe='01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01'
+steamid_pattern_is='92 6F AC 6C'
 
 # Set the working directory
 working_directory = os.path.dirname(os.path.abspath(__file__))
@@ -160,6 +159,17 @@ def find_hex_offset(section_data, hex_pattern):
     except ValueError as e:
         messagebox.showerror("Error", f"Failed to find hex pattern: {str(e)}")
         return None
+    
+def find_hex_offset_last(section_data, hex_pattern):
+    try:
+        pattern_bytes = bytes.fromhex(hex_pattern)
+        last_index = section_data.rfind(pattern_bytes)
+        if last_index != -1:
+            return last_index
+        return None
+    except ValueError as e:
+        messagebox.showerror("Error", f"Failed to find hex pattern: {str(e)}")
+        return None
 
 def calculate_relative_offset(section_start, offset):
     return section_start + offset
@@ -260,7 +270,7 @@ def load_section(section_number):
     # Try to find hex pattern in the section
     offset1 = find_hex_offset(section_data, hex_pattern1_Fixed)
     offsetng = find_hex_offset(section_data, hex_pattern_ng)
-    offset_steam = find_hex_offset(section_data, steamid_pattern_is)
+    offset_steam = find_hex_offset_last(section_data, steamid_pattern_is)
     if offsetng is not None:
         #new game
         ng_offset = offsetng+ ng_distance
@@ -268,20 +278,12 @@ def load_section(section_number):
         current_ng_var.set(current_ng if current_ng is not None else "N/A")
     if offset_steam is not None:
         #steam id
-        steam_offset = offset_steam - 0x08
+        steam_offset = offset_steam - 130
         current_steamid = section_data[steam_offset:steam_offset + 8]
         set_steam_id(0, current_steamid)  # Save the current Steam ID (before import)
         current_stemaid_var.set(current_steamid)
         print("Current SteamID:", current_steamid)
-    else:
-        offset_steam = find_hex_offset(section_data, steamid_pattern_is_maybe)
-        if offset_steam is not None:
-            #steam id
-            steam_offset = offset_steam - 0x08
-            current_steamid = section_data[steam_offset:steam_offset + 8]
-            set_steam_id(0, current_steamid)  # Save the current Steam ID (before import)
-            current_stemaid_var.set(current_steamid)
-            print("Current SteamID:", current_steamid)
+
     if offset1 is not None:
         # Display Souls value
         souls_offset = offset1 + souls_distance
@@ -449,12 +451,10 @@ def import_section():
                 imported_chunk = import_data[import_sections[s]['start']:import_sections[s]['end']+1]
 
                 # Try to locate the Steam ID in the imported chunk
-                offset_steam = find_hex_offset(imported_chunk, steamid_pattern_is) or \
-                            find_hex_offset(imported_chunk, steamid_pattern_is_maybe)
-
+                offset_steam = find_hex_offset_last(imported_chunk, steamid_pattern_is)
                 if offset_steam is not None:
-                    steam_offset = offset_steam - 0x08
-                    if 0 <= steam_offset <= len(imported_chunk) - 8:
+                    steam_offset = offset_steam - 130
+                    if 0 <= steam_offset <= len(imported_chunk) - 130:
                         # Replace Steam ID in the imported chunk before writing it
                         imported_chunk = (
                             imported_chunk[:steam_offset] +
@@ -738,7 +738,53 @@ def update_character_name():
             return
     
     messagebox.showerror("Error", "Could not find name offset in the selected section.")
+####
 
+def find_steam():    
+    global loaded_file_data
+    file_path = file_path_var.get()
+    section_number = current_section_var.get()
+    section_info = SECTIONS[section_number]
+    hex_pattern1_Fixed = '00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 00 00 00 FF FF FF FF'
+    hex_pattern2_Fixed='FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+    hex_pattern3_Fixed='FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF 00 00 00 00 00 00 00 00 00 01 00 00 FF FF FF FF'
+    hex_pattern4_Fixed='00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+    hex_pattern5_Fixed='FF FF FF FF'
+    with open(file_path, 'r+b') as file:
+        loaded_file_data = bytearray(file.read())
+        section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+        inventory_begins= find_hex_offset(section_data, hex_pattern1_Fixed)+0x310+1
+        print(inventory_begins)
+        magic_start=inventory_begins+0x9204
+        print(magic_start)
+        absolute_start = section_info['start'] + magic_start
+        search_data = loaded_file_data[absolute_start:absolute_start+9000]
+        unk_pattern_offset = find_hex_offset(search_data, hex_pattern2_Fixed)
+        if unk_pattern_offset is None:
+            print("Pattern not found in search_data.")
+            return  # or handle it appropriately
+        print(unk_pattern_offset+absolute_start)
+
+        end=unk_pattern_offset+absolute_start
+        search_data1 = loaded_file_data[end:end+35716]
+        unk_pattern_offset1 = find_hex_offset(search_data1, hex_pattern3_Fixed)
+        
+        end1=unk_pattern_offset1+end
+        search_data2=loaded_file_data[end1:end1+90000]
+        unk_pattern_offset2 = find_hex_offset(search_data2, hex_pattern4_Fixed)
+        end2=unk_pattern_offset2+end1
+        search_data3=loaded_file_data[end2:end2+2927596]
+        unk_pattern_offset3 = find_hex_offset(search_data3, hex_pattern5_Fixed)
+        end3=unk_pattern_offset3+end2+131216
+        print('s', end3)
+        file.seek(end3)
+        print(file.read(8))
+
+        
+
+
+
+####
 
 def save_file_as():
     global loaded_file_data
@@ -828,7 +874,484 @@ def get_slot_size(b4):
     else:
         return None
 
+def find_ring_items(section_data, absolute_offset_start, limit=37310):
+    found_ring = []
 
+    # Limit section data to the defined range
+    section_data = section_data[:limit]
+
+    for ring_name, ring_hex in item_hex_patterns.items():
+        ring_bytes = bytes.fromhex(ring_hex)
+        search_pos = 0
+
+        while search_pos < len(section_data):
+            idx = section_data.find(ring_bytes, search_pos)
+            if idx == -1:
+                break
+
+            quantity_offset = idx + len(ring_bytes)
+            if quantity_offset < len(section_data):
+                quantity = section_data[quantity_offset]
+                found_ring.append((ring_name, quantity, absolute_offset_start + idx))
+
+            search_pos = idx + 1  # Move forward
+
+    return found_ring
+
+def refresh_ring_list(file_path):
+    global loaded_file_data
+    section_number = current_section_var.get()
+    
+    if not file_path or section_number == 0:
+        messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a slot.")
+        return
+
+    section_info = SECTIONS[section_number]
+
+    # Ensure bytearray
+    if isinstance(loaded_file_data, bytes):
+        loaded_file_data = bytearray(loaded_file_data)
+
+    # Extract section data
+    section_data = loaded_file_data[section_info['start']:section_info['end'] + 1]
+
+    # Find fixed pattern
+    fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+    if fixed_pattern_offset is None:
+        messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
+        return
+
+    fixed_pattern_offset_start = fixed_pattern_offset
+    search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+
+    if search_start_position >= len(section_data):
+        print("Search start position beyond section data.")
+        return
+
+    fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+    if fixed_pattern_offset_end is not None:
+        fixed_pattern_offset_end += search_start_position
+    else:
+        print("End pattern not found")
+        return
+
+    # Define absolute search start and limit
+    absolute_start = section_info['start'] + fixed_pattern_offset_start
+    search_data = loaded_file_data[absolute_start:absolute_start + 37310]
+
+    updated_rings = find_ring_items(search_data, absolute_start, limit=37310)
+
+    # Clear UI
+    for widget in ring_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_rings:
+        # Create scrollable UI
+        ring_list_canvas = tk.Canvas(ring_list_frame)
+        ring_list_scrollbar = Scrollbar(ring_list_frame, orient="vertical", command=ring_list_canvas.yview)
+        ring_list_frame_inner = ttk.Frame(ring_list_canvas)
+
+        ring_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: ring_list_canvas.configure(scrollregion=ring_list_canvas.bbox("all"))
+        )
+
+        ring_list_canvas.create_window((0, 0), window=ring_list_frame_inner, anchor="nw")
+        ring_list_canvas.configure(yscrollcommand=ring_list_scrollbar.set)
+
+        ring_list_canvas.pack(side="left", fill="both", expand=True)
+        ring_list_scrollbar.pack(side="right", fill="y")
+
+        # Populate ring items
+        for ring_name, quantity, offset in updated_rings:
+            ring_frame = ttk.Frame(ring_list_frame_inner)
+            ring_frame.pack(fill="x", padx=10, pady=5)
+
+            ring_label = tk.Label(ring_frame, text=f"{ring_name} (Quantity: {quantity})", anchor="w")
+            ring_label.pack(side="left", fill="x", padx=5)
+
+            delete_button = ttk.Button(ring_frame, text="Delete", command=lambda o=offset: choose_ring_delete(o))
+            delete_button.pack(side="right", padx=5)
+    else:
+        messagebox.showinfo("Info", "No item found.")
+
+
+def choose_ring_delete(offset):
+    global loaded_file_data
+    current_file_path = file_path_var.get()
+    if not loaded_file_data:
+        messagebox.showerror("Error", "No file loaded.")
+        return
+
+    try:
+
+        for i in range(12):
+            loaded_file_data[offset + i] = 0x00
+
+        # Refresh the ring list to reflect changes
+        refresh_ring_list(current_file_path)
+
+        # Optionally notify user
+        print(f"Deleted ring at offset {offset:X}")
+        with open(current_file_path, 'wb') as f:
+            f.write(loaded_file_data)
+        messagebox.showinfo("Success", "Item deleted successfully.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to delete ring: {e}")
+
+#Talismans list
+def find_talisman_items(file_path, pattern_offset_start, pattern_offset_end):
+
+    global found_talisman
+    found_talisman =[]
+    pattern_offset_start = pattern_offset_start + 520
+    pattern_offset_end = pattern_offset_end - 100
+
+    
+    
+    with open(file_path, 'rb') as file:
+        # Load section
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+        for ring_name, ring_hex in talisman_item_patterns.items():
+            ring_bytes = bytes.fromhex(ring_hex)
+            ring_bytes = ring_bytes[:3] + b'\xA0' + ring_bytes[4:]
+
+            idx = section_data.find(ring_bytes)
+            if idx != -1:
+                # Assuming quantity is stored right after the ring ID in little-endian format
+                quantity_offset = idx + len(ring_bytes)
+                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
+                found_talisman.append((ring_name, quantity))
+    return found_talisman
+
+def refresh_talisman_list(file_path):
+    global loaded_file_data
+    # Find rings in the save file
+    section_number = current_section_var.get()
+    if not file_path or section_number == 0:
+        messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+        return
+
+    # Get section information
+    section_info = SECTIONS[section_number]
+    
+    # Convert loaded_file_data to bytearray if it's not already
+    if isinstance(loaded_file_data, bytes):
+        loaded_file_data = bytearray(loaded_file_data)
+    
+    # Get current section data from loaded_file_data
+    section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+    # Locate Fixed Pattern 1
+    fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+    
+    fixed_pattern_offset_start= fixed_pattern_offset
+    search_start_position = fixed_pattern_offset_start + len(hex_pattern1_Fixed) + 1000
+    fixed_pattern_offset_end = find_hex_offset(section_data[search_start_position:], hex_pattern_end)
+    if fixed_pattern_offset_end is not None:
+        fixed_pattern_offset_end += search_start_position
+    else:
+        # Handle case where end pattern isn't found
+        print("End pattern not found")
+        return
+    if search_start_position >= len(section_data):
+        print("Search start position beyond section data.")
+        return
+    if fixed_pattern_offset is None:
+        messagebox.showerror("Error", "Fixed Pattern 1 not found in the selected section.")
+        return
+    updated_talisman = find_talisman_items(file_path,section_info['start'] + fixed_pattern_offset_start, section_info['start'] + fixed_pattern_offset_start + 37310)
+    
+    # Clear the previous list and display the updated rings
+    for widget in talisman_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_talisman:
+        # Create a canvas and scrollbar to contain the rings
+        talisman_list_canvas = tk.Canvas(talisman_list_frame)
+        talisman_list_scrollbar = Scrollbar(talisman_list_frame, orient="vertical", command=talisman_list_canvas.yview)
+        talisman_list_frame_inner = ttk.Frame(talisman_list_canvas)
+
+        talisman_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: talisman_list_canvas.configure(
+                scrollregion=talisman_list_canvas.bbox("all")
+            )
+        )
+
+        talisman_list_canvas.create_window((0, 0), window=talisman_list_frame_inner, anchor="nw")
+        talisman_list_canvas.configure(yscrollcommand=talisman_list_scrollbar.set)
+
+        talisman_list_canvas.pack(side="left", fill="both", expand=True)
+        talisman_list_scrollbar.pack(side="right", fill="y")
+
+        # Add rings to the inner frame
+        for talisman_name, quantity in updated_talisman:
+            talisman_frame = ttk.Frame(talisman_list_frame_inner)
+            talisman_frame.pack(fill="x", padx=10, pady=5)
+
+            talisman_label = tk.Label(talisman_frame, text=f"{talisman_name} (Quantity: {quantity})", anchor="w")
+            talisman_label.pack(side="left", fill="x", padx=5)
+
+    else:
+        messagebox.showinfo("Info", "No rings found.")
+### Weapons list
+def find_weapon_items(file_path, pattern_offset_start, pattern_offset_end):
+    global found_weapon
+    found_weapon = []
+
+    # Adjust offsets
+    pattern_offset_start += 30
+    pattern_offset_end -= 100
+
+    # Validate read range
+    if pattern_offset_end <= pattern_offset_start:
+        print(f"Invalid read range: start={pattern_offset_start}, end={pattern_offset_end}")
+        return []
+
+    with open(file_path, 'rb') as file:
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+
+        for ring_name, ring_hex in weapon_item_patterns.items():
+            ring_bytes = bytes.fromhex(ring_hex)
+            idx = section_data.find(ring_bytes)
+            if idx != -1:
+                quantity_offset = pattern_offset_start + idx + len(ring_bytes)
+                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
+                found_weapon.append((ring_name, quantity))
+
+    return found_weapon
+
+def refresh_weapon_list(file_path):
+    global loaded_file_data
+    # Find rings in the save file
+    section_number = current_section_var.get()
+    if not file_path or section_number == 0:
+        messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+        return
+
+    # Get section information
+    section_info = SECTIONS[section_number]
+    
+    # Convert loaded_file_data to bytearray if it's not already
+    if isinstance(loaded_file_data, bytes):
+        loaded_file_data = bytearray(loaded_file_data)
+    
+    # Get current section data from loaded_file_data
+    section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+    # Locate Fixed Pattern 1
+    fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+    
+
+    name_offset = fixed_pattern_offset + possible_name_distances_for_name_tap[0]
+    updated_weapon = find_weapon_items(file_path,section_info['start'] + 10, section_info['start'] + name_offset)
+    
+    # Clear the previous list and display the updated rings
+    for widget in weapons_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_weapon:
+        # Create a canvas and scrollbar to contain the rings
+        weapon_list_canvas = tk.Canvas(weapons_list_frame)
+        weapon_list_scrollbar = Scrollbar(weapons_list_frame, orient="vertical", command=weapon_list_canvas.yview)
+        weapon_list_frame_inner = ttk.Frame(weapon_list_canvas)
+
+        weapon_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: weapon_list_canvas.configure(
+                scrollregion=weapon_list_canvas.bbox("all")
+            )
+        )
+
+        weapon_list_canvas.create_window((0, 0), window=weapon_list_frame_inner, anchor="nw")
+        weapon_list_canvas.configure(yscrollcommand=weapon_list_scrollbar.set)
+
+        weapon_list_canvas.pack(side="left", fill="both", expand=True)
+        weapon_list_scrollbar.pack(side="right", fill="y")
+
+        # Add rings to the inner frame
+        for weapon_name, quantity in updated_weapon:
+            weapon_frame = ttk.Frame(weapon_list_frame_inner)
+            weapon_frame.pack(fill="x", padx=10, pady=5)
+
+            weapon_label = tk.Label(weapon_frame, text=f"{weapon_name} (Quantity: {quantity})", anchor="w")
+            weapon_label.pack(side="left", fill="x", padx=5)
+
+    else:
+        messagebox.showinfo("Info", "No rings found.")
+##ARMOR ilst
+
+def find_armor_items(file_path, pattern_offset_start, pattern_offset_end):
+    global found_armor
+    found_armor = []
+
+    # Adjust offsets
+    pattern_offset_start += 30
+    pattern_offset_end -= 100
+
+    # Validate read range
+    if pattern_offset_end <= pattern_offset_start:
+        print(f"Invalid read range: start={pattern_offset_start}, end={pattern_offset_end}")
+        return []
+
+    with open(file_path, 'rb') as file:
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+
+        for ring_name, ring_hex in armor_item_patterns.items():
+            ring_bytes = bytes.fromhex(ring_hex)
+            idx = section_data.find(ring_bytes)
+            if idx != -1:
+                quantity_offset = pattern_offset_start + idx + len(ring_bytes)
+                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
+                found_armor.append((ring_name, quantity))
+
+    return found_armor
+
+def refresh_armor_list(file_path):
+    global loaded_file_data
+    # Find rings in the save file
+    section_number = current_section_var.get()
+    if not file_path or section_number == 0:
+        messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+        return
+
+    # Get section information
+    section_info = SECTIONS[section_number]
+    
+    # Convert loaded_file_data to bytearray if it's not already
+    if isinstance(loaded_file_data, bytes):
+        loaded_file_data = bytearray(loaded_file_data)
+    
+    # Get current section data from loaded_file_data
+    section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+    # Locate Fixed Pattern 1
+    fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+    
+
+    name_offset = fixed_pattern_offset + possible_name_distances_for_name_tap[0]
+    updated_armor = find_armor_items(file_path,section_info['start'] + 10, section_info['start'] + name_offset)
+    
+    # Clear the previous list and display the updated rings
+    for widget in armor_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_armor:
+        # Create a canvas and scrollbar to contain the rings
+        armor_list_canvas = tk.Canvas(armor_list_frame)
+        armor_list_scrollbar = Scrollbar(armor_list_frame, orient="vertical", command=armor_list_canvas.yview)
+        armor_list_frame_inner = ttk.Frame(armor_list_canvas)
+
+        armor_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: armor_list_canvas.configure(
+                scrollregion=armor_list_canvas.bbox("all")
+            )
+        )
+
+        armor_list_canvas.create_window((0, 0), window=armor_list_frame_inner, anchor="nw")
+        armor_list_canvas.configure(yscrollcommand=armor_list_scrollbar.set)
+
+        armor_list_canvas.pack(side="left", fill="both", expand=True)
+        armor_list_scrollbar.pack(side="right", fill="y")
+
+        # Add rings to the inner frame
+        for armor_name, quantity in updated_armor:
+            armor_frame = ttk.Frame(armor_list_frame_inner)
+            armor_frame.pack(fill="x", padx=10, pady=5)
+
+            armor_label = tk.Label(armor_frame, text=f"{armor_name} (Quantity: {quantity})", anchor="w")
+            armor_label.pack(side="left", fill="x", padx=5)
+
+    else:
+        messagebox.showinfo("Info", "No rings found.")
+
+##AOW
+def find_aow_items(file_path, pattern_offset_start, pattern_offset_end):
+    global found_aow
+    found_aow = []
+
+    # Adjust offsets
+    pattern_offset_start += 30
+    pattern_offset_end -= 100
+
+    # Validate read range
+    if pattern_offset_end <= pattern_offset_start:
+        print(f"Invalid read range: start={pattern_offset_start}, end={pattern_offset_end}")
+        return []
+
+    with open(file_path, 'rb') as file:
+        file.seek(pattern_offset_start)
+        section_data = file.read(pattern_offset_end - pattern_offset_start)
+
+        for ring_name, ring_hex in aow_item_patterns.items():
+            ring_bytes = bytes.fromhex(ring_hex)
+            idx = section_data.find(ring_bytes)
+            if idx != -1:
+                quantity_offset = pattern_offset_start + idx + len(ring_bytes)
+                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
+                found_aow.append((ring_name, quantity))
+
+    return found_aow
+
+def refresh_aow_list(file_path):
+    global loaded_file_data
+    # Find rings in the save file
+    section_number = current_section_var.get()
+    if not file_path or section_number == 0:
+        messagebox.showerror("Error", "No file selected or section not chosen. Please load a file and select a section.")
+        return
+
+    # Get section information
+    section_info = SECTIONS[section_number]
+    
+    # Convert loaded_file_data to bytearray if it's not already
+    if isinstance(loaded_file_data, bytes):
+        loaded_file_data = bytearray(loaded_file_data)
+    
+    # Get current section data from loaded_file_data
+    section_data = loaded_file_data[section_info['start']:section_info['end']+1]
+    # Locate Fixed Pattern 1
+    fixed_pattern_offset = find_hex_offset(section_data, hex_pattern1_Fixed)
+    
+
+    name_offset = fixed_pattern_offset + possible_name_distances_for_name_tap[0]
+    updated_aow = find_aow_items(file_path,section_info['start'] + 10, section_info['start'] + name_offset)
+    
+    # Clear the previous list and display the updated rings
+    for widget in aow_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_aow:
+        # Create a canvas and scrollbar to contain the rings
+        aow_list_canvas = tk.Canvas(aow_list_frame)
+        aow_list_scrollbar = Scrollbar(aow_list_frame, orient="vertical", command=aow_list_canvas.yview)
+        aow_list_frame_inner = ttk.Frame(aow_list_canvas)
+
+        aow_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: aow_list_canvas.configure(
+                scrollregion=aow_list_canvas.bbox("all")
+            )
+        )
+
+        aow_list_canvas.create_window((0, 0), window=aow_list_frame_inner, anchor="nw")
+        aow_list_canvas.configure(yscrollcommand=aow_list_scrollbar.set)
+
+        aow_list_canvas.pack(side="left", fill="both", expand=True)
+        aow_list_scrollbar.pack(side="right", fill="y")
+
+        # Add rings to the inner frame
+        for aow_name, quantity in updated_aow:
+            aow_frame = ttk.Frame(aow_list_frame_inner)
+            aow_frame.pack(fill="x", padx=10, pady=5)
+
+            aow_label = tk.Label(aow_frame, text=f"{aow_name} (Quantity: {quantity})", anchor="w")
+            aow_label.pack(side="left", fill="x", padx=5)
+
+    else:
+        messagebox.showinfo("Info", "No rings found.")
 # in the inventory       
 def empty_slot_finder(default_pattern, file_path, pattern_offset_start, pattern_offset_end, quantity):
     with open(file_path, 'r+b') as file:
@@ -843,43 +1366,70 @@ def empty_slot_finder(default_pattern, file_path, pattern_offset_start, pattern_
         section_data = file.read(pattern_offset_end - pattern_offset_start)
         print(f"[DEBUG] Loaded section of {len(section_data)} bytes.")
 
-        # STEP 1: Find alignment point by scanning for two consecutive valid slots
+        def is_valid(slot):
+            if len(slot) != slot_size:
+                return False
+            b3, b4 = slot[2], slot[3]
+            return b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0 #talisman
+
+        # STEP 1: Find alignment point by scanning for one valid slot (simplified)
         start_offset = None
-        for i in range(0, len(section_data) - 2 * slot_size):
+        for i in range(0, len(section_data) - slot_size):
+            # Try alignment at current position
             slot1 = section_data[i:i + slot_size]
-            slot2 = section_data[i + slot_size:i + 2 * slot_size]
 
-            def is_valid(slot):
-                if len(slot) != slot_size:
-                    return False
-                b3, b4 = slot[2], slot[3]
-                return b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0 #talisman
-
-            if is_valid(slot1) and is_valid(slot2):
+            if is_valid(slot1):
                 start_offset = i
                 print(f"[DEBUG] Found alignment at offset {i}")
                 break
+            
+            # Also try alignment offset by 4 bytes (in case there's a 4-byte counter before slots)
+            if i + 4 < len(section_data) - slot_size:
+                slot1_alt = section_data[i + 4:i + 4 + slot_size]
+                
+                if is_valid(slot1_alt):
+                    start_offset = i + 4
+                    print(f"[DEBUG] Found alignment at offset {i + 4} (adjusted for 4-byte counter)")
+                    break
 
         if start_offset is None:
             print("[ERROR] No valid slot alignment found.")
             return
 
-        # STEP 2: Process all slots from alignment
+        # STEP 2: Process all slots from alignment with realignment on invalid slots
         valid_slot_count = 0
         empty_slot_count = 0
+        invalid_slot_count = 0
         highest_counter = b'\x00\x00\x00\x00'
 
-        for i in range(start_offset, len(section_data), slot_size):
-            slot = section_data[i:i + slot_size]
+        def find_next_alignment(data, start_pos):
+            """Find the next alignment point starting from start_pos - only needs 1 valid slot"""
+            for i in range(start_pos, len(data) - slot_size):
+                slot = data[i:i + slot_size]
+                
+                if is_valid(slot):
+                    print(f"[DEBUG] Found new alignment at offset {i}")
+                    return i
+            return None
+
+        current_offset = start_offset
+        
+        while current_offset < len(section_data):
+            slot = section_data[current_offset:current_offset + slot_size]
             if len(slot) < slot_size:
-                print(f"[DEBUG] Skipping incomplete slot at offset {i}")
+                print(f"[DEBUG] Reached end of section at offset {current_offset}")
                 break
 
             b3, b4 = slot[2], slot[3]
-            if slot == b'\x00' * slot_size:
+            
+            # Check if this is an empty slot (first 8 bytes are zero, indicating no item data)
+            if slot[:8] == b'\x00' * 8:
+                # Empty slot
                 empty_slot_count += 1
-                continue
+                print(f"[DEBUG] Empty slot at offset {current_offset}")
+                current_offset += slot_size
             elif b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0: #talisman
+                # Valid slot
                 valid_slot_count += 1
                 counter = slot[8:12]
                 
@@ -887,28 +1437,25 @@ def empty_slot_finder(default_pattern, file_path, pattern_offset_start, pattern_
                 if int.from_bytes(counter, byteorder='little') > int.from_bytes(highest_counter, byteorder='little'):
                     highest_counter = counter
                     print(f"[DEBUG] New highest counter found: {highest_counter.hex()}")
+                current_offset += slot_size
             else:
-                # This is not a valid slot, skip it
-                continue
+                # Invalid slot - find new alignment point
+                invalid_slot_count += 1
+                print(f"[DEBUG] Invalid slot at offset {current_offset} - searching for new alignment")
+                
+                # Search for next alignment starting from current position + 1
+                new_alignment = find_next_alignment(section_data, current_offset + 1)
+                
+                if new_alignment is not None:
+                    current_offset = new_alignment
+                    print(f"[DEBUG] Continuing from new alignment at offset {current_offset}")
+                else:
+                    print(f"[DEBUG] No more valid alignment found, ending search")
+                    break
 
-        # Now create a modified section with zeroed-out invalid slots
         updated_section = bytearray(section_data)
-        for i in range(start_offset, len(section_data), slot_size):
-            slot = section_data[i:i + slot_size]
-            if len(slot) < slot_size:
-                break
-            
-            b3, b4 = slot[2], slot[3]
-            if not (b4 == 0xB0 or (b3 == 0x80 and b4 in valid_b4_values) or b4 == 0xA0) and slot != b'\x00' * slot_size:
-                # Invalidate the slot by zeroing it out
-                updated_section[i:i + slot_size] = b'\x00' * slot_size
-
-        # STEP 3: Apply zeroed-out version to file
-        file.seek(pattern_offset_start)
-        file.write(updated_section)
 
         # STEP 4: Write new entry in the first empty slot found after alignment
-        # Make sure the increment_counterss function exists or define it here
         new_counter = increment_counterss(highest_counter)
         print(f"[DEBUG] Highest counter: {highest_counter.hex()}, New counter: {new_counter.hex()}")
         
@@ -922,9 +1469,9 @@ def empty_slot_finder(default_pattern, file_path, pattern_offset_start, pattern_
                 print(f"[INFO] Wrote new entry at offset {hex(absolute_position)}")
                 break
 
-        print(f"[SUMMARY] Valid slots found: {valid_slot_count}, Empty slots found: {empty_slot_count}")
+        print(f"[SUMMARY] Valid slots found: {valid_slot_count}, Empty slots found: {empty_slot_count}, Invalid slots found: {invalid_slot_count}")
         print(f"[SUMMARY] Highest counter: {highest_counter.hex()}, New counter used: {new_counter.hex()}")
-        return new_entry , absolute_position
+        return new_entry, absolute_position
 
 
 
@@ -3457,6 +4004,83 @@ ttk.Label(souls_tab, text="New Souls Value (MAX 999999999):").grid(row=1, column
 ttk.Entry(souls_tab, textvariable=new_souls_var, width=20).grid(row=1, column=1, padx=10, pady=10)
 ttk.Button(souls_tab, text="Update Souls", command=update_souls_value).grid(row=2, column=0, columnspan=2, pady=20)
 
+inventory_tab = ttk.Frame(notebook)
+
+
+# Sub-notebook inside inventory
+sub_notebook = ttk.Notebook(inventory_tab)
+sub_notebook.pack(expand=True, fill="both")
+
+# 1. Rings tab
+rings_tab = ttk.Frame(sub_notebook)
+sub_notebook.add(rings_tab, text="Items")
+
+ring_list_frame = ttk.Frame(rings_tab)
+ring_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_ring_button = ttk.Button(
+    rings_tab,
+    text="Scan for items",
+    command=lambda: refresh_ring_list(file_path_var.get())
+)
+refresh_ring_button.pack(pady=10)
+
+# 2. Weapons tab
+weapons_tab = ttk.Frame(sub_notebook)
+sub_notebook.add(weapons_tab, text="Weapons")
+
+weapons_list_frame = ttk.Frame(weapons_tab)
+weapons_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_weapon_button = ttk.Button(
+    weapons_tab,
+    text="Scan for Weapons",
+    command=lambda: refresh_weapon_list(file_path_var.get())
+)
+refresh_weapon_button.pack(pady=10)
+
+#armor inven
+
+armor_tab = ttk.Frame(sub_notebook)
+sub_notebook.add(armor_tab, text="Armors")
+
+armor_list_frame = ttk.Frame(armor_tab)
+armor_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_armor_button = ttk.Button(
+    armor_tab,
+    text="Scan for Armors",
+    command=lambda: refresh_armor_list(file_path_var.get())
+)
+refresh_armor_button.pack(pady=10)
+
+#AAOW
+aow_tab = ttk.Frame(sub_notebook)
+sub_notebook.add(aow_tab, text="AOW")
+
+aow_list_frame = ttk.Frame(aow_tab)
+aow_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_aow_button = ttk.Button(
+    aow_tab,
+    text="Scan for AOW",
+    command=lambda: refresh_aow_list(file_path_var.get())
+)
+refresh_aow_button.pack(pady=10)
+# Talisman Tab
+Talisman_tab = ttk.Frame(sub_notebook)
+sub_notebook.add(Talisman_tab, text="Talisman")
+
+talisman_list_frame = ttk.Frame(Talisman_tab)
+talisman_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_Talisman_button = ttk.Button(
+    Talisman_tab,
+    text="Scan for Talisman",
+    command=lambda: refresh_talisman_list(file_path_var.get())
+)
+refresh_Talisman_button.pack(pady=10)
+
 
 # Stats Tab
 stats_tab = ttk.Frame(notebook)
@@ -3489,7 +4113,8 @@ for idx, (stat, stat_offset) in enumerate(stats_offsets_for_stats_tap.items()):
 add_tab = ttk.Frame(notebook)
 
 notebook.add(name_tab, text="Character (OFFLINE ONLY)")
-notebook.add(add_tab, text="ADD")
+notebook.add(inventory_tab, text="Inventory/Remove")
+notebook.add(add_tab, text="ADD Items")
 notebook.add(stats_tab, text="Player Attributes")
 notebook.add(souls_tab, text="Souls")
 
@@ -3498,9 +4123,18 @@ notebook.pack(expand=1, fill="both")
 add_sub_notebook = ttk.Notebook(add_tab)
 add_sub_notebook.pack(expand=1, fill="both")
 
-# Now add "add_tab" to the main notebook correctly
-notebook.add(add_tab, text="ADD")
 
+# Add instruction for "Add Weapons" tab
+add_item_instructions = """
+MAKE SURE WHEN DELETING AN ITEM THAT IT WAS NOT EQUIPED.
+"""
+ttk.Label(
+    rings_tab,
+    text=add_item_instructions,
+    wraplength=500,
+    justify="left",
+    anchor="nw"
+).pack(padx=10, pady=10, fill="x")
 # Adding "Add Weapons" tab
 add_weapons_tab = ttk.Frame(add_sub_notebook)
 add_sub_notebook.add(add_weapons_tab, text="Add Weapons")
