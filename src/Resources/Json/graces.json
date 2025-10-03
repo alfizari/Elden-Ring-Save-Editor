@@ -1,0 +1,2294 @@
+[
+    {
+        "grace_name": "Table of Lost Grace / Roundtable Hold",
+        "map_id": 71190,
+        "offset": "0xa58",
+        "index": 1
+    },
+    {
+        "grace_name": "Agheel Lake North",
+        "map_id": 76108,
+        "offset": "0xcbf",
+        "index": 3
+    },
+    {
+        "grace_name": "Agheel Lake South",
+        "map_id": 76106,
+        "offset": "0xcbf",
+        "index": 5
+    },
+    {
+        "grace_name": "Church of Dragon Communion",
+        "map_id": 76110,
+        "offset": "0xcbf",
+        "index": 1
+    },
+    {
+        "grace_name": "Church of Elleh",
+        "map_id": 76100,
+        "offset": "0xcbe",
+        "index": 3
+    },
+    {
+        "grace_name": "Coastal Cave",
+        "map_id": 73115,
+        "offset": "0xb49",
+        "index": 4
+    },
+    {
+        "grace_name": "Fort Haight West",
+        "map_id": 76105,
+        "offset": "0xcbf",
+        "index": 6
+    },
+    {
+        "grace_name": "Gatefront",
+        "map_id": 76111,
+        "offset": "0xcbf",
+        "index": 0
+    },
+    {
+        "grace_name": "Groveside Cave",
+        "map_id": 73103,
+        "offset": "0xb47",
+        "index": 0
+    },
+    {
+        "grace_name": "Highroad Cave",
+        "map_id": 73117,
+        "offset": "0xb49",
+        "index": 2
+    },
+    {
+        "grace_name": "Artist's Shack (Limgrave)",
+        "map_id": 76103,
+        "offset": "0xcbe",
+        "index": 0
+    },
+    {
+        "grace_name": "Limgrave Tunnels",
+        "map_id": 73201,
+        "offset": "0xb54",
+        "index": 6
+    },
+    {
+        "grace_name": "Mistwood Outskirts",
+        "map_id": 76114,
+        "offset": "0xcc0",
+        "index": 5
+    },
+    {
+        "grace_name": "Murkwater Catacombs",
+        "map_id": 73004,
+        "offset": "0xb3b",
+        "index": 3
+    },
+    {
+        "grace_name": "Murkwater Cave",
+        "map_id": 73100,
+        "offset": "0xb47",
+        "index": 3
+    },
+    {
+        "grace_name": "Murkwater Coast",
+        "map_id": 76116,
+        "offset": "0xcc0",
+        "index": 3
+    },
+    {
+        "grace_name": "Seaside Ruins",
+        "map_id": 76113,
+        "offset": "0xcc0",
+        "index": 6
+    },
+    {
+        "grace_name": "Stormfoot Catacombs",
+        "map_id": 73002,
+        "offset": "0xb3b",
+        "index": 5
+    },
+    {
+        "grace_name": "Summonwater Village Outskirts",
+        "map_id": 76119,
+        "offset": "0xcc0",
+        "index": 0
+    },
+    {
+        "grace_name": "The First Step",
+        "map_id": 76101,
+        "offset": "0xcbe",
+        "index": 2
+    },
+    {
+        "grace_name": "Third Church of Marika",
+        "map_id": 76104,
+        "offset": "0xcbf",
+        "index": 7
+    },
+    {
+        "grace_name": "Waypoint Ruins Cellar",
+        "map_id": 76120,
+        "offset": "0xcc1",
+        "index": 7
+    },
+    {
+        "grace_name": "Cave of Knowledge",
+        "map_id": 71800,
+        "offset": "0xaa5",
+        "index": 7
+    },
+    {
+        "grace_name": "Stranded Graveyard",
+        "map_id": 71801,
+        "offset": "0xaa5",
+        "index": 6
+    },
+    {
+        "grace_name": "Castleward Tunnel",
+        "map_id": 71002,
+        "offset": "0xa41",
+        "index": 5
+    },
+    {
+        "grace_name": "Deathtouched Catacombs",
+        "map_id": 73011,
+        "offset": "0xb3c",
+        "index": 4
+    },
+    {
+        "grace_name": "Divine Tower of Limgrave",
+        "map_id": 73412,
+        "offset": "0xb6e",
+        "index": 3
+    },
+    {
+        "grace_name": "Limgrave Tower Bridge",
+        "map_id": 73410,
+        "offset": "0xb6e",
+        "index": 5
+    },
+    {
+        "grace_name": "Margit, the Fell Omen",
+        "map_id": 71001,
+        "offset": "0xa41",
+        "index": 6
+    },
+    {
+        "grace_name": "Saintsbridge",
+        "map_id": 76117,
+        "offset": "0xcc0",
+        "index": 2
+    },
+    {
+        "grace_name": "Stormhill Shack",
+        "map_id": 76102,
+        "offset": "0xcbe",
+        "index": 1
+    },
+    {
+        "grace_name": "Warmaster's Shack",
+        "map_id": 76118,
+        "offset": "0xcc0",
+        "index": 1
+    },
+    {
+        "grace_name": "Ailing Village Outskirts",
+        "map_id": 76154,
+        "offset": "0xcc5",
+        "index": 5
+    },
+    {
+        "grace_name": "Behind The Castle",
+        "map_id": 76159,
+        "offset": "0xcc5",
+        "index": 0
+    },
+    {
+        "grace_name": "Beside the Crater-Pocked Glade",
+        "map_id": 76155,
+        "offset": "0xcc5",
+        "index": 4
+    },
+    {
+        "grace_name": "Beside the Rampart Gaol",
+        "map_id": 76160,
+        "offset": "0xcc6",
+        "index": 7
+    },
+    {
+        "grace_name": "Bridge of Sacrifice",
+        "map_id": 76157,
+        "offset": "0xcc5",
+        "index": 2
+    },
+    {
+        "grace_name": "Castle Morne Lift",
+        "map_id": 76158,
+        "offset": "0xcc5",
+        "index": 1
+    },
+    {
+        "grace_name": "Castle Morne Rampart",
+        "map_id": 76151,
+        "offset": "0xcc4",
+        "index": 0
+    },
+    {
+        "grace_name": "Church of Pilgrimage",
+        "map_id": 76150,
+        "offset": "0xcc4",
+        "index": 1
+    },
+    {
+        "grace_name": "Earthbore Cave",
+        "map_id": 73101,
+        "offset": "0xb47",
+        "index": 2
+    },
+    {
+        "grace_name": "Fourth Church of Marika",
+        "map_id": 76162,
+        "offset": "0xcc6",
+        "index": 5
+    },
+    {
+        "grace_name": "Impaler's Catacombs",
+        "map_id": 73001,
+        "offset": "0xb3b",
+        "index": 6
+    },
+    {
+        "grace_name": "Isolated Merchant's Shack (Limgrave)",
+        "map_id": 76156,
+        "offset": "0xcc5",
+        "index": 3
+    },
+    {
+        "grace_name": "Morne Moangrave",
+        "map_id": 76161,
+        "offset": "0xcc6",
+        "index": 6
+    },
+    {
+        "grace_name": "Morne Tunnel",
+        "map_id": 73200,
+        "offset": "0xb54",
+        "index": 7
+    },
+    {
+        "grace_name": "South of the Lookout Tower",
+        "map_id": 76153,
+        "offset": "0xcc5",
+        "index": 6
+    },
+    {
+        "grace_name": "Tombsward",
+        "map_id": 76152,
+        "offset": "0xcc5",
+        "index": 7
+    },
+    {
+        "grace_name": "Tombsward Catacombs",
+        "map_id": 73000,
+        "offset": "0xb3b",
+        "index": 7
+    },
+    {
+        "grace_name": "Tombsward Cave",
+        "map_id": 73102,
+        "offset": "0xb47",
+        "index": 1
+    },
+    {
+        "grace_name": "Gateside Chamber",
+        "map_id": 71003,
+        "offset": "0xa41",
+        "index": 4
+    },
+    {
+        "grace_name": "Godrick the Grafted",
+        "map_id": 71000,
+        "offset": "0xa41",
+        "index": 7
+    },
+    {
+        "grace_name": "Liftside Chamber",
+        "map_id": 71006,
+        "offset": "0xa41",
+        "index": 1
+    },
+    {
+        "grace_name": "Rampart Tower",
+        "map_id": 71005,
+        "offset": "0xa41",
+        "index": 2
+    },
+    {
+        "grace_name": "Secluded Cell",
+        "map_id": 71007,
+        "offset": "0xa41",
+        "index": 0
+    },
+    {
+        "grace_name": "Stormveil Cliffside",
+        "map_id": 71004,
+        "offset": "0xa41",
+        "index": 3
+    },
+    {
+        "grace_name": "Stormveil Main Gate",
+        "map_id": 71008,
+        "offset": "0xa42",
+        "index": 7
+    },
+    {
+        "grace_name": "Academy Crystal Cave",
+        "map_id": 73106,
+        "offset": "0xb48",
+        "index": 5
+    },
+    {
+        "grace_name": "Academy Gate Town",
+        "map_id": 76204,
+        "offset": "0xccb",
+        "index": 3
+    },
+    {
+        "grace_name": "Behind Caria Manor",
+        "map_id": 76238,
+        "offset": "0xccf",
+        "index": 1
+    },
+    {
+        "grace_name": "Black Knife Catacombs",
+        "map_id": 73005,
+        "offset": "0xb3b",
+        "index": 2
+    },
+    {
+        "grace_name": "Boilprawn Shack",
+        "map_id": 76216,
+        "offset": "0xccd",
+        "index": 7
+    },
+    {
+        "grace_name": "Church of Vows",
+        "map_id": 76224,
+        "offset": "0xcce",
+        "index": 7
+    },
+    {
+        "grace_name": "Cliffbottom Catacombs",
+        "map_id": 73006,
+        "offset": "0xb3b",
+        "index": 1
+    },
+    {
+        "grace_name": "Converted Tower",
+        "map_id": 76237,
+        "offset": "0xccf",
+        "index": 2
+    },
+    {
+        "grace_name": "Crystalline Woods",
+        "map_id": 76243,
+        "offset": "0xcd0",
+        "index": 4
+    },
+    {
+        "grace_name": "Divine Tower of Liurnia",
+        "map_id": 73422,
+        "offset": "0xb6f",
+        "index": 1
+    },
+    {
+        "grace_name": "Eastern Liurnia Lake Shore",
+        "map_id": 76223,
+        "offset": "0xccd",
+        "index": 0
+    },
+    {
+        "grace_name": "Eastern Tableland",
+        "map_id": 76234,
+        "offset": "0xccf",
+        "index": 5
+    },
+    {
+        "grace_name": "East Gate Bridge Trestle",
+        "map_id": 76242,
+        "offset": "0xcd0",
+        "index": 5
+    },
+    {
+        "grace_name": "Fallen Ruins of the Lake",
+        "map_id": 76236,
+        "offset": "0xccf",
+        "index": 3
+    },
+    {
+        "grace_name": "Folly on the Lake",
+        "map_id": 76219,
+        "offset": "0xccd",
+        "index": 4
+    },
+    {
+        "grace_name": "Foot of the Four Belfries",
+        "map_id": 76210,
+        "offset": "0xccc",
+        "index": 5
+    },
+    {
+        "grace_name": "Gate Town Bridge",
+        "map_id": 76222,
+        "offset": "0xccd",
+        "index": 1
+    },
+    {
+        "grace_name": "Gate Town North",
+        "map_id": 76233,
+        "offset": "0xccf",
+        "index": 6
+    },
+    {
+        "grace_name": "Jarburg",
+        "map_id": 76245,
+        "offset": "0xcd0",
+        "index": 2
+    },
+    {
+        "grace_name": "Lake-Facing Cliffs",
+        "map_id": 76200,
+        "offset": "0xccb",
+        "index": 7
+    },
+    {
+        "grace_name": "Lakeside Crystal Cave",
+        "map_id": 73105,
+        "offset": "0xb48",
+        "index": 6
+    },
+    {
+        "grace_name": "Laskyar Ruins",
+        "map_id": 76202,
+        "offset": "0xccb",
+        "index": 5
+    },
+    {
+        "grace_name": "Liurnia Highway North",
+        "map_id": 76221,
+        "offset": "0xccd",
+        "index": 2
+    },
+    {
+        "grace_name": "Liurnia Highway South",
+        "map_id": 76244,
+        "offset": "0xcd0",
+        "index": 3
+    },
+    {
+        "grace_name": "Liurnia Lake Shore",
+        "map_id": 76201,
+        "offset": "0xccb",
+        "index": 6
+    },
+    {
+        "grace_name": "Artist's Shack (Liurnia of the Lakes)",
+        "map_id": 76217,
+        "offset": "0xccd",
+        "index": 6
+    },
+    {
+        "grace_name": "Liurnia Tower Bridge",
+        "map_id": 73421,
+        "offset": "0xb6f",
+        "index": 2
+    },
+    {
+        "grace_name": "Main Academy Gate",
+        "map_id": 76206,
+        "offset": "0xccb",
+        "index": 1
+    },
+    {
+        "grace_name": "Main Caria Manor Gate",
+        "map_id": 76214,
+        "offset": "0xccc",
+        "index": 1
+    },
+    {
+        "grace_name": "Manor Lower Level",
+        "map_id": 76231,
+        "offset": "0xcce",
+        "index": 0
+    },
+    {
+        "grace_name": "Manor Upper Level",
+        "map_id": 76230,
+        "offset": "0xcce",
+        "index": 1
+    },
+    {
+        "grace_name": "Mausoleum Compound",
+        "map_id": 76226,
+        "offset": "0xcce",
+        "index": 5
+    },
+    {
+        "grace_name": "Northern Liurnia Lake Shore",
+        "map_id": 76212,
+        "offset": "0xccc",
+        "index": 3
+    },
+    {
+        "grace_name": "Ranni's Chamber",
+        "map_id": 76247,
+        "offset": "0xcd0",
+        "index": 0
+    },
+    {
+        "grace_name": "Ranni's Rise",
+        "map_id": 76228,
+        "offset": "0xcce",
+        "index": 3
+    },
+    {
+        "grace_name": "Ravine-Veiled Village",
+        "map_id": 76229,
+        "offset": "0xcce",
+        "index": 2
+    },
+    {
+        "grace_name": "Raya Lucaria Crystal Tunnel",
+        "map_id": 73202,
+        "offset": "0xb54",
+        "index": 5
+    },
+    {
+        "grace_name": "Revenger's Shack",
+        "map_id": 76218,
+        "offset": "0xccd",
+        "index": 5
+    },
+    {
+        "grace_name": "Road's End Catacombs",
+        "map_id": 73003,
+        "offset": "0xb3b",
+        "index": 4
+    },
+    {
+        "grace_name": "Road to the Manor",
+        "map_id": 76213,
+        "offset": "0xccc",
+        "index": 2
+    },
+    {
+        "grace_name": "Royal Moongazing Grounds",
+        "map_id": 76232,
+        "offset": "0xccf",
+        "index": 7
+    },
+    {
+        "grace_name": "Ruined Labyrinth",
+        "map_id": 76225,
+        "offset": "0xcce",
+        "index": 6
+    },
+    {
+        "grace_name": "Scenic Isle",
+        "map_id": 76203,
+        "offset": "0xccb",
+        "index": 4
+    },
+    {
+        "grace_name": "Slumbering Wolf's Shack",
+        "map_id": 76215,
+        "offset": "0xccc",
+        "index": 0
+    },
+    {
+        "grace_name": "Sorcerer's Isle",
+        "map_id": 76211,
+        "offset": "0xccc",
+        "index": 4
+    },
+    {
+        "grace_name": "South Raya Lucaria Gate",
+        "map_id": 76205,
+        "offset": "0xccb",
+        "index": 2
+    },
+    {
+        "grace_name": "Stillwater Cave",
+        "map_id": 73104,
+        "offset": "0xb48",
+        "index": 7
+    },
+    {
+        "grace_name": "Study Hall Entrance",
+        "map_id": 73420,
+        "offset": "0xb6f",
+        "index": 3
+    },
+    {
+        "grace_name": "Temple Quarter",
+        "map_id": 76241,
+        "offset": "0xcd0",
+        "index": 6
+    },
+    {
+        "grace_name": "The Four Belfries",
+        "map_id": 76227,
+        "offset": "0xcce",
+        "index": 4
+    },
+    {
+        "grace_name": "The Ravine",
+        "map_id": 76235,
+        "offset": "0xccf",
+        "index": 4
+    },
+    {
+        "grace_name": "Village of the Albinaurics",
+        "map_id": 76220,
+        "offset": "0xccd",
+        "index": 3
+    },
+    {
+        "grace_name": "Bellum Church",
+        "map_id": 76208,
+        "offset": "0xccc",
+        "index": 7
+    },
+    {
+        "grace_name": "Church of Inhibition",
+        "map_id": 76240,
+        "offset": "0xcd0",
+        "index": 7
+    },
+    {
+        "grace_name": "East Raya Lucaria Gate",
+        "map_id": 76207,
+        "offset": "0xccb",
+        "index": 0
+    },
+    {
+        "grace_name": "Frenzied Flame Village Outskirts",
+        "map_id": 76239,
+        "offset": "0xccf",
+        "index": 0
+    },
+    {
+        "grace_name": "Grand Lift of Dectus",
+        "map_id": 76209,
+        "offset": "0xccc",
+        "index": 6
+    },
+    {
+        "grace_name": "Magma Wyrm",
+        "map_id": 73900,
+        "offset": "0xbab",
+        "index": 3
+    },
+    {
+        "grace_name": "Ruin-Strewn Precipice",
+        "map_id": 73901,
+        "offset": "0xbab",
+        "index": 2
+    },
+    {
+        "grace_name": "Ruin-Strewn Precipice Overlook",
+        "map_id": 73902,
+        "offset": "0xbab",
+        "index": 1
+    },
+    {
+        "grace_name": "Altar South",
+        "map_id": 76252,
+        "offset": "0xcd1",
+        "index": 3
+    },
+    {
+        "grace_name": "Cathedral of Manus Celes",
+        "map_id": 76251,
+        "offset": "0xcd1",
+        "index": 4
+    },
+    {
+        "grace_name": "Moonlight Altar",
+        "map_id": 76250,
+        "offset": "0xcd1",
+        "index": 5
+    },
+    {
+        "grace_name": "Church of the Cuckoo",
+        "map_id": 71402,
+        "offset": "0xa73",
+        "index": 5
+    },
+    {
+        "grace_name": "Debate Parlour",
+        "map_id": 71401,
+        "offset": "0xa73",
+        "index": 6
+    },
+    {
+        "grace_name": "Raya Lucaria Grand Library",
+        "map_id": 71400,
+        "offset": "0xa73",
+        "index": 7
+    },
+    {
+        "grace_name": "Schoolhouse Classroom",
+        "map_id": 71403,
+        "offset": "0xa73",
+        "index": 4
+    },
+    {
+        "grace_name": "Abandoned Coffin",
+        "map_id": 76300,
+        "offset": "0xcd7",
+        "index": 3
+    },
+    {
+        "grace_name": "Altus Highway Junction",
+        "map_id": 76303,
+        "offset": "0xcd7",
+        "index": 0
+    },
+    {
+        "grace_name": "Altus Plateau",
+        "map_id": 76301,
+        "offset": "0xcd7",
+        "index": 2
+    },
+    {
+        "grace_name": "Altus Tunnel",
+        "map_id": 73205,
+        "offset": "0xb54",
+        "index": 2
+    },
+    {
+        "grace_name": "Bower of Bounty",
+        "map_id": 76306,
+        "offset": "0xcd8",
+        "index": 5
+    },
+    {
+        "grace_name": "Castellan's Hall",
+        "map_id": 76322,
+        "offset": "0xcda",
+        "index": 5
+    },
+    {
+        "grace_name": "Erdtree-Gazing Hill",
+        "map_id": 76302,
+        "offset": "0xcd7",
+        "index": 1
+    },
+    {
+        "grace_name": "Forest-Spanning Greatbridge",
+        "map_id": 76304,
+        "offset": "0xcd8",
+        "index": 7
+    },
+    {
+        "grace_name": "Old Altus Tunnel",
+        "map_id": 73204,
+        "offset": "0xb54",
+        "index": 3
+    },
+    {
+        "grace_name": "Perfumer's Grotto",
+        "map_id": 73118,
+        "offset": "0xb49",
+        "index": 1
+    },
+    {
+        "grace_name": "Rampartside Path",
+        "map_id": 76305,
+        "offset": "0xcd8",
+        "index": 6
+    },
+    {
+        "grace_name": "Road of Iniquity Side Path",
+        "map_id": 76307,
+        "offset": "0xcd8",
+        "index": 4
+    },
+    {
+        "grace_name": "Sage's Cave",
+        "map_id": 73119,
+        "offset": "0xb49",
+        "index": 0
+    },
+    {
+        "grace_name": "Sainted Hero's Grave",
+        "map_id": 73008,
+        "offset": "0xb3c",
+        "index": 7
+    },
+    {
+        "grace_name": "Shaded Castle Inner Gate",
+        "map_id": 76321,
+        "offset": "0xcda",
+        "index": 6
+    },
+    {
+        "grace_name": "Shaded Castle Ramparts",
+        "map_id": 76320,
+        "offset": "0xcda",
+        "index": 7
+    },
+    {
+        "grace_name": "Unsightly Catacombs",
+        "map_id": 73012,
+        "offset": "0xb3c",
+        "index": 3
+    },
+    {
+        "grace_name": "Windmill Heights",
+        "map_id": 76313,
+        "offset": "0xcd9",
+        "index": 6
+    },
+    {
+        "grace_name": "Windmill Village",
+        "map_id": 76308,
+        "offset": "0xcd8",
+        "index": 3
+    },
+    {
+        "grace_name": "Bridge of Iniquity",
+        "map_id": 76350,
+        "offset": "0xcdd",
+        "index": 1
+    },
+    {
+        "grace_name": "Craftsman's Shack",
+        "map_id": 76356,
+        "offset": "0xcde",
+        "index": 3
+    },
+    {
+        "grace_name": "First Mt. Gelmir Campsite",
+        "map_id": 76351,
+        "offset": "0xcdd",
+        "index": 0
+    },
+    {
+        "grace_name": "Gelmir Hero's Grave",
+        "map_id": 73009,
+        "offset": "0xb3c",
+        "index": 6
+    },
+    {
+        "grace_name": "Ninth Mt. Gelmir Campsite",
+        "map_id": 76352,
+        "offset": "0xcde",
+        "index": 7
+    },
+    {
+        "grace_name": "Primeval Sorcerer Azur",
+        "map_id": 76357,
+        "offset": "0xcde",
+        "index": 2
+    },
+    {
+        "grace_name": "Road of Iniquity",
+        "map_id": 76353,
+        "offset": "0xcde",
+        "index": 6
+    },
+    {
+        "grace_name": "Seethewater Cave",
+        "map_id": 73107,
+        "offset": "0xb48",
+        "index": 4
+    },
+    {
+        "grace_name": "Seethewater River",
+        "map_id": 76354,
+        "offset": "0xcde",
+        "index": 5
+    },
+    {
+        "grace_name": "Seethewater Terminus",
+        "map_id": 76355,
+        "offset": "0xcde",
+        "index": 4
+    },
+    {
+        "grace_name": "Volcano Cave",
+        "map_id": 73109,
+        "offset": "0xb48",
+        "index": 2
+    },
+    {
+        "grace_name": "Wyndham Catacombs",
+        "map_id": 73007,
+        "offset": "0xb3b",
+        "index": 0
+    },
+    {
+        "grace_name": "Auriza Side Tomb",
+        "map_id": 73013,
+        "offset": "0xb3c",
+        "index": 2
+    },
+    {
+        "grace_name": "Auzira Hero's Grave",
+        "map_id": 73010,
+        "offset": "0xb3c",
+        "index": 5
+    },
+    {
+        "grace_name": "Capital Rampart",
+        "map_id": 76314,
+        "offset": "0xcd9",
+        "index": 5
+    },
+    {
+        "grace_name": "Divine Tower of West Altus",
+        "map_id": 73430,
+        "offset": "0xb70",
+        "index": 1
+    },
+    {
+        "grace_name": "Divine Tower of West Altus: Gate",
+        "map_id": 73432,
+        "offset": "0xb71",
+        "index": 7
+    },
+    {
+        "grace_name": "Hermit Merchant's Shack",
+        "map_id": 76311,
+        "offset": "0xcd8",
+        "index": 0
+    },
+    {
+        "grace_name": "Minor Eerdtree Church",
+        "map_id": 76310,
+        "offset": "0xcd8",
+        "index": 1
+    },
+    {
+        "grace_name": "Outer Wall Battleground",
+        "map_id": 76312,
+        "offset": "0xcd9",
+        "index": 7
+    },
+    {
+        "grace_name": "Outer Wall Phantom Tree",
+        "map_id": 76309,
+        "offset": "0xcd8",
+        "index": 2
+    },
+    {
+        "grace_name": "Sealed Tunnel",
+        "map_id": 73431,
+        "offset": "0xb70",
+        "index": 0
+    },
+    {
+        "grace_name": "Abductor Virgin",
+        "map_id": 71606,
+        "offset": "0xa8c",
+        "index": 1
+    },
+    {
+        "grace_name": "Audience Pathway",
+        "map_id": 71605,
+        "offset": "0xa8c",
+        "index": 2
+    },
+    {
+        "grace_name": "Guest Hall",
+        "map_id": 71604,
+        "offset": "0xa8c",
+        "index": 3
+    },
+    {
+        "grace_name": "Prison Town Church",
+        "map_id": 71603,
+        "offset": "0xa8c",
+        "index": 4
+    },
+    {
+        "grace_name": "Rykard, Lord of Blasphemy",
+        "map_id": 71600,
+        "offset": "0xa8c",
+        "index": 7
+    },
+    {
+        "grace_name": "Subterranean Inquisition Chamber",
+        "map_id": 71607,
+        "offset": "0xa8c",
+        "index": 0
+    },
+    {
+        "grace_name": "Temple of Eiglay",
+        "map_id": 71601,
+        "offset": "0xa8c",
+        "index": 6
+    },
+    {
+        "grace_name": "Volcano Manor",
+        "map_id": 71602,
+        "offset": "0xa8c",
+        "index": 5
+    },
+    {
+        "grace_name": "Avenue Balcony",
+        "map_id": 71104,
+        "offset": "0xa4e",
+        "index": 7
+    },
+    {
+        "grace_name": "Divine Bridge",
+        "map_id": 71109,
+        "offset": "0xa4e",
+        "index": 2
+    },
+    {
+        "grace_name": "East Capital Rampart",
+        "map_id": 71102,
+        "offset": "0xa4d",
+        "index": 1
+    },
+    {
+        "grace_name": "Elden Throne",
+        "map_id": 71100,
+        "offset": "0xa4d",
+        "index": 3
+    },
+    {
+        "grace_name": "Erdtree Sanctuary",
+        "map_id": 71101,
+        "offset": "0xa4d",
+        "index": 2
+    },
+    {
+        "grace_name": "Fortified Manor, First Floor",
+        "map_id": 71108,
+        "offset": "0xa4e",
+        "index": 3
+    },
+    {
+        "grace_name": "Lower Capital Church",
+        "map_id": 71103,
+        "offset": "0xa4d",
+        "index": 0
+    },
+    {
+        "grace_name": "Queen's Bedchamber",
+        "map_id": 71107,
+        "offset": "0xa4e",
+        "index": 4
+    },
+    {
+        "grace_name": "West Capital Rampart",
+        "map_id": 71105,
+        "offset": "0xa4e",
+        "index": 6
+    },
+    {
+        "grace_name": "Cathedral of the Forsaken",
+        "map_id": 73500,
+        "offset": "0xb79",
+        "index": 3
+    },
+    {
+        "grace_name": "Forsaken Depths",
+        "map_id": 73502,
+        "offset": "0xb79",
+        "index": 1
+    },
+    {
+        "grace_name": "Frenzied Flame Proscription",
+        "map_id": 73504,
+        "offset": "0xb7a",
+        "index": 7
+    },
+    {
+        "grace_name": "Leyndell Catacombs",
+        "map_id": 73503,
+        "offset": "0xb79",
+        "index": 0
+    },
+    {
+        "grace_name": "Underground Roadside",
+        "map_id": 73501,
+        "offset": "0xb79",
+        "index": 2
+    },
+    {
+        "grace_name": "Leyendell, Capital of Ash",
+        "map_id": 71123,
+        "offset": "0xa50",
+        "index": 4
+    },
+    {
+        "grace_name": "Divine Bridge",
+        "map_id": 71125,
+        "offset": "0xa50",
+        "index": 2
+    },
+    {
+        "grace_name": "East Capital Rampart",
+        "map_id": 71122,
+        "offset": "0xa50",
+        "index": 5
+    },
+    {
+        "grace_name": "Elden Throne",
+        "map_id": 71120,
+        "offset": "0xa50",
+        "index": 7
+    },
+    {
+        "grace_name": "Erdtree Sanctuary",
+        "map_id": 71121,
+        "offset": "0xa50",
+        "index": 6
+    },
+    {
+        "grace_name": "Queen's Bedchamber",
+        "map_id": 71124,
+        "offset": "0xa50",
+        "index": 3
+    },
+    {
+        "grace_name": "Fractured Marika",
+        "map_id": 71900,
+        "offset": "0xab1",
+        "index": 3
+    },
+    {
+        "grace_name": "Abandoned Cave",
+        "map_id": 73120,
+        "offset": "0xb4a",
+        "index": 7
+    },
+    {
+        "grace_name": "Caelem Ruins",
+        "map_id": 76403,
+        "offset": "0xce4",
+        "index": 4
+    },
+    {
+        "grace_name": "Caelid Catacombs",
+        "map_id": 73015,
+        "offset": "0xb3c",
+        "index": 0
+    },
+    {
+        "grace_name": "Caelid Highway South",
+        "map_id": 76405,
+        "offset": "0xce4",
+        "index": 2
+    },
+    {
+        "grace_name": "Cathedral of Dragon Communion",
+        "map_id": 76404,
+        "offset": "0xce4",
+        "index": 3
+    },
+    {
+        "grace_name": "Chair-Crypt of Sellia",
+        "map_id": 76415,
+        "offset": "0xce5",
+        "index": 0
+    },
+    {
+        "grace_name": "Chamber Outside the Plaza",
+        "map_id": 76420,
+        "offset": "0xce6",
+        "index": 3
+    },
+    {
+        "grace_name": "Church of the Plague",
+        "map_id": 76418,
+        "offset": "0xce6",
+        "index": 5
+    },
+    {
+        "grace_name": "Deep Siofra Well",
+        "map_id": 76410,
+        "offset": "0xce5",
+        "index": 5
+    },
+    {
+        "grace_name": "Fort Gael North",
+        "map_id": 76402,
+        "offset": "0xce4",
+        "index": 5
+    },
+    {
+        "grace_name": "Gael Tunnel",
+        "map_id": 73207,
+        "offset": "0xb54",
+        "index": 0
+    },
+    {
+        "grace_name": "Gaol Cave",
+        "map_id": 73121,
+        "offset": "0xb4a",
+        "index": 6
+    },
+    {
+        "grace_name": "Impassable Greatbridge",
+        "map_id": 76417,
+        "offset": "0xce6",
+        "index": 6
+    },
+    {
+        "grace_name": "Minor Eerdtree Catacombs",
+        "map_id": 73014,
+        "offset": "0xb3c",
+        "index": 1
+    },
+    {
+        "grace_name": "Rear Gael Tunnel Entrance",
+        "map_id": 73257,
+        "offset": "0xb5b",
+        "index": 6
+    },
+    {
+        "grace_name": "Redmane Castle Plaza",
+        "map_id": 76419,
+        "offset": "0xce6",
+        "index": 4
+    },
+    {
+        "grace_name": "Rotview Balcony",
+        "map_id": 76401,
+        "offset": "0xce4",
+        "index": 6
+    },
+    {
+        "grace_name": "Sellia Backstreets",
+        "map_id": 76414,
+        "offset": "0xce5",
+        "index": 1
+    },
+    {
+        "grace_name": "Sellia Crystal Tunnel",
+        "map_id": 73208,
+        "offset": "0xb55",
+        "index": 7
+    },
+    {
+        "grace_name": "Sellia Under-Stair",
+        "map_id": 76416,
+        "offset": "0xce6",
+        "index": 7
+    },
+    {
+        "grace_name": "Smoldering Church",
+        "map_id": 76400,
+        "offset": "0xce4",
+        "index": 7
+    },
+    {
+        "grace_name": "Smoldering Wall",
+        "map_id": 76409,
+        "offset": "0xce5",
+        "index": 6
+    },
+    {
+        "grace_name": "Southern Aeonia Swamp Bank",
+        "map_id": 76411,
+        "offset": "0xce5",
+        "index": 4
+    },
+    {
+        "grace_name": "Starscourge Radahn",
+        "map_id": 76422,
+        "offset": "0xce6",
+        "index": 1
+    },
+    {
+        "grace_name": "War-Dead Catacombs",
+        "map_id": 73016,
+        "offset": "0xb3d",
+        "index": 7
+    },
+    {
+        "grace_name": "Aeonia Swamp Shore",
+        "map_id": 76406,
+        "offset": "0xce4",
+        "index": 1
+    },
+    {
+        "grace_name": "Astray from Caelid Highway North",
+        "map_id": 76407,
+        "offset": "0xce4",
+        "index": 0
+    },
+    {
+        "grace_name": "Heart of Aeonia",
+        "map_id": 76412,
+        "offset": "0xce5",
+        "index": 3
+    },
+    {
+        "grace_name": "Inner Aeonia",
+        "map_id": 76413,
+        "offset": "0xce5",
+        "index": 2
+    },
+    {
+        "grace_name": "Bestial Sanctum",
+        "map_id": 76454,
+        "offset": "0xcea",
+        "index": 1
+    },
+    {
+        "grace_name": "Divine Tower of Caelid: Basement",
+        "map_id": 73440,
+        "offset": "0xb72",
+        "index": 7
+    },
+    {
+        "grace_name": "Divine Tower of Caelid: Center",
+        "map_id": 73441,
+        "offset": "0xb72",
+        "index": 6
+    },
+    {
+        "grace_name": "Dragonbarrow Cave",
+        "map_id": 73110,
+        "offset": "0xb48",
+        "index": 1
+    },
+    {
+        "grace_name": "Dragonbarrow Fork",
+        "map_id": 76452,
+        "offset": "0xcea",
+        "index": 3
+    },
+    {
+        "grace_name": "Dragonbarrow West",
+        "map_id": 76450,
+        "offset": "0xcea",
+        "index": 5
+    },
+    {
+        "grace_name": "Farum Greatbridge",
+        "map_id": 76456,
+        "offset": "0xceb",
+        "index": 7
+    },
+    {
+        "grace_name": "Fort Faroth",
+        "map_id": 76453,
+        "offset": "0xcea",
+        "index": 2
+    },
+    {
+        "grace_name": "Isolated Merchant's Shack (Greyoll's Dragonbarrow)",
+        "map_id": 76451,
+        "offset": "0xcea",
+        "index": 4
+    },
+    {
+        "grace_name": "Isolated Divine Tower",
+        "map_id": 73460,
+        "offset": "0xb74",
+        "index": 3
+    },
+    {
+        "grace_name": "Lenne's Rise",
+        "map_id": 76455,
+        "offset": "0xcea",
+        "index": 0
+    },
+    {
+        "grace_name": "Sellia Hideaway",
+        "map_id": 73111,
+        "offset": "0xb48",
+        "index": 0
+    },
+    {
+        "grace_name": "Divine Tower of the East Altus",
+        "map_id": 73451,
+        "offset": "0xb73",
+        "index": 4
+    },
+    {
+        "grace_name": "Divine Tower of the East Altus: Gate",
+        "map_id": 73450,
+        "offset": "0xb73",
+        "index": 5
+    },
+    {
+        "grace_name": "Forbidden Lands",
+        "map_id": 76500,
+        "offset": "0xcf0",
+        "index": 3
+    },
+    {
+        "grace_name": "Grand Lift of Rold",
+        "map_id": 76502,
+        "offset": "0xcf0",
+        "index": 1
+    },
+    {
+        "grace_name": "Hidden Path to the Haligtree",
+        "map_id": 73020,
+        "offset": "0xb3d",
+        "index": 3
+    },
+    {
+        "grace_name": "Ancient Snow Valley Ruins",
+        "map_id": 76503,
+        "offset": "0xcf0",
+        "index": 0
+    },
+    {
+        "grace_name": "Castle Sol Main Gate",
+        "map_id": 76522,
+        "offset": "0xcf3",
+        "index": 5
+    },
+    {
+        "grace_name": "Castle Sol Rooftop",
+        "map_id": 76524,
+        "offset": "0xcf3",
+        "index": 3
+    },
+    {
+        "grace_name": "Church of the Eclipse",
+        "map_id": 76523,
+        "offset": "0xcf3",
+        "index": 4
+    },
+    {
+        "grace_name": "First Church of Marika",
+        "map_id": 76505,
+        "offset": "0xcf1",
+        "index": 6
+    },
+    {
+        "grace_name": "Freezing Lake",
+        "map_id": 76504,
+        "offset": "0xcf1",
+        "index": 7
+    },
+    {
+        "grace_name": "Snow Valley Ruins Overlook",
+        "map_id": 76521,
+        "offset": "0xcf3",
+        "index": 6
+    },
+    {
+        "grace_name": "Spiritcaller's Cave",
+        "map_id": 73122,
+        "offset": "0xb4a",
+        "index": 5
+    },
+    {
+        "grace_name": "Whiteridge Road",
+        "map_id": 76520,
+        "offset": "0xcf3",
+        "index": 7
+    },
+    {
+        "grace_name": "Zamor Ruins",
+        "map_id": 76501,
+        "offset": "0xcf0",
+        "index": 2
+    },
+    {
+        "grace_name": "Church of Repose",
+        "map_id": 76507,
+        "offset": "0xcf1",
+        "index": 4
+    },
+    {
+        "grace_name": "Fire Giant",
+        "map_id": 76509,
+        "offset": "0xcf1",
+        "index": 2
+    },
+    {
+        "grace_name": "Foot of the Forge",
+        "map_id": 76508,
+        "offset": "0xcf1",
+        "index": 3
+    },
+    {
+        "grace_name": "Forge of the Giants",
+        "map_id": 76510,
+        "offset": "0xcf1",
+        "index": 1
+    },
+    {
+        "grace_name": "Giant-Conquering Hero's Grave",
+        "map_id": 73017,
+        "offset": "0xb3d",
+        "index": 6
+    },
+    {
+        "grace_name": "Giant's Gravepost",
+        "map_id": 76506,
+        "offset": "0xcf1",
+        "index": 5
+    },
+    {
+        "grace_name": "Giant's Mountaintop Catacombs",
+        "map_id": 73018,
+        "offset": "0xb3d",
+        "index": 5
+    },
+    {
+        "grace_name": "Apostate Derelict",
+        "map_id": 76653,
+        "offset": "0xd03",
+        "index": 2
+    },
+    {
+        "grace_name": "Cave of the Forlorn",
+        "map_id": 73112,
+        "offset": "0xb49",
+        "index": 7
+    },
+    {
+        "grace_name": "Consecrated Snowfield",
+        "map_id": 76550,
+        "offset": "0xcf6",
+        "index": 1
+    },
+    {
+        "grace_name": "Consecrated Snowfield Catacombs",
+        "map_id": 73019,
+        "offset": "0xb3d",
+        "index": 4
+    },
+    {
+        "grace_name": "Inner Consecrated Snowfield",
+        "map_id": 76551,
+        "offset": "0xcf6",
+        "index": 0
+    },
+    {
+        "grace_name": "Ordina, Liturgical Town",
+        "map_id": 76652,
+        "offset": "0xd03",
+        "index": 3
+    },
+    {
+        "grace_name": "Yelough Anix Tunnel",
+        "map_id": 73211,
+        "offset": "0xb55",
+        "index": 4
+    },
+    {
+        "grace_name": "Haligtree Canopy",
+        "map_id": 71506,
+        "offset": "0xa80",
+        "index": 5
+    },
+    {
+        "grace_name": "Haligtree Promenade",
+        "map_id": 71505,
+        "offset": "0xa80",
+        "index": 6
+    },
+    {
+        "grace_name": "Haligtree Town",
+        "map_id": 71507,
+        "offset": "0xa80",
+        "index": 4
+    },
+    {
+        "grace_name": "Haligtree Town Plaza",
+        "map_id": 71508,
+        "offset": "0xa80",
+        "index": 3
+    },
+    {
+        "grace_name": "Drainage Channel",
+        "map_id": 71503,
+        "offset": "0xa7f",
+        "index": 0
+    },
+    {
+        "grace_name": "Elphael Inner Wall",
+        "map_id": 71502,
+        "offset": "0xa7f",
+        "index": 1
+    },
+    {
+        "grace_name": "Haligtree Roots",
+        "map_id": 71504,
+        "offset": "0xa80",
+        "index": 7
+    },
+    {
+        "grace_name": "Malenia, Godess of Rot",
+        "map_id": 71500,
+        "offset": "0xa7f",
+        "index": 3
+    },
+    {
+        "grace_name": "Prayer Room",
+        "map_id": 71501,
+        "offset": "0xa7f",
+        "index": 2
+    },
+    {
+        "grace_name": "Beside the great Bridge",
+        "map_id": 71310,
+        "offset": "0xa67",
+        "index": 1
+    },
+    {
+        "grace_name": "Crumbling Beast Grave",
+        "map_id": 71303,
+        "offset": "0xa66",
+        "index": 0
+    },
+    {
+        "grace_name": "Crumbling Beast Grave Depths",
+        "map_id": 71304,
+        "offset": "0xa67",
+        "index": 7
+    },
+    {
+        "grace_name": "Dragonlord Placidusax",
+        "map_id": 71301,
+        "offset": "0xa66",
+        "index": 2
+    },
+    {
+        "grace_name": "Dragon Temple",
+        "map_id": 71306,
+        "offset": "0xa67",
+        "index": 5
+    },
+    {
+        "grace_name": "Dragon Temple Altar",
+        "map_id": 71302,
+        "offset": "0xa66",
+        "index": 1
+    },
+    {
+        "grace_name": "Dragon Temple Lift",
+        "map_id": 71308,
+        "offset": "0xa67",
+        "index": 3
+    },
+    {
+        "grace_name": "Dragon Temple Rooftop",
+        "map_id": 71309,
+        "offset": "0xa67",
+        "index": 2
+    },
+    {
+        "grace_name": "Dragon Temple Transept",
+        "map_id": 71307,
+        "offset": "0xa67",
+        "index": 4
+    },
+    {
+        "grace_name": "Maliketh, the Black Blade",
+        "map_id": 71300,
+        "offset": "0xa66",
+        "index": 3
+    },
+    {
+        "grace_name": "Tempest-Facing Balcony",
+        "map_id": 71305,
+        "offset": "0xa67",
+        "index": 6
+    },
+    {
+        "grace_name": "Ainsel River Downstream",
+        "map_id": 71213,
+        "offset": "0xa5b",
+        "index": 2
+    },
+    {
+        "grace_name": "Ainsel River Sluice Gate",
+        "map_id": 71212,
+        "offset": "0xa5b",
+        "index": 3
+    },
+    {
+        "grace_name": "Ainsel River Well Depths",
+        "map_id": 71211,
+        "offset": "0xa5b",
+        "index": 4
+    },
+    {
+        "grace_name": "Astel, Naturalborn of the Void",
+        "map_id": 71240,
+        "offset": "0xa5f",
+        "index": 7
+    },
+    {
+        "grace_name": "Dragonkin Soldier of Nokstella",
+        "map_id": 71210,
+        "offset": "0xa5b",
+        "index": 5
+    },
+    {
+        "grace_name": "Ainsel River Main",
+        "map_id": 71214,
+        "offset": "0xa5b",
+        "index": 1
+    },
+    {
+        "grace_name": "Nokstella, Eternal City",
+        "map_id": 71215,
+        "offset": "0xa5b",
+        "index": 0
+    },
+    {
+        "grace_name": "Nokstella Waterfall Basin",
+        "map_id": 71219,
+        "offset": "0xa5c",
+        "index": 4
+    },
+    {
+        "grace_name": "Grand Cloister",
+        "map_id": 71218,
+        "offset": "0xa5c",
+        "index": 5
+    },
+    {
+        "grace_name": "Lake of Rot Shoreside",
+        "map_id": 71216,
+        "offset": "0xa5c",
+        "index": 7
+    },
+    {
+        "grace_name": "Ancestral Woods",
+        "map_id": 71224,
+        "offset": "0xa5d",
+        "index": 7
+    },
+    {
+        "grace_name": "Aqueduct-Facing Cliffs",
+        "map_id": 71225,
+        "offset": "0xa5d",
+        "index": 6
+    },
+    {
+        "grace_name": "Great Waterfall Basin",
+        "map_id": 71220,
+        "offset": "0xa5c",
+        "index": 3
+    },
+    {
+        "grace_name": "Mimic Tear",
+        "map_id": 71221,
+        "offset": "0xa5c",
+        "index": 2
+    },
+    {
+        "grace_name": "Night's Sacred Ground",
+        "map_id": 71226,
+        "offset": "0xa5d",
+        "index": 5
+    },
+    {
+        "grace_name": "Nokron, Eternal City",
+        "map_id": 71271,
+        "offset": "0xa62",
+        "index": 0
+    },
+    {
+        "grace_name": "Below the Well",
+        "map_id": 71227,
+        "offset": "0xa5d",
+        "index": 4
+    },
+    {
+        "grace_name": "Siofra River Bank",
+        "map_id": 71222,
+        "offset": "0xa5c",
+        "index": 1
+    },
+    {
+        "grace_name": "Siofra River Well Depths",
+        "map_id": 71270,
+        "offset": "0xa62",
+        "index": 1
+    },
+    {
+        "grace_name": "Worshippers' Woods",
+        "map_id": 71223,
+        "offset": "0xa5c",
+        "index": 0
+    },
+    {
+        "grace_name": "Cocoon of the Empyrean",
+        "map_id": 71250,
+        "offset": "0xa60",
+        "index": 5
+    },
+    {
+        "grace_name": "Dynasty Mausoleum Entrance",
+        "map_id": 71252,
+        "offset": "0xa60",
+        "index": 3
+    },
+    {
+        "grace_name": "Dynasty Mausoleum Midpoint",
+        "map_id": 71253,
+        "offset": "0xa60",
+        "index": 2
+    },
+    {
+        "grace_name": "Palace Approach Ledge-Road",
+        "map_id": 71251,
+        "offset": "0xa60",
+        "index": 4
+    },
+    {
+        "grace_name": "Across the Roots",
+        "map_id": 71235,
+        "offset": "0xa5e",
+        "index": 4
+    },
+    {
+        "grace_name": "Deeproot Depths",
+        "map_id": 71233,
+        "offset": "0xa5e",
+        "index": 6
+    },
+    {
+        "grace_name": "Great Waterfall Crest",
+        "map_id": 71232,
+        "offset": "0xa5e",
+        "index": 7
+    },
+    {
+        "grace_name": "Prince of Death's Throne",
+        "map_id": 71230,
+        "offset": "0xa5d",
+        "index": 1
+    },
+    {
+        "grace_name": "Root-Facing Cliffs",
+        "map_id": 71231,
+        "offset": "0xa5d",
+        "index": 0
+    },
+    {
+        "grace_name": "The Nameless Eternal Cityssssssssssssssssssssssssssssssss",
+        "map_id": 71234,
+        "offset": "0xa5e",
+        "index": 5
+    },
+    {
+        "grace_name": "Theatre of the Divine Beast",
+        "map_id": 72000,
+        "offset": "0xabe",
+        "index": 7
+    },
+    {
+        "grace_name": "Tower Settlement",
+        "map_id": 72001,
+        "offset": "0xabe",
+        "index": 6
+    },
+    {
+        "grace_name": "Stagefront",
+        "map_id": 72003,
+        "offset": "0xabe",
+        "index": 4
+    },
+    {
+        "grace_name": "Gate of Divinity",
+        "map_id": 72010,
+        "offset": "0xabf",
+        "index": 5
+    },
+    {
+        "grace_name": "Outer Wall",
+        "map_id": 72012,
+        "offset": "0xabf",
+        "index": 3
+    },
+    {
+        "grace_name": "Spiral Rise",
+        "map_id": 72014,
+        "offset": "0xabf",
+        "index": 1
+    },
+    {
+        "grace_name": "Cleansing Chamber Anteroom",
+        "map_id": 72015,
+        "offset": "0xabf",
+        "index": 0
+    },
+    {
+        "grace_name": "Divine Gate Front Staircase",
+        "map_id": 72016,
+        "offset": "0xac0",
+        "index": 7
+    },
+    {
+        "grace_name": "Main Gate",
+        "map_id": 72102,
+        "offset": "0xaca",
+        "index": 1
+    },
+    {
+        "grace_name": "Main Gate Plaza",
+        "map_id": 72101,
+        "offset": "0xaca",
+        "index": 2
+    },
+    {
+        "grace_name": "Church District Entrance",
+        "map_id": 72106,
+        "offset": "0xacb",
+        "index": 5
+    },
+    {
+        "grace_name": "Sunken Chapel",
+        "map_id": 72107,
+        "offset": "0xacb",
+        "index": 4
+    },
+    {
+        "grace_name": "Tree-Worship Sanctum",
+        "map_id": 72108,
+        "offset": "0xacb",
+        "index": 3
+    },
+    {
+        "grace_name": "Messmer's Dark Chamber",
+        "map_id": 72110,
+        "offset": "0xacb",
+        "index": 1
+    },
+    {
+        "grace_name": "First Floor",
+        "map_id": 72111,
+        "offset": "0xacb",
+        "index": 0
+    },
+    {
+        "grace_name": "Fourth Floor",
+        "map_id": 72112,
+        "offset": "0xacc",
+        "index": 7
+    },
+    {
+        "grace_name": "Seventh Floor",
+        "map_id": 72113,
+        "offset": "0xacc",
+        "index": 6
+    },
+    {
+        "grace_name": "Dark Chamber Entrance",
+        "map_id": 72114,
+        "offset": "0xacc",
+        "index": 5
+    },
+    {
+        "grace_name": "Back Section",
+        "map_id": 72116,
+        "offset": "0xacc",
+        "index": 4
+    },
+    {
+        "grace_name": "Loft",
+        "map_id": 72117,
+        "offset": "0xacc",
+        "index": 3
+    },
+    {
+        "grace_name": "West Rampart",
+        "map_id": 72120,
+        "offset": "0xacd",
+        "index": 7
+    },
+    {
+        "grace_name": "Garden of Deep Purple",
+        "map_id": 72200,
+        "offset": "0xad7",
+        "index": 7
+    },
+    {
+        "grace_name": "Main Fissure",
+        "map_id": 72201,
+        "offset": "0xad7",
+        "index": 6
+    },
+    {
+        "grace_name": "Fissure Cross",
+        "map_id": 72202,
+        "offset": "0xad7",
+        "index": 5
+    },
+    {
+        "grace_name": "Fissure Waypoint",
+        "map_id": 72203,
+        "offset": "0xad7",
+        "index": 4
+    },
+    {
+        "grace_name": "Discussion Chamber",
+        "map_id": 72800,
+        "offset": "0xb22",
+        "index": 7
+    },
+    {
+        "grace_name": "Manse Hall",
+        "map_id": 72801,
+        "offset": "0xb22",
+        "index": 6
+    },
+    {
+        "grace_name": "Library",
+        "map_id": 72802,
+        "offset": "0xb22",
+        "index": 5
+    },
+    {
+        "grace_name": "Fog Rift Catacombs",
+        "map_id": 74000,
+        "offset": "0xbb8",
+        "index": 7
+    },
+    {
+        "grace_name": "Ruined Forge Lava Intake",
+        "map_id": 74200,
+        "offset": "0xbd1",
+        "index": 7
+    },
+    {
+        "grace_name": "Rivermouth Cave",
+        "map_id": 74300,
+        "offset": "0xbdd",
+        "index": 3
+    },
+    {
+        "grace_name": "Dragon's Pit",
+        "map_id": 74301,
+        "offset": "0xbdd",
+        "index": 2
+    },
+    {
+        "grace_name": "Dragon's Pit Terminus",
+        "map_id": 74351,
+        "offset": "0xbe3",
+        "index": 0
+    },
+    {
+        "grace_name": "Main Plain",
+        "map_id": 76800,
+        "offset": "0xd16",
+        "index": 7
+    },
+    {
+        "grace_name": "Ellac River Cave",
+        "map_id": 76812,
+        "offset": "0xd17",
+        "index": 3
+    },
+    {
+        "grace_name": "Pillar Path",
+        "map_id": 76810,
+        "offset": "0xd17",
+        "index": 5
+    },
+    {
+        "grace_name": "Belurat Gaol",
+        "map_id": 74100,
+        "offset": "0xbc4",
+        "index": 3
+    },
+    {
+        "grace_name": "Ellac River Downstream",
+        "map_id": 76830,
+        "offset": "0xd19",
+        "index": 1
+    },
+    {
+        "grace_name": "Hidden Grave",
+        "map_id": 76841,
+        "offset": "0xd1b",
+        "index": 6
+    },
+    {
+        "grace_name": "Lamenter's Gaol",
+        "map_id": 74102,
+        "offset": "0xbc4",
+        "index": 1
+    },
+    {
+        "grace_name": "Castle Entrance",
+        "map_id": 76821,
+        "offset": "0xd18",
+        "index": 2
+    },
+    {
+        "grace_name": "Moongazing Grounds",
+        "map_id": 76823,
+        "offset": "0xd18",
+        "index": 0
+    },
+    {
+        "grace_name": "Main Shore",
+        "map_id": 76831,
+        "offset": "0xd19",
+        "index": 0
+    },
+    {
+        "grace_name": "The Fissure",
+        "map_id": 76833,
+        "offset": "0xd1a",
+        "index": 6
+    },
+    {
+        "grace_name": "Woods Entrance",
+        "map_id": 76860,
+        "offset": "0xd1d",
+        "index": 3
+    },
+    {
+        "grace_name": "Forsaken Graveyard",
+        "map_id": 76862,
+        "offset": "0xd1d",
+        "index": 1
+    },
+    {
+        "grace_name": "Peak Base",
+        "map_id": 76840,
+        "offset": "0xd1b",
+        "index": 7
+    },
+    {
+        "grace_name": "Mountainside",
+        "map_id": 76850,
+        "offset": "0xd1c",
+        "index": 5
+    },
+    {
+        "grace_name": "Summit",
+        "map_id": 76852,
+        "offset": "0xd1c",
+        "index": 3
+    },
+    {
+        "grace_name": "Rest of the Dread Dragon",
+        "map_id": 76853,
+        "offset": "0xd1c",
+        "index": 2
+    },
+    {
+        "grace_name": "Western Ruins",
+        "map_id": 76942,
+        "offset": "0xd27",
+        "index": 1
+    },
+    {
+        "grace_name": "Church of the Bud",
+        "map_id": 76945,
+        "offset": "0xd28",
+        "index": 6
+    },
+    {
+        "grace_name": "Eastern Ruins",
+        "map_id": 76940,
+        "offset": "0xd27",
+        "index": 3
+    },
+    {
+        "grace_name": "Base Ruins",
+        "map_id": 76912,
+        "offset": "0xd24",
+        "index": 7
+    },
+    {
+        "grace_name": "Scorpion River Catacombs",
+        "map_id": 74001,
+        "offset": "0xbb8",
+        "index": 6
+    },
+    {
+        "grace_name": "Taylew's Ruined Forge",
+        "map_id": 74203,
+        "offset": "0xbd1",
+        "index": 4
+    },
+    {
+        "grace_name": "Finger Birthing Grounds",
+        "map_id": 72500,
+        "offset": "0xafc",
+        "index": 3
+    },
+    {
+        "grace_name": "Main Plaza",
+        "map_id": 76900,
+        "offset": "0xd22",
+        "index": 3
+    },
+    {
+        "grace_name": "Bonny Village",
+        "map_id": 76903,
+        "offset": "0xd22",
+        "index": 0
+    },
+    {
+        "grace_name": "Watering Hole",
+        "map_id": 76916,
+        "offset": "0xd24",
+        "index": 3
+    },
+    {
+        "grace_name": "River Downstream",
+        "map_id": 76918,
+        "offset": "0xd24",
+        "index": 1
+    },
+    {
+        "grace_name": "Darklight Catacombs",
+        "map_id": 74002,
+        "offset": "0xbb8",
+        "index": 5
+    },
+    {
+        "grace_name": "Bonny Gaol",
+        "map_id": 74101,
+        "offset": "0xbc4",
+        "index": 2
+    },
+    {
+        "grace_name": "Starfall Past Forge",
+        "map_id": 74202,
+        "offset": "0xbd1",
+        "index": 5
+    },
+    {
+        "grace_name": "Scadutree Base",
+        "map_id": 76960,
+        "offset": "0xd2a",
+        "index": 7
+    },
+    {
+        "grace_name": "Main Overlook",
+        "map_id": 76930,
+        "offset": "0xd26",
+        "index": 5
+    },
+    {
+        "grace_name": "Keep Back Gate",
+        "map_id": 76931,
+        "offset": "0xd26",
+        "index": 4
+    },
+    {
+        "grace_name": "Hinterland",
+        "map_id": 76935,
+        "offset": "0xd26",
+        "index": 0
+    }
+]
